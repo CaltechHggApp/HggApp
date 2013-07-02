@@ -1,0 +1,33 @@
+##
+## Energy smearing for HCP 53X data
+RunUpper=0
+EBlowEtaBadDeltaE=0.0106
+EBlowEtaGoldDeltaE=0.0100
+EBhiEtaBadDeltaE=0.0196
+EBhiEtaGoldDeltaE=0.0186
+EElowEtaBadDeltaE=0.0267
+EElowEtaGoldDeltaE=0.0283
+EEhiEtaBadDeltaE=0.0345
+EEhiEtaGoldDeltaE=0.0343
+
+# ERRORS
+
+EBlowEtaBadDeltaE_Err=0.0008
+EBlowEtaGoldDeltaE_Err=0.0028
+EBhiEtaBadDeltaE_Err=0.0014
+EBhiEtaGoldDeltaE_Err=0.0014
+EElowEtaBadDeltaE_Err=0.0017
+EElowEtaGoldDeltaE_Err=0.0031
+EEhiEtaBadDeltaE_Err=0.0018
+EEhiEtaGoldDeltaE_Err=0.0015
+
+# 
+
+EBlowEtaBadDeltaE_ScaleErr=0
+EBlowEtaGoldDeltaE_ScaleErr=0
+EBhiEtaBadDeltaE_ScaleErr=0
+EBhiEtaGoldDeltaE_ScaleErr=0
+EElowEtaBadDeltaE_ScaleErr=0
+EElowEtaGoldDeltaE_ScaleErr=0
+EEhiEtaBadDeltaE_ScaleErr=0
+EEhiEtaGoldDeltaE_ScaleErr=0

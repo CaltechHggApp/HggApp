@@ -1,0 +1,33 @@
+##
+## Energy smearing for Moriond 53X data
+RunUpper=0
+EBlowEtaBadDeltaE=0.0107
+EBlowEtaGoldDeltaE=0.0111
+EBhiEtaBadDeltaE=0.0194
+EBhiEtaGoldDeltaE=0.0155
+EElowEtaBadDeltaE=0.0276
+EElowEtaGoldDeltaE=0.0295
+EEhiEtaBadDeltaE=0.0371
+EEhiEtaGoldDeltaE=0.0370
+
+# ERRORS
+
+EBlowEtaBadDeltaE_Err=0.0006
+EBlowEtaGoldDeltaE_Err=0.007
+EBhiEtaBadDeltaE_Err=0.0011
+EBhiEtaGoldDeltaE_Err=0.0040
+EElowEtaBadDeltaE_Err=0.0013
+EElowEtaGoldDeltaE_Err=0.0025
+EEhiEtaBadDeltaE_Err=0.0016
+EEhiEtaGoldDeltaE_Err=0.0011
+
+# 
+
+EBlowEtaBadDeltaE_ScaleErr=0
+EBlowEtaGoldDeltaE_ScaleErr=0
+EBhiEtaBadDeltaE_ScaleErr=0
+EBhiEtaGoldDeltaE_ScaleErr=0
+EElowEtaBadDeltaE_ScaleErr=0
+EElowEtaGoldDeltaE_ScaleErr=0
+EEhiEtaBadDeltaE_ScaleErr=0
+EEhiEtaGoldDeltaE_ScaleErr=0

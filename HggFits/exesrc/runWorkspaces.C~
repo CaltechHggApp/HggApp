@@ -1,0 +1,63 @@
+#include "ArgParser.hh"
+#include "MakeSpinWorkspace.h"
+#include "ReadConfig.hh"
+
+#include <iostream>
+
+int main(int argc, char** argv){
+  using namespace std;
+  ArgParser a(argc,argv);
+  a.addArgument("WorkspaceFile",ArgParser::required,"path to the workspace file");
+  a.addArgument("ConfigFile",  ArgParser::required,"path to the config file giving the data and MC options");
+  a.addArgument("ConfigOption",ArgParser::required,"which heading in the config file");
+  a.addLongOption("SelectionMap",ArgParser::reqArg,"Which selection map to use");
+  a.addLongOption("noCiC",ArgParser::noArg,"specify to disable CiC selection (default: on)");
+  a.addLongOption("useR9",ArgParser::noArg,"use r9 categories (default: off)");
+
+  string ret;
+  if(a.process(ret) !=0){
+    cout << "Invalid Options:  " << ret <<endl;
+    a.printOptions(argv[0]);
+    return 0;
+  }
+
+  string wsFile = a.getArgument("WorkspaceFile");
+
+  string cfgFile = a.getArgument("ConfigFile");
+  string cfgOption = a.getArgument("ConfigOption");
+
+  ReadConfig cfgReader(cfgFile,ReadConfig::kSection);
+
+  string data = cfgReader.getParameter("data",cfgOption);
+  string hgg = cfgReader.getParameter("HggMC",cfgOption);
+  string rsg = cfgReader.getParameter("RSGMC",cfgOption);
+  int runMin = atoi(cfgReader.getParameter("runMin",cfgOption).c_str());
+  int runMax = atoi(cfgReader.getParameter("runMax",cfgOption).c_str());
+
+
+  int selectionMap=7;
+  if(a.longFlagPres("SelectionMap")) selectionMap = atoi(a.getLongFlag("SelectionMap").c_str());
+  bool requireCiC=true;
+  if(a.longFlagPres("noCiC")) requireCiC=false;
+  bool useR9 = a.longFlagPres("useR9");
+
+  MakeSpinWorkspace msw(wsFile);
+
+  cout << "Data:    " << data <<endl
+       << "Hgg MC:  " << hgg << endl
+       << "RSG MC:  " << rsg << endl;
+
+  msw.addFile(data,"Data",true);
+  msw.addFile(hgg,"Hgg125",false);
+  msw.addFile(rsg,"RSG125",false);
+
+  msw.setRequireCiC(requireCiC);
+  msw.setSelectionMap(selectionMap);
+  msw.setRunRange(runMin,runMax);
+  msw.setUseR9(useR9);
+
+  msw.MakeWorkspace();
+
+  return 0;
+
+}

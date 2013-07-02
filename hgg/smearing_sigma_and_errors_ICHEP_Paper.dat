@@ -1,0 +1,12 @@
+##
+## smearing numbers for the ICHEP Paper Dataset
+##
+EBlowEtaGoldCM=0.825,0.40 
+EBlowEtaGoldGAP=1.035,0.23 
+EBlowEtaBad=1.16,0.16 
+EBhighEtaBad=2.22,0.19 
+EBhighEtaGold=1.38,0.52
+EElowEtaBad=2.92,0.25
+EElowEtaGold=2.75,0.54
+EEhighEtaBad=3.22,0.33
+EEhighEtaGold=3.10,0.25

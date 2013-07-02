@@ -1,0 +1,12 @@
+# category=smear,smearErr
+# update on EBlowEtaGold since new special photon boundary
+# These numbers correspong to Jan16 Re-reco
+EBlowEtaGoldGAP=0.0077,0.0022
+EBlowEtaGoldCM=0.0067,0.0040
+EBlowEtaBad=0.0096,0.0024
+EBhighEtaGold=0.0141,0.006
+EBhighEtaBad=0.01960,0059
+EElowEtaGold=0.0268,0.009
+EElowEtaBad=0.0279,0.003
+EEhighEtaGold=0.0293,0.0034
+EEhighEtaBad=0.0301,0.0052

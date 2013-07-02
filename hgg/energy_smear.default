@@ -1,0 +1,29 @@
+# default energy scale originally called energy_scale()
+RunUpper=0,1,2,3
+EBlowEtaBadDeltaE=0,0.0217,0.0148,0.0121
+EBlowEtaGoldDeltaE=0,0.0157,0.023,0.0122
+EBhiEtaBadDeltaE=0,0.01,0.008,0.00
+EBhiEtaGoldDeltaE=0,0.0099,0.0105,0.0201
+EElowEtaBadDeltaE=0,0.0331,0.0286,0.00
+EElowEtaGoldDeltaE=0,0.0378,0.0267,0.0314
+EEhiEtaBadDeltaE=0,0.0326,0.0266,0.0454
+EEhiEtaGoldDeltaE=0,0.033,0.0266,0.0421
+#Errors on the smearing (for systematics)
+EBlowEtaBadDeltaE_Err=0,0.0059,0.0061,0.0007
+EBlowEtaGoldDeltaE_Err=0,0.0060,0.0007,0.0007
+EBhiEtaBadDeltaE_Err=0,0.0024,0.0006,0.00
+EBhiEtaGoldDeltaE_Err=0,0.0022,0.0004,0.0014
+EElowEtaBadDeltaE_Err=0,0.0052,0.0010,0.00
+EElowEtaGoldDeltaE_Err=0,0.0034,0.0019,0.0019
+EEhiEtaBadDeltaE_Err=0,0.0030,0.0040,0.007
+EEhiEtaGoldDeltaE_Err=0,0.0091,0.0013,0.0029
+#Errors on the energy scale (for systematics)
+EBlowEtaBadDeltaE_ScaleErr=0,0.0051,0.0022,0.0002
+EBlowEtaGoldDeltaE_ScaleErr=0,0.0071,0.0003,0.0003
+EBhiEtaBadDeltaE_ScaleErr=0,0.0013,0.0002,0.0008
+EBhiEtaGoldDeltaE_ScaleErr=0,0.0019,0.0001,0.0021
+EElowEtaBadDeltaE_ScaleErr=0,,0.0028,0.0006,0.0012
+EElowEtaGoldDeltaE_ScaleErr=0,0.0019,0.0009,0.0022
+EEhiEtaBadDeltaE_ScaleErr=0,0.0018,0.0021,0.0018
+EEhiEtaGoldDeltaE_ScaleErr=0,0.0088,0.0006,0.0013
+
