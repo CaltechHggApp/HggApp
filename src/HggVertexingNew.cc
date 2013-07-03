@@ -13,7 +13,7 @@ using namespace std;
 
 // local includes
 #include "VecbosBase.hh"
-#include "Vecbos.hh"
+//#include "Vecbos.hh"
 #include "Jet.hh"
 #include "CoolTools.hh"
 #include "CaloTower.hh"

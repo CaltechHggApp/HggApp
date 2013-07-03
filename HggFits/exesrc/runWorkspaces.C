@@ -46,6 +46,7 @@ int main(int argc, char** argv){
   // READ CONFIGURATION FILE
   //
   ReadConfig cfgReader(cfgFile,ReadConfig::kSection);
+  cfgReader.printAll();
   string data = cfgReader.getParameter("data",cfgOption);
   string mcList = cfgReader.getParameter("mcList",cfgOption);
   cout << mcList <<endl;

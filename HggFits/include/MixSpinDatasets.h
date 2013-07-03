@@ -9,6 +9,7 @@
 #include "TString.h"
 
 #include <vector>
+#include <string>
 #include "MakeSpinFits.h"
 
 class MixSpinDatasets{
@@ -17,9 +18,13 @@ public:
 
   void scheduleMix(const char* mc1, const char* mc2, float f1,TString outputName="");
 
+  void scheduleMerge(std::vector<std::string> mcNames, TString outputName="");
+
   void mixAll();
+  void mergeAll();
 
   void mix(const char* mc1, const char* mc2, float f1,TString outputName="");
+  void merge(std::vector<TString> names,TString outputName="");
 protected:
   RooWorkspace *ws;
 
@@ -30,7 +35,11 @@ protected:
   std::vector<float> f1L;
   std::vector<TString> outputNameL;
 
+  std::vector<std::vector<TString> > mergeL;
+  std::vector<TString> mergeOutputNameL;
+
   void internalMix(const char* mc1, const char* mc2, float f1,TString outputName,TString cat);
+  void internalMerge(std::vector<TString> names, TString outputName,TString cat);
 };
 
 #endif

@@ -13,10 +13,26 @@ void MixSpinDatasets::scheduleMix(const char* mc1, const char* mc2,
   outputNameL.push_back(outputName);
 }
 
+void MixSpinDatasets::scheduleMerge(std::vector<std::string> mcNames,
+				    TString outputName){
+  if(mcNames.size() < 2) return;
+  std::vector<TString> tmp;
+  for(int i=0;i<mcNames.size();i++) tmp.push_back(mcNames.at(i).c_str());
+  mergeL.push_back(tmp);
+  mergeOutputNameL.push_back(outputName);
+}
+
 void MixSpinDatasets::mixAll(){
   MakeSpinFits::getLabels("evtcat",&catNames,ws);
   for(int i=0;i<mc1L.size();i++){
     mix(mc1L.at(i).Data(),mc2L.at(i).Data(),f1L.at(i),outputNameL.at(i));
+  }
+}
+
+void MixSpinDatasets::mergeAll(){
+  MakeSpinFits::getLabels("evtcat",&catNames,ws);
+  for(int i=0;i<mergeL.size();i++){
+    merge(mergeL.at(i),mergeOutputNameL.at(i));
   }
 }
 
@@ -30,6 +46,25 @@ void MixSpinDatasets::mix(const char* mc1, const char* mc2,
   internalMix(mc1,mc2,f1,outputName,"Combined");
   ws->import(*l);
 }
+
+void MixSpinDatasets::merge(std::vector<TString> names,
+			    TString outputName){
+  if(outputName==""){
+    std::vector<TString>::const_iterator nameIt = names.begin();
+    for(; nameIt != names.end(); nameIt++){
+      if(nameIt != names.begin()) outputName+="_";
+      outputName+= *nameIt;
+    }
+  }
+  RooCategory* l = ((RooCategory*)ws->obj("labels"));
+  std::cout << outputName << "  " << l << std::endl;
+  l->defineType(outputName,l->numBins(""));
+
+  internalMerge(names,outputName,"Combined");
+  ws->import(*l);
+}
+
+
 
 void MixSpinDatasets::internalMix(const char* mc1, const char* mc2, 
 				  float f1,TString outputName,TString cat){
@@ -93,4 +128,48 @@ void MixSpinDatasets::internalMix(const char* mc1, const char* mc2,
   delete tot_EB_mix;
   delete tot_EE_mix;
   delete ngen_mix;
+}
+
+void MixSpinDatasets::internalMerge(std::vector<TString> names,
+				    TString outputName,TString cat){
+
+  RooRealVar *evtW = ws->var("evtWeight");
+
+  RooDataSet *ds = (RooDataSet*)ws->data(Form("%s_%s",names.at(0).Data(),cat.Data()));
+  RooArgSet inputSet(*(ds->get(0)),RooArgSet(*evtW));
+  
+  RooDataSet *merge_TMP = new RooDataSet("TMP","",inputSet);   
+
+  int ngen_tot=0;
+
+  std::vector<TString>::const_iterator nameIt = names.begin();
+  for(; nameIt != names.end(); nameIt++){
+    RooDataSet *ds = (RooDataSet*)ws->data(*nameIt+"_"+cat);
+
+    Long64_t iEntry=-1;
+    const RooArgSet *set;
+    
+    while( (set=ds->get(++iEntry)) ){ //loop over first DS
+      float w = ds->weight();
+      float we = ds->weightError();
+      evtW->setVal(w);
+      evtW->setError(we);
+      if(iEntry%5000==0) std::cout << "Adding Entry " << iEntry << "  weight " << evtW->getVal() <<std::endl;
+      merge_TMP->add( RooArgSet(*set,RooArgSet(*evtW)) );
+    }
+    
+    ngen_tot += ws->var( Form("%s_Ngen",nameIt->Data()) )->getVal();
+  }
+
+  RooDataSet *merge = new RooDataSet(outputName+"_"+cat,"",merge_TMP,inputSet,0,"evtWeight");
+
+  ws->import( *merge);
+
+  RooRealVar * ngen_merge   = new RooRealVar( Form("%s_Ngen",outputName.Data()),           "", ngen_tot);
+
+  ws->import (*ngen_merge);
+
+  delete merge;
+  delete merge_TMP;
+  delete ngen_merge;
 }
