@@ -23,7 +23,7 @@ make install
 # Come back to the original directory, and clean up.
 cd ../
 \rm -r fastjet-2.4.1
-\rm fastjet-2.4.1.tar.gz
+
 
 set version = `$PWD/FASTJET/bin/fastjet-config --version`
 echo "*******************************************************************"
