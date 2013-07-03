@@ -124,8 +124,15 @@ int main(int argc, char** argv){
     string NgenSt   = cfgReader.getParameter(Form("N_%s",mcName.c_str()),cfgOption);
     int Ngen = -1;
     if(NgenSt.compare("")!=0) Ngen = atoi(NgenSt.c_str());
+    string xsecString = cfgReader.getParameter(Form("xsec_%s",mcName.c_str()),cfgOption);
+    float xsec=0;
+    if(xsecString.compare("")!=0)  xsec = atof(xsecString.c_str());
+    bool isSignal = true;
+    string isSignalString = cfgReader.getParameter(Form("isSignal_%s",mcName.c_str()),cfgOption);
+    if(isSignalString.compare("")!=0) isSignal  = atoi(isSignalString.c_str());
+    
     cout << mcName << ":    " << filePath <<endl;
-    msw.addFile(filePath,mcName,false,Ngen,isList);
+    msw.addFile(filePath,mcName,(isSignal ? +1:-1),Ngen,isList,xsec);
   }
   
   msw.setIsGlobe(isGlobe);
