@@ -46,6 +46,17 @@ Date: Jan 2013
 #include <vector>
 #include "assert.h"
 
+enum dataTypes : signed int {kBackground=-1, kData=0,kSignal=1};
+
+struct dataSetInfo{
+  TString fileName;
+  TString label;
+  dataTypes type;
+  int Ngen;
+  bool isList;
+  float xsec;
+};
+
 class MakeSpinWorkspace{
 public:
   MakeSpinWorkspace(TString outputFileName); //!< Constructor requires the name of the file to which the output fill be written
@@ -66,7 +77,7 @@ public:
     \param N: Number of generated events
     \param list if true, the fName points to a list of nTuples rather than a single file
   */
-  void addFile(TString fName,TString l,bool is,int N,bool list=false); //!< takes a file name, label, and a bool specifying whether this corresponds to data and adds this to the list of files to process
+  void addFile(TString fName,TString l,int t,int N,bool list=false,float xsec=1); //!< takes a file name, label, and a bool specifying whether this corresponds to data and adds this to the list of files to process
   void setRequireCiC(bool b){requireCiC=b;} //!< specify whether to require the photons to have passed the CiC selection
   bool getRequireCiC(){return requireCiC;}  //!< returns whether CiC will be required 
   
@@ -113,9 +124,7 @@ public:
   void setTwoEBCats(bool b =true){twoEBcats=b;}
   void setVetoInnerEE(bool b=true){vetoInnerEE=b; nCat*=1.5;}
 protected:
-  std::vector<TString> fileName,label; // lists of input file names and corresponding labels
-  std::vector<bool> isData,isList;     // list of bools specifying whether the files correspond to data
-  std::vector<int> Ngen;               // number of generated events for normalization
+  std::vector<dataSetInfo> datasets;   //info on all the datasets to process into the workspace
   RooWorkspace *ws;                    // workspace for output
   RooCategory* labels;                 // list of labels to store inside the RooWorkspace
   TFile *outputFile;                   //!< pointer to output file
@@ -145,7 +154,7 @@ protected:
 
   float lumi;                          // luminosity to which to normalize the MC
 
-  void AddToWorkspace(TString inputFile,TString tag, bool isData, int N, bool isList); // takes a file and its labels and adds to the workspace
+  void AddToWorkspace(dataSetInfo dataset); // takes a file and its labels and adds to the workspace
 
   TString EfficiencyCorrectionFile_Data;
   TString EfficiencyCorrectionFile_MC;

@@ -147,17 +147,17 @@ bool MakeSpinWorkspace::getBaselineSelection(HggOutputReader2* h,int maxI,int mi
   return true;
 }
 
-void MakeSpinWorkspace::AddToWorkspace(TString inputFile,TString tag, bool isData, int N, bool isList){
+void MakeSpinWorkspace::AddToWorkspace(dataSetInfo dataset){
   //adds the data/MC to the workspace with the given tag
-  std::cout << "Processing " <<tag << " : " << inputFile <<std::endl;
+  std::cout << "Processing " << dataset.label << " : " << dataset.fileName <<std::endl;
   TFile *f=0;
   TChain *tree=0;
-  TString treeName = (isGlobe ? Form("spin_trees/%s",tag.Data()) : "HggOutput");
-  if(isList){
+  TString treeName = (isGlobe ? Form("spin_trees/%s",dataset.label.Data()) : "HggOutput");
+  if(dataset.isList){
     std::cout << "isList" <<std::endl;
-    tree = getChainFromList(inputFile,treeName);
+    tree = getChainFromList(dataset.fileName,treeName);
   }else{
-    f = TFile::Open(inputFile);
+    f = TFile::Open(dataset.fileName);
     tree = (TChain*)f->Get(treeName);
   }
   if(tree==0) return;
@@ -172,12 +172,12 @@ void MakeSpinWorkspace::AddToWorkspace(TString inputFile,TString tag, bool isDat
   if(!isGlobe) setupBranches(*h);
   
   TFile *efficiencyCorrection=0;
-  if(isData && EfficiencyCorrectionFile_Data!=""){ //Use MC derived correction weights for the photons
+  if(dataset.type==kData && EfficiencyCorrectionFile_Data!=""){ //Use MC derived correction weights for the photons
     //as a function of eta/R9/phi
     std::cout << "Using Efficiency Correction " << EfficiencyCorrectionFile_Data <<std::endl;
     efficiencyCorrection = new TFile(EfficiencyCorrectionFile_Data);
   }
-  if(!isData && EfficiencyCorrectionFile_MC!=""){ //Use MC derived correction weights for the photons
+  if(dataset.type!=kData && EfficiencyCorrectionFile_MC!=""){ //Use MC derived correction weights for the photons
     //as a function of eta/R9/phi
     std::cout << "Using Efficiency Correction " << EfficiencyCorrectionFile_MC <<std::endl;
     efficiencyCorrection = new TFile(EfficiencyCorrectionFile_MC);
@@ -191,7 +191,7 @@ void MakeSpinWorkspace::AddToWorkspace(TString inputFile,TString tag, bool isDat
 
   }
   if(filenameKFactor!=""){
-    if(tag=="Hgg125") fileKFactor = new TFile(filenameKFactor);
+    if(dataset.label=="Hgg125") fileKFactor = new TFile(filenameKFactor);
     else fileKFactor=0;
   }
 
@@ -248,15 +248,14 @@ void MakeSpinWorkspace::AddToWorkspace(TString inputFile,TString tag, bool isDat
   set.add(*idMVA1); set.add(*idMVA2);
   set.add(*diPhotonMVA);
   */
-  RooRealVar *totEB = new RooRealVar(Form("%s_EB_totalEvents",tag.Data()),"",0,0,1e9);
-  RooRealVar *totEE = new RooRealVar(Form("%s_EE_totalEvents",tag.Data()),"",0,0,1e9);
-  RooRealVar *totGen = new RooRealVar(tag+"_Ngen","",N);
+  RooRealVar *totEB = new RooRealVar(Form("%s_EB_totalEvents",dataset.label.Data()),"",0,0,1e9);
+  RooRealVar *totEE = new RooRealVar(Form("%s_EE_totalEvents",dataset.label.Data()),"",0,0,1e9);
+  RooRealVar *totGen = new RooRealVar(dataset.label+"_Ngen","",dataset.Ngen);
 
-  std::map<int,RooDataSet*> dataMap;
-
+  std::vector<RooDataSet*> dataMap;
   std::cout << "nCat: " << nCat <<std::endl;
   for(int j=0;j<nCat;j++){
-    dataMap[j] = new RooDataSet(Form("%s_cat%d",tag.Data(),j),"",set);    
+    dataMap.push_back(new RooDataSet(Form("%s_cat%d",dataset.label.Data(),j),"",set));
   }
 
   Long64_t iEntry=-1;
@@ -268,17 +267,20 @@ void MakeSpinWorkspace::AddToWorkspace(TString inputFile,TString tag, bool isDat
 
   //begin main loop over tree
   while(true){
+
+    //Get the entry
     int val=1;
     if(isGlobe) val=g->GetEntry(++iEntry);
     else val=h->GetEntry(++iEntry);
     
+    //exit if at end
     if(val==0) break;
     if(debug_workspaces && iEntry>=20000) break;
 
     if( !(iEntry%10000) ){
       cout << "Processing " << iEntry << endl;
-
     }
+
     //determine  the leading and trailing photons
     int maxI,minI;
     if(isGlobe){
@@ -293,10 +295,14 @@ void MakeSpinWorkspace::AddToWorkspace(TString inputFile,TString tag, bool isDat
       }
     }
 
+
     if(!isGlobe){ // globe trees don't have run number ...
       int run = h->runNumber;
-      if(isData && (run < runLow || run > runHigh) ) continue;
+      if(dataset.type==kData && (run < runLow || run > runHigh) ) continue;
     }
+
+
+    //get floats out of the trees
     float pho1_etaSC, pho2_etaSC;
     float se1,se2;
     float r91_f,r92_f;
@@ -345,16 +351,19 @@ void MakeSpinWorkspace::AddToWorkspace(TString inputFile,TString tag, bool isDat
 	phi2_f = h->Photon_phi[minI];
       }
     }
+    
+    //compute the weight.  Globe has this done already
     float weight=1;
-    if(!isData) weight = (isGlobe ? g->evweight : h->evtWeight*getEfficiency(*h,125));
-    if(weight==0 && !isData && !isGlobe){
-      std::cout << "0 weight event!    " << h->evtWeight << "    " << getEfficiency(*h,125) <<std::endl;
+    if(dataset.type!=kData){
+      weight = (isGlobe ? g->evweight : h->evtWeight*getEfficiency(*h,125));
+      if(weight==0) std::cout << "0 weight event!    " << h->evtWeight << "    " << getEfficiency(*h,125) <<std::endl;
     }
     if(fabs(pho1_etaSC) < 1.48 && fabs(pho2_etaSC) < 1.48) nEB+=weight;
     else nEE+=weight;
 
     Nentries++;
     
+    //get the mass
     float m;
     if(isGlobe) m = g->higgs_mass;
     else{
@@ -364,23 +373,27 @@ void MakeSpinWorkspace::AddToWorkspace(TString inputFile,TString tag, bool isDat
     }
     if(debug_workspaces && m!=-1) std::cout << "m: " << m <<std::endl;
 
+
     // apply selections
-    if(isGlobe){ 
+    if(isGlobe){// globe ntuples already have selections, just need mass cuts
       if(m <mMin || m > mMax) continue;
-    }else{// globe ntuples already have selections, just need mass cuts
+    }else{
       if(!getBaselineSelection(h,maxI,minI,m)) continue;
       if(tightPt && (pt1_f/m < 1./3. || pt2_f/m < 1./4.) ) continue;
     }
     if(debug_workspaces) std::cout <<  "passed selection" <<std::endl;
 
+    
     int p1=nCat,p2=nCat;
     assert(minI != maxI);
     //determine the photon categories
     int cat=-1;
+
     if(vetoInnerEE){
       if(fabs(pho1_etaSC) > 1.48 && fabs(pho1_etaSC) < 1.70) continue;
       if(fabs(pho2_etaSC) > 1.48 && fabs(pho2_etaSC) < 1.70) continue;
     }
+    
     if(takeCatFromTree && isGlobe){
       cat = g->category;
     }else if(useR9){
@@ -403,6 +416,8 @@ void MakeSpinWorkspace::AddToWorkspace(TString inputFile,TString tag, bool isDat
       if(twoEBcats) if( !(fabs(pho1_etaSC) < 0.80 && fabs(pho2_etaSC) < 0.80) ) cat+=nLayer;
       if( !(fabs(pho1_etaSC) < 1.48 && fabs(pho2_etaSC) < 1.48) ) cat+=nLayer;      
     }
+
+
     if(cat < 0 || cat >= nCat) continue;
     //set all the variables
     mass->setVal(m);
@@ -437,7 +452,7 @@ void MakeSpinWorkspace::AddToWorkspace(TString inputFile,TString tag, bool isDat
     float pho2EffWeight = getEffWeight(eta2_f,pt2_f,phi2_f,r92_f);
 
     //set the event weight
-    if(!isData) evtW->setVal(weight*pho1EffWeight*pho2EffWeight);
+    if(dataset.type!=kData) evtW->setVal(weight*pho1EffWeight*pho2EffWeight);
     else evtW->setVal(1*pho1EffWeight*pho2EffWeight);
     if( !(iEntry%1000) ) cout <<  "\t\t\t" << evtW->getVal() << endl;
 
@@ -449,44 +464,45 @@ void MakeSpinWorkspace::AddToWorkspace(TString inputFile,TString tag, bool isDat
       std::cout << "Large Event Weight: " << evtW->getVal() << std::endl;
       set.Print("V");
     }
-    dataMap[cat]->add(set);
-  }
-  cout << "Processed " << iEntry << " Entries" <<endl;
+    dataMap.at(cat)->add(set);
+  } 
+  //
+  // END OF MAIN LOOP
+  //
 
+  cout << "Processed " << iEntry << " Entries" <<endl;
   totEB->setVal(nEB);
   totEE->setVal(nEE);
 
   //build a combined DataSet using the cat RooCategory
   RooArgSet setCat(set);
   setCat.add(*cat);
-  RooDataSet* dataComb = new RooDataSet(tag+"_Combined","",setCat);
+  RooDataSet* dataComb = new RooDataSet(dataset.label+"_Combined","",setCat);
 
-  float lumiRescaleFactor = (isGlobe ? 1 : lumi * 50.58/N);  //50.58 Higgs/fb
-
+  float lumiRescaleFactor = lumi * dataset.xsec/dataset.Ngen;
   float puWeightCorrection = (isGlobe ? 1 : (nEB+nEE)/Nentries); // globe doesn't need this correction
   
-  std::cout << tag << " LUMI RESCALE: " << lumiRescaleFactor <<std::endl;
+  std::cout << dataset.label << " LUMI RESCALE: " << lumiRescaleFactor <<std::endl;
 
-  std::map<int, RooDataSet*>::iterator dIt;
-  for(dIt = dataMap.begin();dIt!=dataMap.end();dIt++){
+  for(auto dIt = dataMap.begin();dIt!=dataMap.end();dIt++){
     //loop over the barrel datasets and add the individual data to the combined dataset
     //dIt->setWeightVar(*evtW);
     TString cattag;
-    cattag = Form("cat%d", dIt->first );
+    cattag = Form("cat%d", int(dIt - dataMap.begin()) );
     std::cout << cattag <<std::endl;
-    RooDataSet *tmp = new RooDataSet("DataCat_"+cattag,"",set,RooFit::Index(*cat),RooFit::Import(cattag,*(dIt->second)) );
+    RooDataSet *tmp = new RooDataSet("DataCat_"+cattag,"",set,RooFit::Index(*cat),RooFit::Import(cattag,**dIt) );
     tmp->Print();
     Long64_t iEntry=-1;
     const RooArgSet *set;
     while( (set = tmp->get(++iEntry)) ){
-      if(!isData) ((RooRealVar*)set->find("evtWeight"))->setVal( ((RooRealVar*)set->find("evtWeight"))->getVal()*lumiRescaleFactor/puWeightCorrection );
+      if(dataset.type!=kData) ((RooRealVar*)set->find("evtWeight"))->setVal( ((RooRealVar*)set->find("evtWeight"))->getVal()*lumiRescaleFactor/puWeightCorrection );
       dataComb->add(*set);
     }
     //dataComb->append(*tmp);
     //ws->import(*(dIt->second));
   }
 
-  RooDataSet *dataComb_w = new RooDataSet(tag+"_Combined","",dataComb,setCat,0,"evtWeight");
+  RooDataSet *dataComb_w = new RooDataSet(dataset.label+"_Combined","",dataComb,setCat,0,"evtWeight");
   //import everything
   ws->import(*dataComb_w);
   ws->import(*totEB);
@@ -558,31 +574,28 @@ float MakeSpinWorkspace::getEffWeight(float eta, float pt, float phi, float r9){
 
 }
 
-void MakeSpinWorkspace::addFile(TString fName,TString l,bool is,int N,bool list){
-  fileName.push_back(fName);
-  label.push_back(l);
-  isData.push_back(is);
-  Ngen.push_back(N);
-  isList.push_back(list);
-  if(!is) labels->defineType(l,labels->numBins(""));
+void MakeSpinWorkspace::addFile(TString fName,TString l,int t,int N,bool list,float xsec){
+  dataSetInfo data = {
+    fName, //fileName
+    l, //label
+    dataTypes(t), //type
+    N, // Ngen
+    list, //isList
+    xsec //xsec
+  };
+  datasets.push_back(data);
+  if(! t!=0) labels->defineType(l,labels->numBins(""));
 }
 
 
 void MakeSpinWorkspace::MakeWorkspace(){
   //run AddToWorkspace(...) on all the input files
-  std::vector<TString>::const_iterator fnIt,lIt;
-  std::vector<bool>::const_iterator idIt,ilIt;
-  std::vector<int>::const_iterator NgenIt;
-  fnIt = fileName.begin();
-  lIt  = label.begin();
-  idIt = isData.begin();
-  NgenIt = Ngen.begin();
-  ilIt = isList.begin();
+  
 
   if(!useR9 && !takeCatFromTree) getSelectionMap(selectionMap,1); // load the selection map
 
-  for(; fnIt != fileName.end(); fnIt++, lIt++, idIt++,NgenIt++, ilIt++){
-    AddToWorkspace(*fnIt,*lIt,*idIt,*NgenIt,*ilIt);
+  for(auto datasetIt = datasets.begin(); datasetIt != datasets.end(); datasetIt++){    
+    AddToWorkspace(*datasetIt);
     outputFile->cd();
     ws->Write(ws->GetName(),TObject::kWriteDelete);
   }
