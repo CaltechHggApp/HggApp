@@ -115,7 +115,7 @@ int main(int argc, char** argv){
   cout << "Data:    " << data <<endl;
 
 
-  if(!a.longFlagPres("noData"))   msw.addFile(data,"Data",true,-1,isList);
+  if(!a.longFlagPres("noData"))   msw.addFile(data,"Data",0,-1,isList);
   for(vector<string>::const_iterator mcIt = mcListVec.begin();
       mcIt != mcListVec.end();
       mcIt++){
