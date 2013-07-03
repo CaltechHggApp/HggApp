@@ -114,12 +114,12 @@ int ReadConfig::parseSectionLine(string s,string &sec){
 
   if(sc.find_first_not_of(' ') == string::npos) return 0; // if there was nothing other than spaces on the line
   if(sc.find_first_not_of(' ') == string::npos) return 0; // if there was nothing other than spaces on the line
-  unsigned int eqPos = sc.find_first_of('='); // location of the assignment
+  int eqPos = sc.find_first_of('='); // location of the assignment
 
   if(eqPos == sc.find_first_not_of(' ')) throw runtime_error(string("non l-value assignment:  ")+s);; // can't start the line with =
   if(eqPos == string::npos){ // might be a new section, lets check.  Section format needs to be [NAME]
-    unsigned int openParPos = sc.find_first_of('[');
-    unsigned int closeParPos = sc.find_first_of(']');
+    int openParPos = sc.find_first_of('[');
+    int closeParPos = sc.find_first_of(']');
     if(openParPos==string::npos || closeParPos==string::npos) throw runtime_error(string("non l-value assignment:  ")+s);; // need an assignment operator
     if(openParPos >= closeParPos || closeParPos==openParPos+1) throw runtime_error(string("invalid section heading:  ")+s);
 
