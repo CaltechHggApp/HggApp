@@ -503,6 +503,9 @@ void MakeSpinWorkspace::AddToWorkspace(dataSetInfo dataset){
   }
 
   RooDataSet *dataComb_w = new RooDataSet(dataset.label+"_Combined","",dataComb,setCat,0,"evtWeight");
+
+  dataComb_w->SetTitle(TString( int(dataset.type) ));
+
   //import everything
   ws->import(*dataComb_w);
   ws->import(*totEB);
@@ -584,7 +587,7 @@ void MakeSpinWorkspace::addFile(TString fName,TString l,int t,int N,bool list,fl
     xsec //xsec
   };
   datasets.push_back(data);
-  if(! t!=0) labels->defineType(l,labels->numBins(""));
+  if( t!=0) labels->defineType(l,labels->numBins(""));
 }
 
 
