@@ -1,4 +1,5 @@
 #include "MixSpinDatasets.h"
+#include "TString.h"
 #include <iostream>
 MixSpinDatasets::MixSpinDatasets(RooWorkspace *w):ws(w)
 {
@@ -50,8 +51,7 @@ void MixSpinDatasets::mix(const char* mc1, const char* mc2,
 void MixSpinDatasets::merge(std::vector<TString> names,
 			    TString outputName){
   if(outputName==""){
-    std::vector<TString>::const_iterator nameIt = names.begin();
-    for(; nameIt != names.end(); nameIt++){
+    for(auto nameIt = names.begin(); nameIt != names.end(); nameIt++){
       if(nameIt != names.begin()) outputName+="_";
       outputName+= *nameIt;
     }
@@ -60,6 +60,9 @@ void MixSpinDatasets::merge(std::vector<TString> names,
   std::cout << outputName << "  " << l << std::endl;
   l->defineType(outputName,l->numBins(""));
 
+  
+  for(auto nameIt = names.begin(); nameIt != names.end(); nameIt++) std::cout << *nameIt << std::endl;
+  std::cout << names.size() << std::endl;
   internalMerge(names,outputName,"Combined");
   ws->import(*l);
 }
@@ -133,17 +136,31 @@ void MixSpinDatasets::internalMix(const char* mc1, const char* mc2,
 void MixSpinDatasets::internalMerge(std::vector<TString> names,
 				    TString outputName,TString cat){
 
+  std::cout << "internalMerge" << std::endl;
   RooRealVar *evtW = ws->var("evtWeight");
-
+  std::cout << Form("%s_%s",names.at(0).Data(),cat.Data()) << std::endl;
   RooDataSet *ds = (RooDataSet*)ws->data(Form("%s_%s",names.at(0).Data(),cat.Data()));
-  RooArgSet inputSet(*(ds->get(0)),RooArgSet(*evtW));
-  
-  RooDataSet *merge_TMP = new RooDataSet("TMP","",inputSet);   
+  int index=-1;
+  for(int i=0;i<names.size();i++){
+    if(ds->get(i)){
+      index=i;
+      break;
+    }
+  }
+  if(index==-1) {
+    std::cout << "NO ENTRIES IN ANY DATASET FOR MERGING:  ABORTING" << std::endl;
+    return;
+  }
+  std::cout << ds << "  " << evtW << "  " << ds->get(index) << std::endl;
 
+  RooArgSet inputSet(*(ds->get(index)),RooArgSet(*evtW));
+  std::cout << "made RooArgSet" << std::endl;
+  RooDataSet *merge_TMP = new RooDataSet("TMP","",inputSet);   
+  std::cout << merge_TMP << std::endl;
   int ngen_tot=0;
 
-  std::vector<TString>::const_iterator nameIt = names.begin();
-  for(; nameIt != names.end(); nameIt++){
+  for(auto nameIt=names.begin(); nameIt != names.end(); nameIt++){
+    std::cout << *nameIt << std::endl;
     RooDataSet *ds = (RooDataSet*)ws->data(*nameIt+"_"+cat);
 
     Long64_t iEntry=-1;

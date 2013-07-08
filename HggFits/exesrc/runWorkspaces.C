@@ -17,6 +17,8 @@ int main(int argc, char** argv){
   a.addLongOption("useR9",ArgParser::noArg,"use r9 categories (default: off)");
   a.addLongOption("tightPt",ArgParser::noArg,"use tight pt/m cuts (default: off)");
   a.addLongOption("mixMC",ArgParser::required,"Specify two MC samples to mix, comma-separated (e.g.: --mixMC=Hgg125,RSG125)");
+  a.addLongOption("mergeMC",ArgParser::required,"specify multiple MC samples to merge (e.g. mergeMC=GluGluHgg,VBFHgg)");
+  a.addLongOption("mergeName",ArgParser::required,"specify the name of the merged dataset (note: samples marked as background with automatically be merged into a 'background' dataset)");
   a.addLongOption("fractions",ArgParser::required,"Specify the fractions of the MC samples specified in --mixMC, comma-separated (e.g.: --fractions=0.1,0.2,0.8)");
   a.addLongOption("useUncorrectedMass",ArgParser::noArg,"Use the uncorrected (no regression, scale or smear) mass");
   a.addLongOption("setMassRange",ArgParser::reqArg,"set the mass range to include (default 100-180)");
@@ -91,6 +93,8 @@ int main(int argc, char** argv){
 
   MakeSpinWorkspace msw(wsFile);
 
+
+  //MIXER
   if(a.longFlagPres("mixMC") && a.longFlagPres("fractions")){
     msw.setMixDatasets();
     std::vector<string> mc = ReadConfig::tokenizeString(a.getLongFlag("mixMC"),",");
@@ -111,12 +115,27 @@ int main(int argc, char** argv){
       msw.getMixer()->scheduleMix(mc.at(0).c_str(),mc.at(1).c_str(),atof(fst.at(i).c_str()));
     }
   }
-  if(a.longFlagPres("useUncorrectedMass")) msw.setUseUncorrMass();
+  
+  //MERGER
+  if(a.longFlagPres("mergeMC")){
+    msw.setMixDatasets();
+    std::vector<string> mc = ReadConfig::tokenizeString(a.getLongFlag("mergeMC"),",");
+    if(mc.size()<2){
+      std::cout << "cannot merge fewer than two samples...." << std::endl;
+      return -1;
+    }
+    const char* outputName = a.getLongFlag("mergeName").c_str();
+    msw.getMixer()->scheduleMerge(mc,outputName);
+  }
 
+  if(a.longFlagPres("useUncorrectedMass")) msw.setUseUncorrMass();
   cout << "Data:    " << data <<endl;
 
+  //ADD DATA SAMPLES
+  if(!a.longFlagPres("noData"))   msw.addFile(data,"Data",dataSetInfo::kData,-1,isList);
 
-  if(!a.longFlagPres("noData"))   msw.addFile(data,"Data",0,-1,isList);
+  //ADD MC SAMPLES
+  std::vector<string> bkgSamples;
   for(vector<string>::const_iterator mcIt = mcListVec.begin();
       mcIt != mcListVec.end();
       mcIt++){
@@ -133,9 +152,16 @@ int main(int argc, char** argv){
     if(isSignalString.compare("")!=0) isSignal  = atoi(isSignalString.c_str());
     
     cout << mcName << ":    " << filePath <<endl;
-    msw.addFile(filePath,mcName,(isSignal ? +1:-1),Ngen,isList,xsec);
+    msw.addFile(filePath,mcName,(isSignal ? dataSetInfo::kSignal : dataSetInfo::kBackground),Ngen,isList,xsec);
+    if(!isSignal) bkgSamples.push_back(mcName);
   }
   
+  //merge background samples if necessary
+  if(bkgSamples.size()>1){
+    msw.setMixDatasets();
+    msw.getMixer()->scheduleMerge(bkgSamples,"Background");
+  }
+
   msw.setIsGlobe(isGlobe);
   if(a.longFlagPres("catFromTree")) msw.setTakeCatFromTree();
   if(a.longFlagPres("optimization")) msw.setOptimization();

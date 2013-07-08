@@ -852,13 +852,16 @@ RooAbsPdf* MakeSpinFits::Make2DSignalModel(TString massMcName,TString costMcName
 
 RooAbsPdf* MakeSpinFits::Make2DBkgModel(TString massMcName,TString costMcName,TString catTag,TString inset){return 0;}
 */
-void MakeSpinFits::MakeBackgroundOnlyFit(TString catTag, float cosTlow, float cosThigh){
+void MakeSpinFits::MakeBackgroundOnlyFit(TString catTag, float cosTlow, float cosThigh,bool fitMCbackground){
   std::cout << "MakeSpinFits::MakeBackgroundOnlyFit" <<std::endl;
   if(ws==0) return;
   RooRealVar mass = *(ws->var("mass"));
   cout << "1" <<endl;
 
-  RooAbsData *ds = ws->data("Data_Combined")->reduce(TString("evtcat==evtcat::")+catTag);
+  TString dataTag="Data";
+  if(fitMCbackground) dataTag="Background";
+
+  RooAbsData *ds = ws->data(dataTag+"_Combined")->reduce(TString("evtcat==evtcat::")+catTag);
 
   TString outputTag = catTag;
   if(cosTlow > -1 || cosThigh < 1){
@@ -874,32 +877,32 @@ void MakeSpinFits::MakeBackgroundOnlyFit(TString catTag, float cosTlow, float co
   case kExp:
     {
       //double exponential
-    RooRealVar* alpha1 = new RooRealVar(Form("Data_BKGFIT_%s_alpha1",outputTag.Data()),"alpha1",-0.1,-1.,0.);
-    RooRealVar* alpha2 = new RooRealVar(Form("Data_BKGFIT_%s_alpha2",outputTag.Data()),"alpha2",-0.1,-1.,0.);
-    RooRealVar* f_bkg  = new RooRealVar(Form("Data_BKGFIT_%s_f",outputTag.Data()),"f_bkg",0.1,0,1);
-    RooExponential* exp1 = new RooExponential(Form("Data_BKGFIT_%s_exp1",outputTag.Data()),"exp1",mass,*alpha1);
-    RooExponential* exp2 = new RooExponential(Form("Data_BKGFIT_%s_exp2",outputTag.Data()),"exp2",mass,*alpha2);
+    RooRealVar* alpha1 = new RooRealVar(dataTag+Form("_BKGFIT_%s_alpha1",outputTag.Data()),"alpha1",-0.1,-1.,0.);
+    RooRealVar* alpha2 = new RooRealVar(dataTag+Form("_BKGFIT_%s_alpha2",outputTag.Data()),"alpha2",-0.1,-1.,0.);
+    RooRealVar* f_bkg  = new RooRealVar(dataTag+Form("_BKGFIT_%s_f",outputTag.Data()),"f_bkg",0.1,0,1);
+    RooExponential* exp1 = new RooExponential(dataTag+Form("_BKGFIT_%s_exp1",outputTag.Data()),"exp1",mass,*alpha1);
+    RooExponential* exp2 = new RooExponential(dataTag+Form("_BKGFIT_%s_exp2",outputTag.Data()),"exp2",mass,*alpha2);
     
-    BkgShape = new RooAddPdf(Form("Data_BKGFIT_%s_bkgShape",outputTag.Data()),"Background Model",
+    BkgShape = new RooAddPdf(dataTag+Form("_BKGFIT_%s_bkgShape",outputTag.Data()),"Background Model",
 			     RooArgList(*exp1,*exp2),*f_bkg);
     break;
     }
   case kPoly:
     {
       //5th order polynomial
-    RooRealVar *pC = new RooRealVar(Form("Data_BKGFIT_%s_pC",outputTag.Data()),"pC",1);
-    RooRealVar *p0 = new RooRealVar(Form("Data_BKGFIT_%s_p0",outputTag.Data()),"p0",0,-10,10);
-    RooRealVar *p1 = new RooRealVar(Form("Data_BKGFIT_%s_p1",outputTag.Data()),"p1",0,-10,10);
-    RooRealVar *p2 = new RooRealVar(Form("Data_BKGFIT_%s_p2",outputTag.Data()),"p2",0,-10,10);
-    RooRealVar *p3 = new RooRealVar(Form("Data_BKGFIT_%s_p3",outputTag.Data()),"p3",0,-10,10);
-    RooRealVar *p4 = new RooRealVar(Form("Data_BKGFIT_%s_p4",outputTag.Data()),"p4",0,-10,10);
+    RooRealVar *pC = new RooRealVar(dataTag+Form("_BKGFIT_%s_pC",outputTag.Data()),"pC",1);
+    RooRealVar *p0 = new RooRealVar(dataTag+Form("_BKGFIT_%s_p0",outputTag.Data()),"p0",0,-10,10);
+    RooRealVar *p1 = new RooRealVar(dataTag+Form("_BKGFIT_%s_p1",outputTag.Data()),"p1",0,-10,10);
+    RooRealVar *p2 = new RooRealVar(dataTag+Form("_BKGFIT_%s_p2",outputTag.Data()),"p2",0,-10,10);
+    RooRealVar *p3 = new RooRealVar(dataTag+Form("_BKGFIT_%s_p3",outputTag.Data()),"p3",0,-10,10);
+    RooRealVar *p4 = new RooRealVar(dataTag+Form("_BKGFIT_%s_p4",outputTag.Data()),"p4",0,-10,10);
     //enforce all coefficients positive
-    RooFormulaVar *pCmod = new RooFormulaVar(Form("Data_BKGFIT_%s_pCmod",outputTag.Data()),"","@0*@0",*pC);
-    RooFormulaVar *p0mod = new RooFormulaVar(Form("Data_BKGFIT_%s_p0mod",outputTag.Data()),"","@0*@0",*p0);
-    RooFormulaVar *p1mod = new RooFormulaVar(Form("Data_BKGFIT_%s_p1mod",outputTag.Data()),"","@0*@0",*p1);
-    RooFormulaVar *p2mod = new RooFormulaVar(Form("Data_BKGFIT_%s_p2mod",outputTag.Data()),"","@0*@0",*p2);
-    RooFormulaVar *p3mod = new RooFormulaVar(Form("Data_BKGFIT_%s_p3mod",outputTag.Data()),"","@0*@0",*p3);
-    RooFormulaVar *p4mod = new RooFormulaVar(Form("Data_BKGFIT_%s_p4mod",outputTag.Data()),"","@0*@0",*p4);
+    RooFormulaVar *pCmod = new RooFormulaVar(dataTag+Form("_BKGFIT_%s_pCmod",outputTag.Data()),"","@0*@0",*pC);
+    RooFormulaVar *p0mod = new RooFormulaVar(dataTag+Form("_BKGFIT_%s_p0mod",outputTag.Data()),"","@0*@0",*p0);
+    RooFormulaVar *p1mod = new RooFormulaVar(dataTag+Form("_BKGFIT_%s_p1mod",outputTag.Data()),"","@0*@0",*p1);
+    RooFormulaVar *p2mod = new RooFormulaVar(dataTag+Form("_BKGFIT_%s_p2mod",outputTag.Data()),"","@0*@0",*p2);
+    RooFormulaVar *p3mod = new RooFormulaVar(dataTag+Form("_BKGFIT_%s_p3mod",outputTag.Data()),"","@0*@0",*p3);
+    RooFormulaVar *p4mod = new RooFormulaVar(dataTag+Form("_BKGFIT_%s_p4mod",outputTag.Data()),"","@0*@0",*p4);
 
   
 
@@ -910,7 +913,7 @@ void MakeSpinFits::MakeBackgroundOnlyFit(TString catTag, float cosTlow, float co
       args = new RooArgList(*pCmod,*p0mod,*p1mod,*p2mod,*p3mod,*p4mod);
     }
 
-    BkgShape = new RooBernstein(Form("Data_BKGFIT_%s_bkgShape",outputTag.Data()),"Background Model",mass,*args);
+    BkgShape = new RooBernstein(dataTag+Form("_BKGFIT_%s_bkgShape",outputTag.Data()),"Background Model",mass,*args);
     break;
     }
   default:
@@ -919,16 +922,16 @@ void MakeSpinFits::MakeBackgroundOnlyFit(TString catTag, float cosTlow, float co
     break;
   }
 
-  RooRealVar *Nbkg = new RooRealVar(Form("Data_BKGFIT_%s_Nbkg",outputTag.Data()),"N background Events",ds->sumEntries(),0,1e9);
+  RooRealVar *Nbkg = new RooRealVar(dataTag+Form("_BKGFIT_%s_Nbkg",outputTag.Data()),"N background Events",ds->sumEntries(),0,1e9);
   //extended fit model
-  RooExtendPdf *BkgModel = new RooExtendPdf(Form("Data_BKGFIT_%s_bkgModel",outputTag.Data()),"Background Model",*BkgShape,*Nbkg);
+  RooExtendPdf *BkgModel = new RooExtendPdf(dataTag+Form("_BKGFIT_%s_bkgModel",outputTag.Data()),"Background Model",*BkgShape,*Nbkg);
   
   //  mass.setRange("fitLow", 100,120.5);
   //mass.setRange("fitHigh",127.5,180);
 
   BkgModel->fitTo(*ds,RooFit::Strategy(0),RooFit::NumCPU(NUM_CPU),RooFit::Minos(kFALSE),RooFit::Extended(kTRUE));
   RooFitResult *res=BkgModel->fitTo(*ds,RooFit::Save(kTRUE),RooFit::Strategy(2),RooFit::NumCPU(NUM_CPU),RooFit::Minos(kFALSE),RooFit::Extended(kTRUE));
-  res->SetName(Form("Data_BKGFIT_%s_fitResult",outputTag.Data()) );
+  res->SetName(dataTag+Form("_BKGFIT_%s_fitResult",outputTag.Data()) );
 
   //set all parameters of the background fit as constant after the fit
   RooArgSet* vars = BkgModel->getVariables();
@@ -943,8 +946,8 @@ void MakeSpinFits::MakeBackgroundOnlyFit(TString catTag, float cosTlow, float co
   if(!(cosTlow > -1 || cosThigh < 1)){
     RooRealVar* cosT = ws->var("cosT");
     RooDataSet *dsred = (RooDataSet*)ds->reduce("mass<120 || mass > 130");
-    RooDataHist hist(Form("Data_BKGFIT_%s_cosThist",outputTag.Data()),"Data Hist for cos(theta)",RooArgSet(*cosT),*ds);
-    RooHistPdf cosTkde(Form("Data_BKGFIT_%s_cosTpdf",outputTag.Data()),"Hist PDF for cos(theta)",RooArgSet(*cosT),hist);
+    RooDataHist hist(dataTag+Form("_BKGFIT_%s_cosThist",outputTag.Data()),dataTag+" Hist for cos(theta)",RooArgSet(*cosT),*ds);
+    RooHistPdf cosTkde(dataTag+Form("_BKGFIT_%s_cosTpdf",outputTag.Data()),"Hist PDF for cos(theta)",RooArgSet(*cosT),hist);
     
     ws->import(cosTkde);
   }
@@ -1041,36 +1044,38 @@ void MakeSpinFits::run(){
   binDatasetCosT(*(ws->data("Data_Combined")),"Data");
 
   //run fits in the correct order for each MC type
-  std::vector<TString>::const_iterator mcIt = mcLabel.begin();
-  for(; mcIt != mcLabel.end(); mcIt++){
+  for(auto mcIt=mcLabel.begin(); mcIt != mcLabel.end(); mcIt++){
     binDatasetCosT(*(ws->data(*mcIt+"_Combined")),*mcIt);
 
-    std::vector<TString>::const_iterator catIt = catLabels.begin();
     MakeSignalFit("Combined",*mcIt);
     for(int i=0;i<NcosTbins;i++) MakeSignalFit("Combined",*mcIt,cosTbinEdges[i],cosTbinEdges[i+1]);
 
     MakeSignalFitForFit("Combined",*mcIt);
 
-    for(; catIt != catLabels.end(); catIt++){
+    for(auto catIt=catLabels.begin(); catIt != catLabels.end(); catIt++){
       MakeSignalFit(*catIt,*mcIt);
       MakeSignalFitForFit(*catIt,*mcIt);
       for(int i=0;i<NcosTbins;i++){
 	MakeSignalFit(*catIt,*mcIt,cosTbinEdges[i],cosTbinEdges[i+1]);
 	MakeSignalFitForFit(*catIt+Form("_cosT_%0.2f_%0.2f",cosTbinEdges[i],cosTbinEdges[i+1]),*mcIt);
       }
-      if(mcIt == mcLabel.begin()){
-	MakeBackgroundOnlyFit(*catIt);
-	for(int i=0;i<NcosTbins;i++) MakeBackgroundOnlyFit(*catIt,cosTbinEdges[i],cosTbinEdges[i+1]);	
-      }
     }
+
+    for(auto catIt=catLabels.begin(); catIt != catLabels.end(); catIt++){
+      MakeBackgroundOnlyFit(*catIt);
+      for(int i=0;i<NcosTbins;i++) MakeBackgroundOnlyFit(*catIt,cosTbinEdges[i],cosTbinEdges[i+1]);	
+      MakeBackgroundOnlyFit(*catIt);
+      for(int i=0;i<NcosTbins;i++) MakeBackgroundOnlyFit(*catIt,cosTbinEdges[i],cosTbinEdges[i+1]);	
+    }
+
 
     MakeCombinedSignalTest(*mcIt);
     MakeFloatingSignalTest(*mcIt);
 
     MakeCombinedSignalTest(*mcIt,true);
 
-    catIt = catLabels.begin();
-    for(; catIt != catLabels.end(); catIt++){
+
+    for(auto catIt = catLabels.begin(); catIt != catLabels.end(); catIt++){
       getSimpleBkgSubtraction(*mcIt,*catIt);
     }
     MakeCombinedSignalSpin(*mcIt);

@@ -83,7 +83,7 @@ public:
 
   void MakeCombinedSignalSpin(TString mcName); //!< Make RooHistPdfs of the cos(theta) distribution for inclusive signal samples
 
-  void MakeBackgroundOnlyFit(TString catTag,float cosTlow=-2,float cosThigh=2); //!< Make a background only fit to data in single category the type of fit is controlled by the fitType member
+  void MakeBackgroundOnlyFit(TString catTag,float cosTlow=-2,float cosThigh=2,bool fitMCbackground=false); //!< Make a background only fit to data in single category the type of fit is controlled by the fitType member
 
 
   /*! 

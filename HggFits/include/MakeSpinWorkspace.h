@@ -46,9 +46,8 @@ Date: Jan 2013
 #include <vector>
 #include "assert.h"
 
-enum dataTypes : signed int {kBackground=-1, kData=0,kSignal=1};
-
 struct dataSetInfo{
+  enum dataTypes : signed int {kBackground=-1, kData=0,kSignal=1};
   TString fileName;
   TString label;
   dataTypes type;
@@ -77,7 +76,7 @@ public:
     \param N: Number of generated events
     \param list if true, the fName points to a list of nTuples rather than a single file
   */
-  void addFile(TString fName,TString l,int t,int N,bool list=false,float xsec=1); //!< takes a file name, label, and a bool specifying whether this corresponds to data and adds this to the list of files to process
+  void addFile(TString fName,TString l,dataSetInfo::dataTypes t,int N,bool list=false,float xsec=1); //!< takes a file name, label, and a bool specifying whether this corresponds to data and adds this to the list of files to process
   void setRequireCiC(bool b){requireCiC=b;} //!< specify whether to require the photons to have passed the CiC selection
   bool getRequireCiC(){return requireCiC;}  //!< returns whether CiC will be required 
   
@@ -102,7 +101,7 @@ public:
     EfficiencyCorrectionFile_MC = f_MC;    
   } 
 
-  void setMixDatasets(){mixer = new MixSpinDatasets(ws);} //!< specify that we will be mixing MC datasets
+  void setMixDatasets(){if(!mixer) mixer = new MixSpinDatasets(ws);} //!< specify that we will be mixing MC datasets
   MixSpinDatasets* getMixer(){return mixer;} //!< return the mixing module for customization
 
   void setKFactorFile(TString s){filenameKFactor = s;} //!< specify the file containing the KFactor weights for the higgs signal

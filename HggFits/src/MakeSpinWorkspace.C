@@ -172,12 +172,12 @@ void MakeSpinWorkspace::AddToWorkspace(dataSetInfo dataset){
   if(!isGlobe) setupBranches(*h);
   
   TFile *efficiencyCorrection=0;
-  if(dataset.type==kData && EfficiencyCorrectionFile_Data!=""){ //Use MC derived correction weights for the photons
+  if(dataset.type==dataSetInfo::kData && EfficiencyCorrectionFile_Data!=""){ //Use MC derived correction weights for the photons
     //as a function of eta/R9/phi
     std::cout << "Using Efficiency Correction " << EfficiencyCorrectionFile_Data <<std::endl;
     efficiencyCorrection = new TFile(EfficiencyCorrectionFile_Data);
   }
-  if(dataset.type!=kData && EfficiencyCorrectionFile_MC!=""){ //Use MC derived correction weights for the photons
+  if(dataset.type!=dataSetInfo::kData && EfficiencyCorrectionFile_MC!=""){ //Use MC derived correction weights for the photons
     //as a function of eta/R9/phi
     std::cout << "Using Efficiency Correction " << EfficiencyCorrectionFile_MC <<std::endl;
     efficiencyCorrection = new TFile(EfficiencyCorrectionFile_MC);
@@ -298,7 +298,7 @@ void MakeSpinWorkspace::AddToWorkspace(dataSetInfo dataset){
 
     if(!isGlobe){ // globe trees don't have run number ...
       int run = h->runNumber;
-      if(dataset.type==kData && (run < runLow || run > runHigh) ) continue;
+      if(dataset.type==dataSetInfo::kData && (run < runLow || run > runHigh) ) continue;
     }
 
 
@@ -354,8 +354,8 @@ void MakeSpinWorkspace::AddToWorkspace(dataSetInfo dataset){
     
     //compute the weight.  Globe has this done already
     float weight=1;
-    if(dataset.type!=kData){
-      weight = (isGlobe ? g->evweight : h->evtWeight*getEfficiency(*h,125));
+    if(dataset.type!=dataSetInfo::kData){
+      weight = (isGlobe ? g->evweight : /*h->evtWeight*/ 1*getEfficiency(*h,125));
       if(weight==0) std::cout << "0 weight event!    " << h->evtWeight << "    " << getEfficiency(*h,125) <<std::endl;
     }
     if(fabs(pho1_etaSC) < 1.48 && fabs(pho2_etaSC) < 1.48) nEB+=weight;
@@ -452,7 +452,7 @@ void MakeSpinWorkspace::AddToWorkspace(dataSetInfo dataset){
     float pho2EffWeight = getEffWeight(eta2_f,pt2_f,phi2_f,r92_f);
 
     //set the event weight
-    if(dataset.type!=kData) evtW->setVal(weight*pho1EffWeight*pho2EffWeight);
+    if(dataset.type!=dataSetInfo::kData) evtW->setVal(weight*pho1EffWeight*pho2EffWeight);
     else evtW->setVal(1*pho1EffWeight*pho2EffWeight);
     if( !(iEntry%1000) ) cout <<  "\t\t\t" << evtW->getVal() << endl;
 
@@ -495,7 +495,7 @@ void MakeSpinWorkspace::AddToWorkspace(dataSetInfo dataset){
     Long64_t iEntry=-1;
     const RooArgSet *set;
     while( (set = tmp->get(++iEntry)) ){
-      if(dataset.type!=kData) ((RooRealVar*)set->find("evtWeight"))->setVal( ((RooRealVar*)set->find("evtWeight"))->getVal()*lumiRescaleFactor/puWeightCorrection );
+      if(dataset.type!=dataSetInfo::kData) ((RooRealVar*)set->find("evtWeight"))->setVal( ((RooRealVar*)set->find("evtWeight"))->getVal()*lumiRescaleFactor/puWeightCorrection );
       dataComb->add(*set);
     }
     //dataComb->append(*tmp);
@@ -504,7 +504,7 @@ void MakeSpinWorkspace::AddToWorkspace(dataSetInfo dataset){
 
   RooDataSet *dataComb_w = new RooDataSet(dataset.label+"_Combined","",dataComb,setCat,0,"evtWeight");
 
-  dataComb_w->SetTitle(TString( int(dataset.type) ));
+  dataComb_w->SetTitle( Form("type%d",int(dataset.type)) );
 
   //import everything
   ws->import(*dataComb_w);
@@ -577,11 +577,11 @@ float MakeSpinWorkspace::getEffWeight(float eta, float pt, float phi, float r9){
 
 }
 
-void MakeSpinWorkspace::addFile(TString fName,TString l,int t,int N,bool list,float xsec){
+void MakeSpinWorkspace::addFile(TString fName,TString l,dataSetInfo::dataTypes t,int N,bool list,float xsec){
   dataSetInfo data = {
     fName, //fileName
     l, //label
-    dataTypes(t), //type
+    t, //type
     N, // Ngen
     list, //isList
     xsec //xsec
@@ -605,7 +605,8 @@ void MakeSpinWorkspace::MakeWorkspace(){
   ws->import(*labels);
 
   if(mixer) mixer->mixAll();
-  
+  if(mixer) mixer->mergeAll();
+
   outputFile->cd();
   ws->Write(ws->GetName(),TObject::kWriteDelete);
   outputFile->Close();
