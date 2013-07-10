@@ -792,6 +792,21 @@ void VecbosJet::Init(VecbosBase* o, int i,VecbosJet::JetType jtype = PFPUcorr){
    combinedSecondaryVertex = o->combinedSecondaryVertexBJetTagsAK5PFPUcorrJet[i];
    simpleSecondaryVertexHighPur = o->simpleSecondaryVertexHighPurBJetTagsAK5PFPUcorrJet[i];
    simpleSecondaryVertexHighEff = o->simpleSecondaryVertexHighEffBJetTagsAK5PFPUcorrJet[i];
+
+   chargedHadronMultiplicity   = o->chargedHadronMultiplicityAK5PFPUcorrJet[i];
+   neutralHadronMultiplicity   = o->neutralHadronMultiplicityAK5PFPUcorrJet[i];
+   photonMultiplicity          = o->photonMultiplicityAK5PFPUcorrJet[i];
+   electronMultiplicity        = o->electronMultiplicityAK5PFPUcorrJet[i];
+   muonMultiplicity            = o->muonMultiplicityAK5PFPUcorrJet[i];
+   HFHadronMultiplicity        = o->HFHadronMultiplicityAK5PFPUcorrJet[i];
+   HFEMMultiplicity            = o->HFEMMultiplicityAK5PFPUcorrJet[i];
+
+  photonEnergy     = o->photonEnergyAK5PFPUcorrJet[i];
+  electronEnergy   = o->electronEnergyAK5PFPUcorrJet[i];
+  muonEnergy       = o->muonEnergyAK5PFPUcorrJet[i];
+  HFHadronEnergy   = o->HFHadronEnergyAK5PFPUcorrJet[i];
+  HFEMEnergy       = o->HFEMEnergyAK5PFPUcorrJet[i];
+
    break;
 
   case PFNoPU:
@@ -830,6 +845,21 @@ void VecbosJet::Init(VecbosBase* o, int i,VecbosJet::JetType jtype = PFPUcorr){
    combinedSecondaryVertex = o->combinedSecondaryVertexBJetTagsAK5PFNoPUJet[i];
    simpleSecondaryVertexHighPur = o->simpleSecondaryVertexHighPurBJetTagsAK5PFNoPUJet[i];
    simpleSecondaryVertexHighEff = o->simpleSecondaryVertexHighEffBJetTagsAK5PFNoPUJet[i];
+
+   chargedHadronMultiplicity   = o->chargedHadronMultiplicityAK5PFNoPUJet[i];
+   neutralHadronMultiplicity   = o->neutralHadronMultiplicityAK5PFNoPUJet[i];
+   photonMultiplicity          = o->photonMultiplicityAK5PFNoPUJet[i];
+   electronMultiplicity        = o->electronMultiplicityAK5PFNoPUJet[i];
+   muonMultiplicity            = o->muonMultiplicityAK5PFNoPUJet[i];
+   HFHadronMultiplicity        = o->HFHadronMultiplicityAK5PFNoPUJet[i];
+   HFEMMultiplicity            = o->HFEMMultiplicityAK5PFNoPUJet[i];
+
+  photonEnergy     = o->photonEnergyAK5PFNoPUJet[i];
+  electronEnergy   = o->electronEnergyAK5PFNoPUJet[i];
+  muonEnergy       = o->muonEnergyAK5PFNoPUJet[i];
+  HFHadronEnergy   = o->HFHadronEnergyAK5PFNoPUJet[i];
+  HFEMEnergy       = o->HFEMEnergyAK5PFNoPUJet[i];
+
    break;
  
   default:
