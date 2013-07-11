@@ -1,6 +1,6 @@
-setenv SCRAM_ARCH slc5_amd64_gcc462
-cmsrel CMSSW_5_2_3
-cd CMSSW_5_2_3/src
+setenv SCRAM_ARCH slc5_amd64_gcc472
+cmsrel CMSSW_6_2_0
+cd CMSSW_6_2_0/src
 cmsenv
 cd ../../
 cvs co -d CommonTools UserCode/emanuele/CommonTools
