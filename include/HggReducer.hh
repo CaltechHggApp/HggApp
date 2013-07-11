@@ -190,6 +190,10 @@ private:
   float tcMet;
   float tcMetPhi;
 
+  float pfMetType1;
+  float pfMetType1Phi;
+
+  float ECALLaserFilter;
   bool eeBadScFilterFlag;
   bool hcalLaserEventFilterFlag;
   bool HBHENoiseFilterResultFlag;
