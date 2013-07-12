@@ -97,7 +97,7 @@ HggApp: $(SRCDIR)HggApp.C \
 	$(OUTLIB)VecbosEGObject.o \
 	$(OUTLIB)HggEnergyScale.o \
 	$(OUTLIB)HggReducer.o \
-	$(OUTLIB)HggMakePhotonTree.o \
+#	$(OUTLIB)HggMakePhotonTree.o \
 	$(OUTLIB)GBRTree.o \
 	$(OUTLIB)GBRForest.o \
 	$(OUTLIB)ArgParser.o
@@ -267,9 +267,9 @@ $(OUTLIB)HggVertexing.o: $(SRCDIR)HggVertexingNew.cc \
 			$(OUTLIB)VecbosEGObject.o
 	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)HggVertexing.o $<
 
-$(OUTLIB)HggMakePhotonTree.o: $(SRCDIR)HggMakePhotonTree.cc \
-			      $(OUTLIB)Vecbos.o
-	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)HggMakePhotonTree.o $<
+#$(OUTLIB)HggMakePhotonTree.o: $(SRCDIR)HggMakePhotonTree.cc \
+#			      $(OUTLIB)Vecbos.o
+#	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)HggMakePhotonTree.o $<
 
 $(OUTLIB)HggEnergyScale.o: $(SRCDIR)HggEnergyScale.cc \
 			$(OUTLIB)Vecbos.o \
