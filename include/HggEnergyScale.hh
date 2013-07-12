@@ -22,7 +22,7 @@ public:
   int nRegions;
   std::vector<std::string> configNames;
 
-  static const float r9Cut = 0.94;
+  static constexpr float r9Cut = 0.94;
   std::vector<bool> highR9;
   std::vector<float> minEta;
   std::vector<float> maxEta;
