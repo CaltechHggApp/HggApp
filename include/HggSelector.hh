@@ -78,10 +78,10 @@ private:
   bool doPtOverM;
   float PtOverMLead;
   float PtOverMSubLead;
-  const static float rhoFac    = 0.17;
-  const static float rhoFacBad = 0.52;
-  const static float isoSumConst = 0;//5;
-  const static float isoSumConstBad = 0;//7;
+  static constexpr float rhoFac    = 0.17;
+  static constexpr float rhoFacBad = 0.52;
+  static constexpr float isoSumConst = 0;//5;
+  static constexpr float isoSumConstBad = 0;//7;
 
   vector<string> triggers;
   int *triggerDec;
@@ -213,7 +213,7 @@ private:
   std::vector<float> mPairSmearCiC;
 
   //for mumuG
-  const static int maxMuMuG = 500;
+  static constexpr int maxMuMuG = 500;
   int nMuMuG;
   float massMuMuGamma[maxMuMuG];
   float massMuMuRegGamma[maxMuMuG];
@@ -251,7 +251,7 @@ private:
 
 
   //member data
-  const static int maxPho = 100;
+  static constexpr int maxPho = 100;
   int nPho_;
   std::vector<VecbosPho> *Photons_; // this contains ALL photons
   
@@ -273,7 +273,7 @@ private:
   // for each photon, a vector of floats giving the track iso from each ggVertex
 
   int nVtx; 
-  static const int MAXVX = 100;
+  static constexpr int MAXVX = 100;
   float vtxX[MAXVX];
   float vtxY[MAXVX];
   float vtxZ[MAXVX];
