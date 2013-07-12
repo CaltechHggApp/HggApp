@@ -53,6 +53,7 @@ protected:
   virtual void setDefaults(){}
   virtual void clear(){}
   virtual void write(){}
+  virtual void firstInit(){}
 
   //We can turn on and off different inputs here:
   std::map<TString,bool> CollectionsToProcess = {

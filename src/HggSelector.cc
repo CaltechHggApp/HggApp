@@ -15,6 +15,11 @@ using namespace TMVA;
 #define debugSelector 0
 
 
+void HggSelector::firstInit(){
+  setProcessCollection("Muons",false);
+  setProcessCollection("Electrons",false);
+}
+
 //
 // Process the configuration file(s)
 //

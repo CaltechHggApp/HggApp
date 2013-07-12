@@ -71,6 +71,7 @@ protected:
   virtual void setDefaults() final;
   virtual void setupOutputTree() final;
   virtual void processConfig(ReadConfig& cfg) final;
+  virtual void firstInit() final;
 
   virtual void processEntry(Long64_t iEntry) final; //main override
   void processOnce(); // only run this part once, regardless of how many selections are turned on

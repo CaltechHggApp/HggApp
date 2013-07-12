@@ -57,6 +57,8 @@ void BaseSelector::loadChain(vector<string> fNames,string treeName){
 int BaseSelector::baseInit(){
   if(!valid) return -1;
 
+  firstInit();
+
   triggerDec = new int[triggers.size()];
 
   
