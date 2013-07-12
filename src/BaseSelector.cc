@@ -150,21 +150,29 @@ void BaseSelector::setBranchAddresses(){
   fChain->SetBranchAddress("pileupWeight", &pileupWeight);
  
   //objects
-  fChain->SetBranchAddress("nPho",&nPho_);
-  fChain->SetBranchAddress("Photons",&Photons_);
+  if(CollectionsToProcess["Photons"]){
+    fChain->SetBranchAddress("nPho",&nPho_);
+    fChain->SetBranchAddress("Photons",&Photons_);
+    
+    fChain->SetBranchAddress("photonMatchedElectron",photonMatchedElectron);
+    fChain->SetBranchAddress("nPair",&nPair_); 
+    fChain->SetBranchAddress("ggVerticesPhotonIndices",&ggVerticesPhotonIndices);
+    fChain->SetBranchAddress("ggVerticesVertexIndex",&ggVerticesVertexIndex);
+    fChain->SetBranchAddress("ggVerticesPerEvtMVA",&ggVerticesPerEvtMVA);
+  }
+  if(CollectionsToProcess["Muons"]){
+    fChain->SetBranchAddress("nMu",&nMu_);
+    fChain->SetBranchAddress("Muons",&Muons_);
+  }
+  if(CollectionsToProcess["Electrons"]){
+    fChain->SetBranchAddress("nEle",&nEle_);
+    fChain->SetBranchAddress("Electrons",&Electrons_);
+  }
+  if(CollectionsToProcess["Jets"]){
+    fChain->SetBranchAddress("nJet",&nJet_);
+    fChain->SetBranchAddress("Jets",&Jets_);
+  }
   
-  fChain->SetBranchAddress("photonMatchedElectron",photonMatchedElectron);
-  fChain->SetBranchAddress("nPair",&nPair_); 
-  fChain->SetBranchAddress("ggVerticesPhotonIndices",&ggVerticesPhotonIndices);
-  fChain->SetBranchAddress("ggVerticesVertexIndex",&ggVerticesVertexIndex);
-  fChain->SetBranchAddress("ggVerticesPerEvtMVA",&ggVerticesPerEvtMVA);
-
-  fChain->SetBranchAddress("nMu",&nMu_);
-  fChain->SetBranchAddress("Muons",&Muons_);
-  
-  fChain->SetBranchAddress("nJet",&nJet_);
-  fChain->SetBranchAddress("Jets",&Jets_);
-
   fChain->SetBranchAddress("nGenHiggs",&nGenHiggs);
   fChain->SetBranchAddress("GenHiggs",&GenHiggs);
   

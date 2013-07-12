@@ -1,6 +1,7 @@
 #include <VecbosEGObject.hh>
 #include <vector>
 #include <iostream>
+#include <exception>
 #include <string>
 
 #include <TChain.h>
@@ -52,6 +53,23 @@ protected:
   virtual void setDefaults(){}
   virtual void clear(){}
   virtual void write(){}
+
+  //We can turn on and off different inputs here:
+  std::map<TString,bool> CollectionsToProcess = {
+    { "Photons",true },
+    { "Jets", true},
+    { "Muons", true },
+    { "Electrons", true}
+  };
+  void setProcessCollection(TString n, bool b){ 
+    try{
+      CollectionsToProcess.at(n) = b;
+    }catch(std::exception& e){
+      std::cout << "FATAL ERROR:  Trying to set the status of invalid collection " << n << std::endl;
+      throw e;
+    }
+  }
+     
 
   //
   // INPUT VARIABLES
