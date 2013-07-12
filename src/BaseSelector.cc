@@ -151,6 +151,13 @@ void BaseSelector::setBranchAddresses(){
 
   fChain->SetBranchAddress("pileupWeight", &pileupWeight);
  
+  fChain->SetBranchStatus("*",1);
+  for(auto& colIt: CollectionsToProcess){
+    if(colIt.second==false){
+      fChain->SetBranchStatus(colIt.first,0);
+    }
+  }
+
   //objects
   if(CollectionsToProcess["Photons"]){
     fChain->SetBranchAddress("nPho",&nPho_);
