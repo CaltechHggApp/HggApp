@@ -1,6 +1,5 @@
 #include <VecbosEGObject.hh>
 #include <HggEGEnergyCorrector.hh>
-#include <HggVertexing.hh>
 #include <HggEnergyScale.hh>
 
 #include <vector>
