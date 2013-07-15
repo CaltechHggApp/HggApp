@@ -19,15 +19,8 @@ class HggPhotonID{
 public:
   HggPhotonID();
   ~HggPhotonID();
-  void setConfig(std::string s){
-    cfg = std::make_shared<ReadConfig>();
-    if(cfg->read(s) !=0){
-      cout << "ERROR: Could not read PhotonID Config!";
-      valid = false;
-    }
-    
-  }
-  void setConfig(ReadConfig &config){cfg = config;}
+  void setConfig(std::string s){ configFile = s; }
+
   bool isValid(){return valid;}
   void Init();
 
@@ -49,7 +42,7 @@ public:
   
   void setDoEcalIso(bool b){doECALIso=b;}
 private:
-  std::shared_ptr<ReadConfig> cfg;
+  std::string configFile;
   bool valid;
 
   bool doECALIso;

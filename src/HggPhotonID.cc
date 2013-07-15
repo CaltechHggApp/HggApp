@@ -1,6 +1,6 @@
 #include <HggPhotonID.hh>
-#include "ReadConfig.hh"
 
+#include "assert.h"
 //includes for the TMVA ID
 #include "TMVA/Tools.h"
 #include "TMVA/Factory.h"
@@ -19,12 +19,11 @@ HggPhotonID::HggPhotonID():
 void HggPhotonID::Init(){
 
   ReadConfig cfg;
-  if(cfg.read(configFile)!=0){
+  if(cfg.read(configFile) !=0){
     cout << "ERROR: Could not read PhotonID Config!";
     valid = false;
     return;
   }
-
   weightFile_IdEB_2011 = cfg.getParameter("weightFile_IdEB_2011");
   weightFile_IdEE_2011 = cfg.getParameter("weightFile_IdEE_2011");
   weightFile_IdEB_2012 = cfg.getParameter("weightFile_IdEB_2012");
