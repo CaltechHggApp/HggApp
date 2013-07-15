@@ -1,10 +1,10 @@
-
-
 #include <VecbosEGObject.hh>
+#include "ReadConfig.hh"
 
 #include <vector>
 #include <iostream>
 #include <string>
+#include <memory>
 
 #include <TChain.h>
 #include <TH1F.h>
@@ -19,7 +19,15 @@ class HggPhotonID{
 public:
   HggPhotonID();
   ~HggPhotonID();
-  void setConfig(string s){configFile = s;}
+  void setConfig(std::string s){
+    cfg = std::make_shared<ReadConfig>();
+    if(cfg->read(s) !=0){
+      cout << "ERROR: Could not read PhotonID Config!";
+      valid = false;
+    }
+    
+  }
+  void setConfig(ReadConfig &config){cfg = config;}
   bool isValid(){return valid;}
   void Init();
 
@@ -41,7 +49,7 @@ public:
   
   void setDoEcalIso(bool b){doECALIso=b;}
 private:
-  string configFile;
+  std::shared_ptr<ReadConfig> cfg;
   bool valid;
 
   bool doECALIso;
