@@ -3,15 +3,8 @@ cmsrel CMSSW_6_2_0
 cd CMSSW_6_2_0/src
 cmsenv
 cd ../../
-cvs co -d CommonTools UserCode/emanuele/CommonTools
+git clone https://github.com/VecbosApp/CommonTools.git
+git clone https://github.com/VecbosApp/EgammaAnalysisTools.git
+rm -rf EgammaAnalysisTools/elebdtweights
 
-## avoid the enormous BDT weights in this dir
-##cvs co -d EgammaAnalysisTools UserCode/emanuele/EgammaAnalysisTools
-cvs co -d EgammaAnalysisTools/src UserCode/emanuele/EgammaAnalysisTools/src 
-cvs co -d EgammaAnalysisTools/include UserCode/emanuele/EgammaAnalysisTools/include 
-cvs co -d EgammaAnalysisTools/lib UserCode/emanuele/EgammaAnalysisTools/lib 
-#scramv1 b
-
-#ln -s CMSSW_5_2_3/src/h2gglobe/VertexAnalysis/interface/ h2ginclude
-#ln -s CMSSW_5_2_3/lib/slc5_amd64_gcc462/ h2glib
 make all
