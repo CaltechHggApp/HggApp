@@ -88,6 +88,10 @@ void HggPhotonID::fillVariables(VecbosPho* pho, int nVertex, float rhoFastJet,in
 
   //We need some computation for these:
 
+  pfChargedIsoZero03 = pho->dr03ChargedHadronPFIso[0];
+  float eTZero = pho->p4FromVtx(vertices.at(0),pho->finalEnergy,false).Et();
+  pfChargedIsoZero03oet = pfChargedIsoZero03/eTZero;
+
   pfChargedIsoGood03 = pho->dr03ChargedHadronPFIso[selVtxIndex];
   float maxIso=0;
   int worstVtx=0;
@@ -294,6 +298,8 @@ void HggPhotonID::fillIsoVariables(VecbosPho* pho, ReducedPhotonData* data,int n
   data->HoverE = hoe;
   data->sieie  = sigietaieta;
   data->dr03PFChargedIso = pfChargedIsoGood03oet;
+  data->dr03PFPhotonIso  = pfPhotonIso03oet;
+  data->dr03PFChargedIsoZero = pfChargedIsoZero03oet;
   data->isosumGood = isosumoetPF;
   data->isosumBad  = isosumoetbadPF;
 

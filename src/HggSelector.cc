@@ -171,6 +171,9 @@ void HggSelector::processOnce(){
   drBoundaryOut                = drBoundary;
   ECALTPFilterFlagOut          = ECALTPFilterFlag;
 
+  nVtxOut = nVtx;
+  rhoOut  = rho;
+
 }
 
 void HggSelector::processEntry(HggSelector::SelectionType SelType){
@@ -919,6 +922,7 @@ void HggSelector::setupOutputTree(){
 
   outTree->Branch("nPU",&nPU_);
   outTree->Branch("nVtx",&nVtxOut);
+  outTree->Branch("rho",&rhoOut);
 
   outTree->Branch("runNumber",&runNumberOut);
   outTree->Branch("evtNumber",&evtNumberOut);

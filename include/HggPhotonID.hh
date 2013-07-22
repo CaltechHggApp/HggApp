@@ -91,6 +91,8 @@ private:
   float pfChargedIsoBad04;
   float pfChargedIsoGood03oet;
   float pfChargedIsoBad04oet;
+  float pfChargedIsoZero03;
+  float pfChargedIsoZero03oet;
   float pfPhotonIso03;
   float pfPhotonIso03oet;
   float pfPhotonIso04;

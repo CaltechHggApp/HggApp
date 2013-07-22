@@ -257,6 +257,7 @@ protected:
   
   float nPU_;
   int nVtxOut;
+  float rhoOut;
   int lumiBlockOut;
   int runNumberOut;
   int evtNumberOut;

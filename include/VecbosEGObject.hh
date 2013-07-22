@@ -258,6 +258,8 @@ struct ReducedPhotonData{
   float HoverE;
   float sieie;
   float dr03PFChargedIso;
+  float dr03PFChargedIsoZero;
+  float dr03PFPhotonIso;
   float isosumGood;
   float isosumBad;
   float dr03EcalIso;
