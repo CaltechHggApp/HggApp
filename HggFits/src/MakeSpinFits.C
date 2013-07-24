@@ -1047,7 +1047,7 @@ void MakeSpinFits::run(){
   for(auto mcIt=mcLabel.begin(); mcIt != mcLabel.end(); mcIt++){
     binDatasetCosT(*(ws->data(*mcIt+"_Combined")),*mcIt);
 
-    if( getDataType(*mcIt) == dataSetInfo::kBackground) continue;
+    if( getDataType(*mcIt+"_Combined") == dataSetInfo::kBackground) continue;
 
     MakeSignalFit("Combined",*mcIt);
     for(int i=0;i<NcosTbins;i++) MakeSignalFit("Combined",*mcIt,cosTbinEdges[i],cosTbinEdges[i+1]);
