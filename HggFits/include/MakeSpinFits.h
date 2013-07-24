@@ -42,6 +42,7 @@ Date: Jan 2013
 #include "RooIntegralMorph.h"
 
 #include <HggOutputReader2.h>
+#include <dataSetInfo.h>
 
 #include <iostream>
 #include <map>
@@ -150,6 +151,13 @@ public:
   */
   static void getLabels(const char *varName, std::vector<TString> *lblVec,RooWorkspace *w); //!< export the list of categories from a RooCategory into a list
 
+  static inline dataSetInfo::dataTypes getDataType(RooAbsData &data) {
+    return dataSetInfo::dataTypes(TString( TString(data.GetTitle())(4,2) ).Atoi());
+  }
+
+  inline dataSetInfo::dataTypes getDataType(TString name) {
+    return getDataType( *ws->data(name) );
+  }
   int specifySamples(std::vector<std::string> samples); //!< specify the list of samples to run fits on (otherwise, all are used)
 
   void setMeanRange(float low, float high, float start){ //!< specify the range to try to float the signal mean
