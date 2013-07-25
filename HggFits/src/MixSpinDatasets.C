@@ -58,12 +58,11 @@ void MixSpinDatasets::merge(std::vector<TString> names,
   }
   RooCategory* l = ((RooCategory*)ws->obj("labels"));
   std::cout << outputName << "  " << l << std::endl;
-  l->defineType(outputName,l->numBins(""));
 
   
   for(auto nameIt = names.begin(); nameIt != names.end(); nameIt++) std::cout << *nameIt << std::endl;
   std::cout << names.size() << std::endl;
-  internalMerge(names,outputName,"Combined");
+  internalMerge(names,outputName,"Combined",l);
   ws->import(*l);
 }
 
@@ -134,14 +133,15 @@ void MixSpinDatasets::internalMix(const char* mc1, const char* mc2,
 }
 
 void MixSpinDatasets::internalMerge(std::vector<TString> names,
-				    TString outputName,TString cat){
+				    TString outputName,TString cat,RooCategory *labels){
 
   std::cout << "internalMerge" << std::endl;
   RooRealVar *evtW = ws->var("evtWeight");
   std::cout << Form("%s_%s",names.at(0).Data(),cat.Data()) << std::endl;
-  RooDataSet *ds = (RooDataSet*)ws->data(Form("%s_%s",names.at(0).Data(),cat.Data()));
+  RooDataSet *ds = 0; 
   int index=-1;
   for(int i=0;i<names.size();i++){
+    ds = (RooDataSet*)ws->data(Form("%s_%s",names.at(0).Data(),cat.Data()));
     if(ds->get(i)){
       index=i;
       break;
@@ -185,6 +185,8 @@ void MixSpinDatasets::internalMerge(std::vector<TString> names,
   RooRealVar * ngen_merge   = new RooRealVar( Form("%s_Ngen",outputName.Data()),           "", ngen_tot);
 
   ws->import (*ngen_merge);
+
+  labels->defineType(outputName,labels->numBins(""));
 
   delete merge;
   delete merge_TMP;
