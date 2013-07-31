@@ -162,6 +162,7 @@ ZeeSelectorApp: $(SRCDIR)ZeeSelectorApp.C \
 	$(OUTLIBCOMMON)EfficiencyEvaluator.o \
 	$(OUTLIB)HggEGEnergyCorrector.o \
 	$(OUTLIB)VecbosEGObject.o \
+	$(OUTLIB)HggEnergyScale.o \
 	$(OUTLIB)ZeeSelector.o
 	$(CXX) $(CXXFLAGS) -o ZeeSelectorApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 

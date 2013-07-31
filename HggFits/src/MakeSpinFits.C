@@ -44,8 +44,11 @@ MakeSpinFits::MakeSpinFits(TString inputFileName, TString outputFileName):
   setMeanRange(123,126,125);
 
   //default cos(theta) binning
-  float tmp[5] = {0, 0.2, 0.4, 0.6, 1};
-  setCosTBins(5,tmp);
+  //float tmp[5] = {0, 0.2, 0.4, 0.6, 1};
+  //setCosTBins(5,tmp);
+  //no cos(theta) bins
+  float tmp[2] = {0, 1};
+  setCosTBins(2,tmp);
 }
 
 MakeSpinFits::~MakeSpinFits(){
@@ -1045,6 +1048,8 @@ void MakeSpinFits::run(){
 
   //run fits in the correct order for each MC type
   for(auto mcIt=mcLabel.begin(); mcIt != mcLabel.end(); mcIt++){
+    std::cout << *mcIt << std::endl;
+    if( ws->data(*mcIt+"_Combined")->sumEntries() == 0) continue;
     binDatasetCosT(*(ws->data(*mcIt+"_Combined")),*mcIt);
 
     if( getDataType(*mcIt+"_Combined") == dataSetInfo::kBackground) continue;

@@ -39,7 +39,7 @@ protected:
   std::vector<TString> mergeOutputNameL;
 
   void internalMix(const char* mc1, const char* mc2, float f1,TString outputName,TString cat);
-  void internalMerge(std::vector<TString> names, TString outputName,TString cat);
+  void internalMerge(std::vector<TString> names, TString outputName,TString cat,RooCategory* labels);
 };
 
 #endif

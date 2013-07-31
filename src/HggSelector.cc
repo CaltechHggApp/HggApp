@@ -516,7 +516,7 @@ void HggSelector::fillGenInfo(){
       ptGenPho2 =  genPho->pt;
       energyGenPho2 = genPho->energy;
     }else{
-      cout << "More than 2 photons from a higgs decay!!" << endl;
+      //cout << "More than 2 photons from a higgs decay!!" << endl;
     }
     selGenPho++;
   }

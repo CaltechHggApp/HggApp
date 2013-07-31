@@ -69,7 +69,7 @@ int ZeeSelector::init(){
     applyScaleSmear = atoi(cfg.getParameter("ScaleSmear").c_str());
     std::cout << "Doing smearing.  Config: " << smearCFG << "  ScaleSmear: " << applyScaleSmear <<std::endl;
   }
-
+  return 0;
 }
 
 void swap(VecbosEle& e1, VecbosEle &e2){
@@ -109,7 +109,7 @@ void ZeeSelector::Loop(){
 	if(doSmear){
 	  ele.scaledEnergy = ele.correctedEnergy;
 	  ele.scaledEnergyError = ele.correctedEnergyError;
-	  std::pair<float,float> dE = smear->getDEoE(*pho,applyScaleSmear);
+	  std::pair<float,float> dE = smear->getDEoE(ele,applyScaleSmear);
 	  ele.dEoE    = dE.first;
 	  ele.dEoEErr = dE.second;
 	}

@@ -68,3 +68,7 @@ void SimpleMatrix<T>::dot(SimpleMatrix* out, SimpleMatrix &right){
     }
   }
 }
+
+
+//instantiate
+template class SimpleMatrix<double>;

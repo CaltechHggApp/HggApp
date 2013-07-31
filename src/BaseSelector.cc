@@ -41,6 +41,7 @@ BaseSelector::BaseSelector(vector<string> fNames, string treeName,string outFNam
   GenHiggs(0),
   GenPhotons(0)
 {
+  outFile = new TFile(outputFile.c_str(),"RECREATE");
   this->loadChain(fNames,treeName);
   outputFile = outFName;
 }
@@ -75,7 +76,6 @@ int BaseSelector::baseInit(){
   }
   processConfig(cfg);
 
-  outFile = new TFile(outputFile.c_str(),"RECREATE");
 
   int slaveReturn = init(); // run the initialization of the derived class
   if(slaveReturn!=0){

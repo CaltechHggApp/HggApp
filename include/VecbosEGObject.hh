@@ -287,8 +287,18 @@ public:
   }
   int charge;
 
+  //Hgg Correction Variables
   float correctedEnergy;
   float correctedEnergyError;
+  float scaledEnergy;
+  float scaledEnergyError;
+  //float smearedEnergy;
+  //float smearedEnergyError;
+  float finalEnergy;
+  float finalEnergyError;
+
+  float dEoE;
+  float dEoEErr;
 
   VecbosSC SC;
   float esEnergy;

@@ -17,6 +17,8 @@ class HggEnergyScale{
 public:
   HggEnergyScale(std::string path);
   std::pair<float,float> getDEoE(VecbosPho,int);
+  std::pair<float,float> getDEoE(VecbosEle,int);
+  std::pair<float,float> getDEoE(int,int);
   float getMCScaleErr(VecbosPho,int);
   bool isValid(){return valid;}
   int nRegions;
@@ -29,7 +31,7 @@ public:
 private:
   bool valid;
   
-  float getCategory(VecbosPho);
+  float getCategory(VecbosSC& SC);
 
   //energy scale
   std::vector<int> runs;

@@ -35,6 +35,14 @@ private:
 
   bool isData_;
 
+  bool doSmear=false;
+  bool doScale=false;
+
+  int applyScaleSmear=0;
+
+  HggEnergyScale *scale=0;
+  HggEnergyScale *smear=0;
+
   int init();
   void setBranchAddresses();
   void setupOutputTree();
