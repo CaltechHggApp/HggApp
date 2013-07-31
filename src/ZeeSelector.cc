@@ -76,6 +76,11 @@ void swap(VecbosEle& e1, VecbosEle &e2){
   VecbosEle t= e1; e1=e2; e2=e1;
 }
 
+struct ElectronAdditionalInfo{
+  float dEoE,dEoEErr;
+  float scaledEnergy,scaledEnergyError;
+};
+
 void ZeeSelector::Loop(){
   if(!valid) return;
 
@@ -84,7 +89,10 @@ void ZeeSelector::Loop(){
   int nEntries = fChain->GetEntries();
   int nbytes = 0;
 
+  std::vector<ElectronAdditionalInfo> eleInfo;
+
   for (int eventi=0; eventi<nEntries; eventi++) {
+    eleInfo.clear();
     if(eventi%500==0) {
       cout << ">> Processing Entry " << eventi << "/" << nEntries << endl;
     }    
@@ -95,24 +103,26 @@ void ZeeSelector::Loop(){
     isZmass = false;
     // Require the event to have at least two electrons
     if (nEle > 1) {   
-
+      
       //apply scale and smear to the electrons
       for(int i=0;i<nEle;i++){
 	VecbosEle ele = Electrons->at(i);
+	ElectronAdditionalInfo info = {0.,0.,ele.energy,0.};
 	if(doScale){
 	  std::pair<float,float> dE = scale->getDEoE(ele,runNumber);
-	  ele.dEoE    = dE.first;
-	  ele.dEoEErr = 0;
-	  ele.scaledEnergy = ele.correctedEnergy*(ele.dEoE);
-	  ele.scaledEnergyError = ele.correctedEnergyError*((ele.dEoE+ele.dEoEErr));
+	  info.dEoE    = dE.first;
+	  info.dEoEErr = 0;
+	  info.scaledEnergy = ele.correctedEnergy*(info.dEoE);
+	  info.scaledEnergyError = ele.correctedEnergyError*((info.dEoE+info.dEoEErr));
 	}
 	if(doSmear){
-	  ele.scaledEnergy = ele.correctedEnergy;
-	  ele.scaledEnergyError = ele.correctedEnergyError;
+	  info.scaledEnergy = ele.correctedEnergy;
+	  info.scaledEnergyError = ele.correctedEnergyError;
 	  std::pair<float,float> dE = smear->getDEoE(ele,applyScaleSmear);
-	  ele.dEoE    = dE.first;
-	  ele.dEoEErr = dE.second;
+	  info.dEoE    = dE.first;
+	  info.dEoEErr = dE.second;
 	}
+	eleInfo.push_back(info);
       }
 
 
