@@ -224,6 +224,7 @@ void HggPhotonID::setupTMVA(){
 float HggPhotonID::getIdMVA(VecbosPho* pho, int nVertex, float rhoFastJet, int selVtxIndex){
   if(selVtxIndex < 0 || selVtxIndex >= vertices.size()){
     cout << "WARNING: Selected Vertex Index out of range: " << selVtxIndex << "/" << vertices.size() <<endl;
+    throw new VertexOutOfRange();
     return -9999;
   }
   if(pho->index <0) return -9999;
@@ -241,6 +242,7 @@ float HggPhotonID::getIdMVA(VecbosPho* pho, int nVertex, float rhoFastJet, int s
 bool HggPhotonID::getIdCiC(VecbosPho* pho, int nVertex, float rhoFastJet,int selVtxIndex){
   if(selVtxIndex < 0 || selVtxIndex >= vertices.size()){
     cout << "WARNING: Selected Vertex Index out of range: " << selVtxIndex << "/" << vertices.size() <<endl;
+    throw new VertexOutOfRange();
     return false;
   }
   this->fillVariables(pho,nVertex,rhoFastJet,selVtxIndex);
@@ -269,6 +271,7 @@ bool HggPhotonID::getIdCiC(VecbosPho* pho, int nVertex, float rhoFastJet,int sel
 bool HggPhotonID::getIdCiCPF(VecbosPho* pho, int nVertex, float rhoFastJet,int selVtxIndex){
   if(selVtxIndex < 0 || selVtxIndex >= vertices.size()){
     cout << "WARNING: Selected Vertex Index out of range: " << selVtxIndex << "/" << vertices.size() <<endl;
+    throw new VertexOutOfRange();
     return false;
   }
   this->fillVariables(pho,nVertex,rhoFastJet,selVtxIndex);

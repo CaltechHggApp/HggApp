@@ -14,6 +14,12 @@
 #include "TVector3.h"
 using namespace std;
 
+class VertexOutOfRange : public std::exception {
+public:
+  virtual const char * what() const throw() {
+    std::cout << "FATAL ERROR: Trying to access a vertex out of range" << std::endl;
+  }
+};
                                     
 class HggPhotonID{
 public:
