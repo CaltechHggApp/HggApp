@@ -41,7 +41,8 @@ BaseSelector::BaseSelector(vector<string> fNames, string treeName,string outFNam
   GenHiggs(0),
   GenPhotons(0)
 {
-  outFile = new TFile(outputFile.c_str(),"RECREATE");
+  std::cout << outFName << std::endl;
+  outFile = new TFile(outFName.c_str(),"RECREATE");
   this->loadChain(fNames,treeName);
   outputFile = outFName;
 }
