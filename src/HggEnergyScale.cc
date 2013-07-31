@@ -191,15 +191,16 @@ std::pair<float,float> HggEnergyScale::getDEoE(int selectRegion, int run){
   try{
     string regionName = configNames[selectRegion];
     string regionErrName = regionName;  regionErrName.append("_Err");
-  } catch(std::exception &e) {
-    std::cout << "HggEnergyScale:  Unable to determine region\nselectRegion: " << selectRegion << std::endl;
-    throw e;
-  }
   if(runIndex<0 || runIndex >= energyScales[regionName].size() ) return std::pair<float,float>(1,0);
 
   if(debugEnergyScale) cout << energyScales[regionName].at(runIndex) << endl;
   return std::pair<float,float>(energyScales[regionName].at(runIndex),
 				energyScales[regionErrName].at(runIndex));
+  } catch(std::exception &e) {
+    std::cout << "HggEnergyScale:  Unable to determine region\nselectRegion: " << selectRegion << std::endl;
+    throw e;
+  }
+  return std::pair<float,float>(0,0); //shouldn't ever get here...
 }
 
 float HggEnergyScale::getMCScaleErr(VecbosPho pho, int run){
