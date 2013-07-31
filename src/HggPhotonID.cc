@@ -6,6 +6,7 @@
 #include "TMVA/Factory.h"
 #include "TMVA/Reader.h"
 #include "TRandom3.h"
+#include <exception>
 using namespace std;
 using namespace TMVA;
 
@@ -19,10 +20,15 @@ HggPhotonID::HggPhotonID():
 void HggPhotonID::Init(){
 
   ReadConfig cfg;
-  if(cfg.read(configFile) !=0){
-    cout << "ERROR: Could not read PhotonID Config!";
-    valid = false;
-    return;
+  try{
+    if(cfg.read(configFile) !=0){
+      cout << "ERROR: Could not read PhotonID Config!";
+      valid = false;
+      return;
+    }
+  } catch(std::exception& e) {
+    std::cout << "HggPhotonID:  Unable to read config file" << std::endl;
+    throw e;
   }
   weightFile_IdEB_2011 = cfg.getParameter("weightFile_IdEB_2011");
   weightFile_IdEE_2011 = cfg.getParameter("weightFile_IdEE_2011");
@@ -61,8 +67,12 @@ void HggPhotonID::setVertices(int nPV, float* xPV, float *yPV, float *zPV){
 }
 
 void HggPhotonID::fillVariables(VecbosPho* pho, int nVertex, float rhoFastJet,int selVtxIndex){
-  selVtxPos = vertices.at(selVtxIndex);
-
+  try{
+    selVtxPos = vertices.at(selVtxIndex);
+  }catch(std::exception& e){
+    std::cout << "HggPhotonID:  Attempted to access invalid vertex index " << selVtxIndex << " / " << verteices.size() << std::endl;
+    throw e;
+  }
   eT = pho->p4FromVtx(selVtxPos,pho->finalEnergy,false).Et();
   if(debugPhotonID) cout << "eT: " << eT << endl;
   hoe = pho->HoverE;
