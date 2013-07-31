@@ -13,7 +13,6 @@
 #include "TH1F.h"
 
 using namespace std;
-#include "HggVertexing.hh"
 
 class ZeeSelector{
 public:
