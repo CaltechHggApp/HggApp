@@ -7,7 +7,7 @@ FASTJETFLAGS = $(shell FASTJET/bin/fastjet-config --cxxflags)
 FASTJETLIBS  = $(shell FASTJET/bin/fastjet-config --libs --plugins)
 
 CXX           = g++ -m64
-CXXFLAGS      = -g -fPIC -Wno-deprecated -O -ansi -D_GNU_SOURCE -g -O2 -Xlinker -zmuldefs -Wall -Wno-error=unused-variable -Wno-error=sign-compare -Wno-error=unused-value -Wno-error=unused-but-set-variable
+CXXFLAGS      = -g -std=c++11 -fPIC -Wno-deprecated -O -ansi -D_GNU_SOURCE -g -O2 -Xlinker -zmuldefs -Wall -Wno-error=unused-variable -Wno-error=sign-compare -Wno-error=unused-value -Wno-error=unused-but-set-variable
 LD            = g++ -m64
 LDFLAGS       = -g
 SOFLAGS       = -shared
@@ -72,6 +72,7 @@ lib: 	$(OUTLIBCOMMON)Conditions.o \
 	$(OUTLIB)HggEGEnergyCorrector.o \
 	$(OUTLIB)VecbosEGObject.o \
 	$(OUTLIB)HggMCWeight.o \
+	$(OUTLIB)BaseSelector.o \
 	$(OUTLIB)HggSelector.o \
 	$(OUTLIB)HggScaling.o \
 	$(OUTLIB)ArgParser.o 
@@ -96,7 +97,7 @@ HggApp: $(SRCDIR)HggApp.C \
 	$(OUTLIB)VecbosEGObject.o \
 	$(OUTLIB)HggEnergyScale.o \
 	$(OUTLIB)HggReducer.o \
-	$(OUTLIB)HggMakePhotonTree.o \
+#	$(OUTLIB)HggMakePhotonTree.o \
 	$(OUTLIB)GBRTree.o \
 	$(OUTLIB)GBRForest.o \
 	$(OUTLIB)ArgParser.o
@@ -119,6 +120,7 @@ HggSelectorApp: $(SRCDIR)HggSelectorApp.C \
 	$(OUTLIBCOMMON)EfficiencyEvaluator.o \
 	$(OUTLIB)VecbosEGObject.o \
 	$(OUTLIB)HggMCWeight.o \
+	$(OUTLIB)BaseSelector.o \
 	$(OUTLIB)HggSelector.o \
 	$(OUTLIB)ArgParser.o
 	$(CXX) $(CXXFLAGS) -o HggSelectorApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
@@ -160,6 +162,7 @@ ZeeSelectorApp: $(SRCDIR)ZeeSelectorApp.C \
 	$(OUTLIBCOMMON)EfficiencyEvaluator.o \
 	$(OUTLIB)HggEGEnergyCorrector.o \
 	$(OUTLIB)VecbosEGObject.o \
+	$(OUTLIB)HggEnergyScale.o \
 	$(OUTLIB)ZeeSelector.o
 	$(CXX) $(CXXFLAGS) -o ZeeSelectorApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
@@ -196,6 +199,12 @@ $(OUTLIB)HggSelector.o: $(SRCDIR)HggSelector.cc \
 			$(OUTLIB)HggEnergyScale.o \
 			$(OUTLIB)MitDict.o
 	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)HggSelector.o $<
+
+$(OUTLIB)BaseSelector.o: $(SRCDIR)BaseSelector.cc \
+			$(OUTLIB)Vecbos.o \
+			$(OUTLIB)VecbosEGObject.o
+	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)BaseSelector.o $<
+
 
 $(OUTLIB)HggEfficiencyMap.o: $(SRCDIR)HggEfficiencyMap.cc \
 			$(OUTLIB)HggPhotonID.o \
@@ -259,9 +268,9 @@ $(OUTLIB)HggVertexing.o: $(SRCDIR)HggVertexingNew.cc \
 			$(OUTLIB)VecbosEGObject.o
 	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)HggVertexing.o $<
 
-$(OUTLIB)HggMakePhotonTree.o: $(SRCDIR)HggMakePhotonTree.cc \
-			      $(OUTLIB)Vecbos.o
-	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)HggMakePhotonTree.o $<
+#$(OUTLIB)HggMakePhotonTree.o: $(SRCDIR)HggMakePhotonTree.cc \
+#			      $(OUTLIB)Vecbos.o
+#	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)HggMakePhotonTree.o $<
 
 $(OUTLIB)HggEnergyScale.o: $(SRCDIR)HggEnergyScale.cc \
 			$(OUTLIB)Vecbos.o \

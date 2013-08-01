@@ -14,10 +14,10 @@ public:
   HggMakePhotonTree(TTree*,std::string,bool);
   void Loop(int,int);
 private:
-  const static float rhoFac    = 0.17;
-  const static float rhoFacBad = 0.52;
-  const static float isoSumConst = 0;//5;
-  const static float isoSumConstBad = 0;//7;
+  static constexpr float rhoFac    = 0.17;
+  static constexpr float rhoFacBad = 0.52;
+  static constexpr float isoSumConst = 0;//5;
+  static constexpr float isoSumConstBad = 0;//7;
   bool usePF;
   string outFName;
   void init();

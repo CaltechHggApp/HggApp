@@ -1,6 +1,5 @@
 #include <VecbosEGObject.hh>
 #include <HggEGEnergyCorrector.hh>
-#include <HggVertexing.hh>
 #include <HggEnergyScale.hh>
 #include <HggPhotonID.hh>
 
@@ -14,58 +13,29 @@
 #include "TMVA/Reader.h"
 #include "TH1F.h"
 
+#include "BaseSelector.hh"
+
 using namespace std;
-#include "HggVertexing.hh"
+//#include "HggVertexing.hh"
 
-class MuMuGammaSelector{
+class MuMuGammaSelector : public BaseSelector{
 public:
-  //MuMuGammaSelector();
-  ~MuMuGammaSelector();
-  MuMuGammaSelector(vector<string> fNames,string treeName,string outputFile);
-  void loadChain(vector<string> fNames, string treeName);
-  void setOutputFile(string s){outputFile = s;}
-  bool isValid(){return valid;}
-  void setIsData(bool d){isData_=d;}
-  void Loop();
-  void setConfigFile(string s){cfg=s;}
-private:
-  bool valid;;
-  TChain* fChain;
-  TTree* outTree;
-  string outputFile;
-
-  string cfg;
-
-  bool isData_;
-
+  MuMuGammaSelector(vector<string> fNames,string treeName,string outputFile):BaseSelector(fNames,treeName,outputFile){}
+protected:
   HggPhotonID *photonID;
 
-  int init();
-  void setBranchAddresses();
-  void setupOutputTree();
+  //mandatory overrides
+  virtual void processEntry(Long64_t iEntry);
+  virtual int init(){ return 0; }
+  virtual void processConfig(ReadConfig &cfg);
+  virtual void setupOutputTree();
   
-  void clear();
+  virtual void clear();
+  virtual void firstInit();
+
   bool passPresel(VecbosMu&);
   void writeEventInfo();
 
-  // Input variables
-  int runNumber;
-  int evtNumber;
-  int rho;
-
-  //vtx
-  static const int maxVtx=100;
-  
-  int nVtx;
-  float vtxX[maxVtx];
-  float vtxY[maxVtx];
-  float vtxZ[maxVtx];
-
-  // Electron Selection
-  int __nMu;
-  MuCollection  *__Muons;
-  int __nPho;
-  PhoCollection *__Photons;
 
   //output variables
   int runNumberOut;

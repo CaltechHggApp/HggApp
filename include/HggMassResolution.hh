@@ -28,14 +28,14 @@ public:
   void init();
   double getMassResolution(VecbosPho*,VecbosPho*,TVector3,bool);
   double getMassResolutionEonly(VecbosPho*,VecbosPho*,TVector3);
-  const static int nCategories=9;
+  static constexpr int nCategories=9;
   std::vector<string>Categories;
-  const static float r9Cut=0.94;
+  static constexpr float r9Cut=0.94;
   std::vector<bool> highR9;
   std::vector<float> minEta;
   std::vector<float> maxEta;
   std::vector<float> dzRes;
-  const static int sphericalIndex=1;
+  static constexpr int sphericalIndex=1;
   float getResolution(VecbosPho*);
 private:
   void clear();

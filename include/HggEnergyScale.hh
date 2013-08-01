@@ -17,19 +17,21 @@ class HggEnergyScale{
 public:
   HggEnergyScale(std::string path);
   std::pair<float,float> getDEoE(VecbosPho,int);
+  std::pair<float,float> getDEoE(VecbosEle,int);
+  std::pair<float,float> getDEoE(int,int);
   float getMCScaleErr(VecbosPho,int);
   bool isValid(){return valid;}
   int nRegions;
   std::vector<std::string> configNames;
 
-  static const float r9Cut = 0.94;
+  static constexpr float r9Cut = 0.94;
   std::vector<bool> highR9;
   std::vector<float> minEta;
   std::vector<float> maxEta;
 private:
   bool valid;
   
-  float getCategory(VecbosPho);
+  float getCategory(VecbosSC& SC);
 
   //energy scale
   std::vector<int> runs;

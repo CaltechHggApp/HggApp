@@ -16,52 +16,103 @@
 #include "TMVA/Reader.h"
 #include "TH1F.h"
 
-using namespace std;
-//#include "HggVertexing.hh"
+#include "BaseSelector.hh"
 
-class HggSelector{
+struct OutputVars{ // all the misc vars to write to the output tree for each selection
+  float mPair_;
+  float mPairNoCorr_;
+  float mPairRes_;
+  float mPairResWrongVtx_;
+  float diPhoMVA_;
+  float diPhoMVAShift_[9];
+  int diPhoVtx_;
+  float vtxProb_;
+  float diPhoVtxX_;
+  float diPhoVtxY_;
+  float diPhoVtxZ_;
+  float Mjj_;
+  float ptJet1_;
+  float ptJet2_;
+  int cat_;
+  float cosThetaLead_;
+
+  int nOutPhotons_;
+  std::vector<ReducedPhotonData> OutPhotons_;
+
+  std::vector<float> mPairScale_;
+  std::vector<float> mPairSmear_;
+
+  void clear(){ 
+    OutPhotons_.clear(); mPairScale_.clear(); mPairScale_.clear();
+    mPair_=0; mPairNoCorr_=0; mPairRes_=0; mPairResWrongVtx_=0;
+    diPhoMVA_=-999; diPhoVtx_=-1; vtxProb_=0;
+    diPhoVtxX_=-999; diPhoVtxY_=-999; diPhoVtxZ_=-999;
+    Mjj_=-1; ptJet1_=-1; ptJet2_=-1;
+    cat_=-1; cosThetaLead_=-2;
+  }
+}; 
+
+class HggSelector: public BaseSelector{
 public:
-  HggSelector();
-  ~HggSelector();
-  HggSelector(vector<string> fNames,string treeName,string outputFile);
-  void loadChain(vector<string> fNames, string treeName);
-  void setOutputFile(string s){outputFile = s;}
-  void setConfig(string s){configFile = s;}
-  void setMassResConfig(string s){massResConfig = s;}
-  bool isValid(){return valid;}
-  void addTrigger(string s){triggers.push_back(s);}
-  void setDoMuMuGamma(bool d=true){doMuMuGamma=d;}
-  void setNSigma(int ns){nSigma=ns;}
+  HggSelector():BaseSelector(){}
+  HggSelector(vector<string> fNames,string treeName,string outputFile):
+    BaseSelector(fNames,treeName,outputFile){}
+
+  static constexpr unsigned int nSelections=3;
+  enum SelectionType: unsigned int{kMVA=0,kPFCiC=1,kCiC=2};
 
   void suppressElectronVeto(){doElectronVeto=false;}
   void setForceVertexZero(){forceVtxZero=true;}
-  void setIsData(bool d){isData_=d;}
-  void Loop();
-private:
-  TChain* fChain;
-  bool valid;
-  bool doElectronVeto;
-  bool doMuMuGamma;
-  bool forceVtxZero;
-  bool isData_;
 
-  TTree* outTree;
-  TTree* outTreeMuMuG;
-  string configFile;
-  string outputFile;
+protected:
+  //methods we need/want to override
+  virtual int init() final;
+  virtual void clear() final;
+  virtual void setDefaults() final;
+  virtual void setupOutputTree() final;
+  virtual void processConfig(ReadConfig& cfg) final;
+  virtual void firstInit() final;
+
+  virtual void processEntry(Long64_t iEntry) final; //main override
+  void processOnce(); // only run this part once, regardless of how many selections are turned on
+  void processEntry(SelectionType SelType); // run this once per selection
+
+
+  //Hgg Specific methods
+  void setMassResConfig(string s){massResConfig = s;}
+  void setNSigma(int ns){nSigma=ns;}
+
+  bool preSelectPhotons(VecbosPho*,VecbosPho*,TVector3); // kinematic photons selections
+  void smearPhoton(VecbosPho*,int);
 
   std::pair<int,int> getBestPair(float*,int,int);
   std::pair<int,int> getBestPairCiC(int,int,bool);
-  
+  int getCategory(OutputVars & vars);
+  int getCategoryPFCiC(OutputVars & vars);
 
-  bool preSelectPhotons(VecbosPho*,VecbosPho*,TVector3); // kinematic photons selections
-  
-  string massResConfig;
-  HggMassResolution *massRes;
+  void setupTMVA();
+  void fillGenInfo();
 
-  HggPhotonID *PhotonID;
+  float getVBFMjj(VecbosPho*,VecbosPho*,TVector3,float*);
+  bool passJetID(VecbosJet*);
 
-  //incase we want to redo the regression/scaling/smearing
+  //get vertex info
+  int getVertexIndex(int,int);
+  float getVertexProb(int,int);
+  float getVertexMVA(int,int);
+
+  float getDiPhoMVA(int,int,float,float,bool);
+
+  float getMPair(int,int);
+
+  ReducedPhotonData getReducedData(VecbosPho*,TVector3,int);
+
+
+  //Hgg specific flags
+  bool doElectronVeto = true;
+  bool forceVtxZero   = false;
+
+  //we can re-run the regression, scaling or smearing
   bool doRegression;
   bool doScale;
   bool doSmear;
@@ -69,8 +120,13 @@ private:
   HggEnergyScale* scale;
   int applyScaleSmear;
   HggEnergyScale* smear;
+  
+  //Mass Resolution
+  string massResConfig;
+  HggMassResolution *massRes;
 
-  void smearPhoton(VecbosPho*,int);
+  //Photon ID
+  HggPhotonID *PhotonID;
 
   //selection
   float leadPhoEtMin;
@@ -78,30 +134,11 @@ private:
   bool doPtOverM;
   float PtOverMLead;
   float PtOverMSubLead;
-  const static float rhoFac    = 0.17;
-  const static float rhoFacBad = 0.52;
-  const static float isoSumConst = 0;//5;
-  const static float isoSumConstBad = 0;//7;
+  static constexpr float rhoFac    = 0.17;
+  static constexpr float rhoFacBad = 0.52;
+  static constexpr float isoSumConst = 0;//5;
+  static constexpr float isoSumConstBad = 0;//7;
 
-  vector<string> triggers;
-  int *triggerDec;
-  bool requireTrigger();
-
-  int getVertexIndex(int,int);
-  float getVertexProb(int,int);
-  float getVertexMVA(int,int);
-
-  int init();
-  void clear();
-  void setDefaults();
-  void setBranchAddresses();
-  void setupOutputTree();
-  void setupTMVA();
-  void fillGenInfo();
-
-  void fillMuMuGamma();
-  float getVBFMjj(VecbosPho*,VecbosPho*,TVector3,float*);
-  bool passJetID(VecbosJet*);
   //TMVA stuff
   string weightFile_diPho;
   string methodName_diPho;
@@ -109,11 +146,6 @@ private:
 
   std::map<std::string,TH1F*> MVAInputs;
   std::map<std::string,TH1F*> MjjDists;
-  float getDiPhoMVA(int,int,float,float,bool);
-
-  float getMPair(int,int);
-
-  ReducedPhotonData getReducedData(VecbosPho*,TVector3,int);
   //These are the variables that will be filled for the TMVA:
   //better to do it this way so we can do PFSC or regular SC without major changes
 
@@ -131,11 +163,13 @@ private:
   float pho2IdMVA;
   //-------------
 
-  int getCategory();
-  int getCategoryPFCiC();
+  //outputSets:
+  OutputVars vars[nSelections];
 
   //Output Variables:
   int trigger_;
+
+  /*
   float mPair_;
   float mPairNoCorr_;
   float mPairRes_;
@@ -189,45 +223,23 @@ private:
   std::vector<ReducedPhotonData> OutPhotonsPFCiC_;
   Int_t nOutPhotonsCiC_;
   std::vector<ReducedPhotonData> OutPhotonsCiC_;
-
+*/
   float MET;
   float METPhi;
 
   VecbosPho pho1_;
   VecbosPho pho2_;
 
-  int nSigma;
-  std::vector<float> mPairScale;
+  int nSigma = 3; 
+
   std::vector<float> pho1MVAScale;
   std::vector<float> pho2MVAScale;
   std::vector<float> diPhoMVAScale;
-  std::vector<float> mPairSmear;
+
   std::vector<float> pho1MVASmear;
   std::vector<float> pho2MVASmear;
   std::vector<float> diPhoMVASmear;
 
-  std::vector<float> mPairScalePFCiC;
-  std::vector<float> mPairSmearPFCiC;
-
-  std::vector<float> mPairScaleCiC;
-  std::vector<float> mPairSmearCiC;
-
-  //for mumuG
-  const static int maxMuMuG = 500;
-  int nMuMuG;
-  float massMuMuGamma[maxMuMuG];
-  float massMuMuRegGamma[maxMuMuG];
-  float massMuMuScaleGamma[maxMuMuG];
-  float massMuMuGenGamma[maxMuMuG];
-  float massMuMu[maxMuMuG];
-  float puWeight[maxMuMuG];
-  
-  MuCollection MMG_Mu1;
-  MuCollection MMG_Mu2;
-  PhoCollection MMG_Pho;
-  float mvaPho[maxMuMuG];
-  float isosumoetPho[maxMuMuG];
-  
   //----
   float genHiggsPt;
   float genHiggsVx;
@@ -245,84 +257,8 @@ private:
   
   float nPU_;
   int nVtxOut;
+  float rhoOut;
   int lumiBlockOut;
   int runNumberOut;
   int evtNumberOut;
-
-
-  //member data
-  const static int maxPho = 100;
-  int nPho_;
-  std::vector<VecbosPho> *Photons_; // this contains ALL photons
-  
-  bool photonMatchedElectron[maxPho];
-
-  //this is the collection of the TMVA selected vertices for each photon pair
-  //the format is std::pair< (iPho1 << 14) + iPho2,iVrt> 
-  int nPair_;
-  std::vector<std::pair<int,int> > *ggVerticesPhotonIndices;
-  std::vector<std::pair<int, float> > *ggVerticesVertexIndex;
-  std::vector<float>                  *ggVerticesPerEvtMVA;
-
-  int nMu_;
-  std::vector<VecbosMu> *Muons_;
-
-  int nJet_;
-  std::vector<VecbosJet> *Jets_;
-  
-  // for each photon, a vector of floats giving the track iso from each ggVertex
-
-  int nVtx; 
-  static const int MAXVX = 100;
-  float vtxX[MAXVX];
-  float vtxY[MAXVX];
-  float vtxZ[MAXVX];
-  float vtxChi2[MAXVX];
-  float vtxNdof[MAXVX];
-  float vtxNormalizedChi2[MAXVX];
-  int vtxTrackSize[MAXVX];
-  int vtxIsFake[MAXVX];
-  int vtxIsValid[MAXVX];
-
-  float rho;
-  float rhoEtaMax44;
-
-  int lumiBlock;
-  int runNumber;
-  long evtNumber;
-  bool _isData;
-
-  float evtWeight;
-  float pileupWeight;
-  
-  int nGenHiggs;
-  std::vector<VecbosGen> *GenHiggs;
-
-  int nGenPho;
-  std::vector<VecbosGen> *GenPhotons;
-
-  float pfMet;
-  float pfMetPhi;
-
-  float inPU;
-
-  bool eeBadScFilterFlagOut;
-  bool hcalLaserEventFilterFlagOut;
-  bool HBHENoiseFilterResultFlagOut;
-  bool isNotDeadEcalClusterOut;
-  bool trackerFailureFilterFlagOut;
-  bool CSCHaloFilterFlagOut;
-  bool drDeadOut; 
-  bool drBoundaryOut;
-  bool ECALTPFilterFlagOut;
-
-  bool eeBadScFilterFlag;
-  bool hcalLaserEventFilterFlag;
-  bool HBHENoiseFilterResultFlag;
-  bool isNotDeadEcalCluster;
-  bool trackerFailureFilterFlag;
-  bool CSCHaloFilterFlag;
-  bool drDead; 
-  bool drBoundary;
-  bool ECALTPFilterFlag;
 };

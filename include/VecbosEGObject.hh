@@ -258,6 +258,8 @@ struct ReducedPhotonData{
   float HoverE;
   float sieie;
   float dr03PFChargedIso;
+  float dr03PFChargedIsoZero;
+  float dr03PFPhotonIso;
   float isosumGood;
   float isosumBad;
   float dr03EcalIso;
@@ -285,8 +287,18 @@ public:
   }
   int charge;
 
+  //Hgg Correction Variables
   float correctedEnergy;
   float correctedEnergyError;
+  //float scaledEnergy;
+  //float scaledEnergyError;
+  //float smearedEnergy;
+  //float smearedEnergyError;
+  //float finalEnergy;
+  //float finalEnergyError;
+
+  //float dEoE;
+  //float dEoEErr;
 
   VecbosSC SC;
   float esEnergy;
@@ -408,6 +420,22 @@ public:
   float combinedSecondaryVertex;
   float simpleSecondaryVertexHighPur;
   float simpleSecondaryVertexHighEff;
+
+  //Summer13 Variables
+  int chargedHadronMultiplicity;
+  int neutralHadronMultiplicity;
+  int photonMultiplicity;
+  int electronMultiplicity;
+  int muonMultiplicity;
+  int HFHadronMultiplicity;
+  int HFEMMultiplicity;
+
+
+  float photonEnergy;
+  float electronEnergy;
+  float muonEnergy;
+  float HFHadronEnergy;
+  float HFEMEnergy;
 };
 
 typedef std::vector<VecbosPho> PhoCollection;

@@ -1,5 +1,6 @@
 #include "HggEnergyScale.hh"
 #include <iostream>
+#include <exception>
 using namespace std;
 
 #define debugEnergyScale 0
@@ -173,27 +174,39 @@ int HggEnergyScale::getRunIndex(int run){
 }
 
 std::pair<float,float> HggEnergyScale::getDEoE(VecbosPho pho, int run){
+  return getDEoE( getCategory(pho.SC), run);
+}
+
+std::pair<float,float> HggEnergyScale::getDEoE(VecbosEle ele, int run){
+  return getDEoE( getCategory(ele.SC), run);
+}
+
+std::pair<float,float> HggEnergyScale::getDEoE(int selectRegion, int run){
   if(debugEnergyScale) cout << "getDEoE" << endl;
   if(!valid) return std::pair<float,float>(0,0);
   int runIndex = getRunIndex(run);
-  int selectRegion = getCategory(pho);
 
   if(selectRegion == -1) return std::pair<float,float>(0,0);
 
-  string regionName = configNames[selectRegion];
-  string regionErrName = regionName;  regionErrName.append("_Err");
-  
+  try{
+    string regionName = configNames[selectRegion];
+    string regionErrName = regionName;  regionErrName.append("_Err");
   if(runIndex<0 || runIndex >= energyScales[regionName].size() ) return std::pair<float,float>(1,0);
 
   if(debugEnergyScale) cout << energyScales[regionName].at(runIndex) << endl;
   return std::pair<float,float>(energyScales[regionName].at(runIndex),
 				energyScales[regionErrName].at(runIndex));
+  } catch(std::exception &e) {
+    std::cout << "HggEnergyScale:  Unable to determine region\nselectRegion: " << selectRegion << std::endl;
+    throw e;
+  }
+  return std::pair<float,float>(0,0); //shouldn't ever get here...
 }
 
 float HggEnergyScale::getMCScaleErr(VecbosPho pho, int run){
   if(debugEnergyScale) cout << "getMCScaleErr" << endl;
   int runIndex = getRunIndex(run);
-  int selectRegion = getCategory(pho);
+  int selectRegion = getCategory(pho.SC);
 
   if(selectRegion == -1) return -999;
 
@@ -201,15 +214,15 @@ float HggEnergyScale::getMCScaleErr(VecbosPho pho, int run){
   return energyScales[regionName].at(runIndex);
 }
 
-float HggEnergyScale::getCategory(VecbosPho pho){
+float HggEnergyScale::getCategory(VecbosSC& SC){
   if(debugEnergyScale) cout << "getCategory" << endl;
   int selectRegion=-1;
-  //cout << pho.eta << "  " << pho.SC.r9 << endl;
+  //cout << pho.eta << "  " << SC.r9 << endl;
   for(int iReg = 0; iReg< nRegions; iReg++){
     //cout << ">> " << minEta[iReg] << "  " << maxEta[iReg] << "  " << r9Cut << "  " << highR9[iReg] << endl; 
-    if( fabs(pho.SC.eta) >= minEta[iReg] 
-	&& fabs(pho.SC.eta) <maxEta[iReg] 
-	&& ((pho.SC.r9 > r9Cut) == highR9[iReg]) ){
+    if( fabs(SC.eta) >= minEta[iReg] 
+	&& fabs(SC.eta) <maxEta[iReg] 
+	&& ((SC.r9 > r9Cut) == highR9[iReg]) ){
       selectRegion = iReg;
       break;
     }

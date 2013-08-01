@@ -3,6 +3,7 @@
 #include "ReadConfig.hh"
 #include <string>
 #include <iostream>
+#include <exception>
 
 #define debugEGEnergy 0
 HggEGEnergyCorrector::HggEGEnergyCorrector(VecbosBase *r,string cfgFile,Bool_t realData):
@@ -49,11 +50,17 @@ void HggEGEnergyCorrector::Init(){
 	    << "Using Correction Version: " << version << std::endl;
   
   TFile *fgbr = new TFile(regweights.c_str(),"READ");
-  fReadereb = (GBRForest*)fgbr->Get("EBCorrection");
-  fReaderebvariance = (GBRForest*)fgbr->Get("EBUncertainty");
-  
-  fReaderee = (GBRForest*)fgbr->Get("EECorrection");
-  fReadereevariance = (GBRForest*)fgbr->Get("EEUncertainty");
+  try{
+    fReadereb = (GBRForest*)fgbr->Get("EBCorrection");
+    fReaderebvariance = (GBRForest*)fgbr->Get("EBUncertainty");
+    
+    fReaderee = (GBRForest*)fgbr->Get("EECorrection");
+    fReadereevariance = (GBRForest*)fgbr->Get("EEUncertainty");
+  } catch (std::exception &e) {
+    std::cout << "HggEGEnergyCorrector:  Unable to read energy regression input file " << regweights << std::endl;
+    fgbr->Close();
+    throw e;
+  }
   fgbr->Close();
 
   //load the ECAL geometry information

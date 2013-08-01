@@ -107,11 +107,10 @@ int main(int argc, char* argv[]) {
   delete inputFile;
   // get additional input options
   MuMuGammaSelector sel(fileNames,"HggReduce", string(outFileName));  //sel.addTrigger("HLT_Photon26_R9Id85_OR_CaloId10_Iso50_Photon18_R9Id85_OR_CaloId10_Iso50_Mass60_v4");
-  sel.setConfigFile(cfg);
+  sel.setConfig(cfg);
   sel.Loop();
   
   cout << "DONE" <<endl;
-  system("rm thisiswhyitcrashed*");
 
   return 0;
 

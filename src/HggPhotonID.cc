@@ -1,11 +1,12 @@
 #include <HggPhotonID.hh>
-#include "ReadConfig.hh"
 
+#include "assert.h"
 //includes for the TMVA ID
 #include "TMVA/Tools.h"
 #include "TMVA/Factory.h"
 #include "TMVA/Reader.h"
 #include "TRandom3.h"
+#include <exception>
 using namespace std;
 using namespace TMVA;
 
@@ -19,12 +20,16 @@ HggPhotonID::HggPhotonID():
 void HggPhotonID::Init(){
 
   ReadConfig cfg;
-  if(cfg.read(configFile)!=0){
-    cout << "ERROR: Could not read PhotonID Config!";
-    valid = false;
-    return;
+  try{
+    if(cfg.read(configFile) !=0){
+      cout << "ERROR: Could not read PhotonID Config!";
+      valid = false;
+      return;
+    }
+  } catch(std::exception& e) {
+    std::cout << "HggPhotonID:  Unable to read config file" << std::endl;
+    throw e;
   }
-
   weightFile_IdEB_2011 = cfg.getParameter("weightFile_IdEB_2011");
   weightFile_IdEE_2011 = cfg.getParameter("weightFile_IdEE_2011");
   weightFile_IdEB_2012 = cfg.getParameter("weightFile_IdEB_2012");
@@ -62,8 +67,12 @@ void HggPhotonID::setVertices(int nPV, float* xPV, float *yPV, float *zPV){
 }
 
 void HggPhotonID::fillVariables(VecbosPho* pho, int nVertex, float rhoFastJet,int selVtxIndex){
-  selVtxPos = vertices.at(selVtxIndex);
-
+  try{
+    selVtxPos = vertices.at(selVtxIndex);
+  }catch(std::exception& e){
+    std::cout << "HggPhotonID:  Attempted to access invalid vertex index " << selVtxIndex << " / " << vertices.size() << std::endl;
+    throw e;
+  }
   eT = pho->p4FromVtx(selVtxPos,pho->finalEnergy,false).Et();
   if(debugPhotonID) cout << "eT: " << eT << endl;
   hoe = pho->HoverE;
@@ -88,6 +97,10 @@ void HggPhotonID::fillVariables(VecbosPho* pho, int nVertex, float rhoFastJet,in
   sigRR = pho->SC.esEffSigRR;                
 
   //We need some computation for these:
+
+  pfChargedIsoZero03 = pho->dr03ChargedHadronPFIso[0];
+  float eTZero = pho->p4FromVtx(vertices.at(0),pho->finalEnergy,false).Et();
+  pfChargedIsoZero03oet = pfChargedIsoZero03/eTZero;
 
   pfChargedIsoGood03 = pho->dr03ChargedHadronPFIso[selVtxIndex];
   float maxIso=0;
@@ -211,6 +224,7 @@ void HggPhotonID::setupTMVA(){
 float HggPhotonID::getIdMVA(VecbosPho* pho, int nVertex, float rhoFastJet, int selVtxIndex){
   if(selVtxIndex < 0 || selVtxIndex >= vertices.size()){
     cout << "WARNING: Selected Vertex Index out of range: " << selVtxIndex << "/" << vertices.size() <<endl;
+    throw new VertexOutOfRange();
     return -9999;
   }
   if(pho->index <0) return -9999;
@@ -228,6 +242,7 @@ float HggPhotonID::getIdMVA(VecbosPho* pho, int nVertex, float rhoFastJet, int s
 bool HggPhotonID::getIdCiC(VecbosPho* pho, int nVertex, float rhoFastJet,int selVtxIndex){
   if(selVtxIndex < 0 || selVtxIndex >= vertices.size()){
     cout << "WARNING: Selected Vertex Index out of range: " << selVtxIndex << "/" << vertices.size() <<endl;
+    throw new VertexOutOfRange();
     return false;
   }
   this->fillVariables(pho,nVertex,rhoFastJet,selVtxIndex);
@@ -256,6 +271,7 @@ bool HggPhotonID::getIdCiC(VecbosPho* pho, int nVertex, float rhoFastJet,int sel
 bool HggPhotonID::getIdCiCPF(VecbosPho* pho, int nVertex, float rhoFastJet,int selVtxIndex){
   if(selVtxIndex < 0 || selVtxIndex >= vertices.size()){
     cout << "WARNING: Selected Vertex Index out of range: " << selVtxIndex << "/" << vertices.size() <<endl;
+    throw new VertexOutOfRange();
     return false;
   }
   this->fillVariables(pho,nVertex,rhoFastJet,selVtxIndex);
@@ -295,6 +311,8 @@ void HggPhotonID::fillIsoVariables(VecbosPho* pho, ReducedPhotonData* data,int n
   data->HoverE = hoe;
   data->sieie  = sigietaieta;
   data->dr03PFChargedIso = pfChargedIsoGood03oet;
+  data->dr03PFPhotonIso  = pfPhotonIso03oet;
+  data->dr03PFChargedIsoZero = pfChargedIsoZero03oet;
   data->isosumGood = isosumoetPF;
   data->isosumBad  = isosumoetbadPF;
 

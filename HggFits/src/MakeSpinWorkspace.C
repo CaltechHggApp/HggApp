@@ -129,20 +129,24 @@ int MakeSpinWorkspace::passSelection(float r9){
   return 1;
 }
 bool MakeSpinWorkspace::getBaselineSelection(HggOutputReader2* h,int maxI,int minI,float mass){
+  assert(mMin < mMax);
+  if(debug_workspaces) std::cout << mMin <<"--"<< mMax << "    " << pt2Min << "  " << pt1Min << std::endl;
   if(requireCiC){
-  if(h->nPhotonPFCiC < 2
-     || h->diPhotonMVA<-1
-     || mass < mMin
-     || mass > mMax
-     || h->PhotonPFCiC_pt[minI] < pt2Min
-     || h->PhotonPFCiC_pt[maxI] < pt1Min) return false;
+    if(debug_workspaces) std::cout << h->nPhotonPFCiC<< "  " << mass <<  "    " << h->PhotonPFCiC_pt[minI] << "  " << h->PhotonPFCiC_pt[maxI] << std::endl;
+    if(h->nPhotonPFCiC < 0
+       || mass < mMin
+       || mass > mMax
+       || h->PhotonPFCiC_pt[minI] < pt2Min
+       || h->PhotonPFCiC_pt[maxI] < pt1Min) return false;
+    return true;
+
   }else{
-    if(h->nPhoton < 2
-       || h->diPhotonMVA<-1
+    if(h->nPhoton < 0
        || mass < mMin
        || mass > mMax
        || h->Photon_pt[minI] < pt2Min
        || h->Photon_pt[maxI] < pt1Min) return false;
+    return true;
   }
   return true;
 }
@@ -367,18 +371,19 @@ void MakeSpinWorkspace::AddToWorkspace(dataSetInfo dataset){
     float m;
     if(isGlobe) m = g->higgs_mass;
     else{
-      if(requireCiC) m = (useUncorrMass ? h->mPairNoCorrPFCiC : h->mPairPFCiC);
-      else m = (useUncorrMass ? h->mPairNoCorr : h->mPair);
+      if(requireCiC) m = h->mPairPFCiC; //(useUncorrMass ? h->mPairNoCorrPFCiC : h->mPairPFCiC);
+      else m = h->mPair; //(useUncorrMass ? h->mPairNoCorr : h->mPair);
 
     }
-    if(debug_workspaces && m!=-1) std::cout << "m: " << m <<std::endl;
-
+    //if(debug_workspaces && m!=-1) std::cout << "m: " << m <<std::endl;
+    if(m<0) continue;
 
     // apply selections
     if(isGlobe){// globe ntuples already have selections, just need mass cuts
       if(m <mMin || m > mMax) continue;
     }else{
       if(!getBaselineSelection(h,maxI,minI,m)) continue;
+      if(debug_workspaces) std::cout << "passed selection" << std::endl;
       if(tightPt && (pt1_f/m < 1./3. || pt2_f/m < 1./4.) ) continue;
     }
     if(debug_workspaces) std::cout <<  "passed selection" <<std::endl;
@@ -619,7 +624,7 @@ float MakeSpinWorkspace::getEfficiency(HggOutputReader2 &h, int massPoint){
     std::cout << "INVALID KFACTOR!!!!"<<std::endl;
     assert(false);
   }
-   if(rescale!=rescale ||rescale==0){
+   if(rescale!=rescale || rescale==0){
     std::cout << "INVALID rescale!!!!"<<std::endl;
     assert(false);
   }
@@ -665,19 +670,20 @@ float MakeSpinWorkspace::getRescaleFactor(HggOutputReader2 &h){
     p4_1.SetPtEtaPhiM(h.Photon_pt[0],h.Photon_eta[0],h.Photon_phi[0],0);
     p4_2.SetPtEtaPhiM(h.Photon_pt[1],h.Photon_eta[1],h.Photon_phi[1],0);
   }
-
   float pt_sys = (p4_1+p4_1).Pt();
-  
   //L1-HLT factor
   TGraphAsymmErrors* e = (TGraphAsymmErrors*)fileRescaleFactor->Get( Form("effL1HLT_cat%d",cicCat) );
   EFF*=getEffFromTGraph(e,pt_sys);
+  if(EFF==0) std::cout << e->GetName() << std::endl;
   delete e;
   //vertex efficiencies
   e = (TGraphAsymmErrors*)fileRescaleFactor->Get( Form("ratioVertex_cat%d_pass",cicCat) );
   EFF*=getEffFromTGraph(e,pt_sys);
+  if(EFF==0) std::cout << e->GetName() << std::endl;
   delete e;
   e = (TGraphAsymmErrors*)fileRescaleFactor->Get( Form("ratioVertex_cat%d_fail",cicCat) );
   EFF*=getEffFromTGraph(e,pt_sys);
+  if(EFF==0) std::cout << e->GetName() << std::endl;
   delete e;
   //per-photon efficiencies
   TString labels[4] = {"EBHighR9","EBLowR9","EEHighR9","EELowR9"};
@@ -686,10 +692,12 @@ float MakeSpinWorkspace::getRescaleFactor(HggOutputReader2 &h){
     e = (TGraphAsymmErrors*)fileRescaleFactor->Get( TString("ratioTP_")+labels[index] );
     if(requireCiC) EFF*=getEffFromTGraph(e,h.PhotonPFCiC_pt[i]);
     else EFF*=getEffFromTGraph(e,h.Photon_pt[i]);
+    if(EFF==0) std::cout << e->GetName() << std::endl;
     delete e;
     e = (TGraphAsymmErrors*)fileRescaleFactor->Get( TString("ratioR9_")+labels[index] );
     if(requireCiC) EFF*=getEffFromTGraph(e,h.PhotonPFCiC_pt[i]);
     else EFF*=getEffFromTGraph(e,h.Photon_pt[i]);
+    if(EFF==0) std::cout << e->GetName() << std::endl;
     delete e;
   }
   return EFF;

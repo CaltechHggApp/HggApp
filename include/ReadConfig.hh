@@ -26,7 +26,9 @@ class ReadConfig{
   static vector<string> tokenizeString(string s, const char *tok);
   void printAll();
   vector<string> getAllParameters();
+  std::string getPath(){return path;}
  private:
+  std::string path;
   int parseLine(string);  // parses lines for config files in the format key=value
   int parseSectionLine(string,string &); //parses lines for section mode config files
   string stripComments(string);  //removes comments from the string
@@ -51,6 +53,7 @@ ReadConfig::ReadConfig(string s,style type):
 }
 
 int ReadConfig::read(string s){
+  path = s;
   ifstream file(s.c_str());
   string line;
   if(!file.is_open()) throw runtime_error(string("cannot open file:  ")+s);

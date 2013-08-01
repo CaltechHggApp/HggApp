@@ -1,10 +1,10 @@
-
-
 #include <VecbosEGObject.hh>
+#include "ReadConfig.hh"
 
 #include <vector>
 #include <iostream>
 #include <string>
+#include <memory>
 
 #include <TChain.h>
 #include <TH1F.h>
@@ -14,12 +14,19 @@
 #include "TVector3.h"
 using namespace std;
 
+class VertexOutOfRange : public std::exception {
+public:
+  virtual const char * what() const throw() {
+    std::cout << "FATAL ERROR: Trying to access a vertex out of range" << std::endl;
+  }
+};
                                     
 class HggPhotonID{
 public:
   HggPhotonID();
   ~HggPhotonID();
-  void setConfig(string s){configFile = s;}
+  void setConfig(std::string s){ configFile = s; }
+
   bool isValid(){return valid;}
   void Init();
 
@@ -41,17 +48,17 @@ public:
   
   void setDoEcalIso(bool b){doECALIso=b;}
 private:
-  string configFile;
+  std::string configFile;
   bool valid;
 
   bool doECALIso;
 
   string version;
 
-  const static float isoSumConst = 0;
-  const static float isoSumConstPF = 2.5;
-  const static float rhoFac = 0.09;
-  const static float rhoFacBad = 0.23;
+  static constexpr float isoSumConst = 0;
+  static constexpr float isoSumConstPF = 2.5;
+  static constexpr float rhoFac = 0.09;
+  static constexpr float rhoFacBad = 0.23;
 
   string weightFile_IdEB_2011;
   string weightFile_IdEE_2011;
@@ -90,6 +97,8 @@ private:
   float pfChargedIsoBad04;
   float pfChargedIsoGood03oet;
   float pfChargedIsoBad04oet;
+  float pfChargedIsoZero03;
+  float pfChargedIsoZero03oet;
   float pfPhotonIso03;
   float pfPhotonIso03oet;
   float pfPhotonIso04;
