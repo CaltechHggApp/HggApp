@@ -81,6 +81,42 @@ struct ElectronAdditionalInfo{
   float scaledEnergy,scaledEnergyError;
 };
 
+void ZeeSelector::clear(){
+  //clear the tree variables
+  mass =-1;
+  nEleOut=0;
+  Ele1mva=-999;
+  Ele2mva=-999;
+
+  Ele1pt =-1;
+  Ele1eta =0;
+  Ele1phi =0;
+  Ele1E=-1;
+  Ele1Epho=-1;
+
+  Ele2pt=-1;
+  Ele2eta=0;
+  Ele2phi=0;
+  Ele2E=-1;
+  Ele2Epho=-1;
+
+  Ele1etaSC=0;
+  Ele2etaSC=0;
+
+  Ele1r9=-1;
+  Ele2r9=-1;
+  Ele1sigEoE=-1;
+  Ele2sigEoE=-1;
+  Ele1sigEoEpho=-1;
+  Ele2sigEoEpho=-1;
+  Ele1sigEscaleoEpho=-1;
+  Ele2sigEscaleoEpho=-1;
+  passtight=0;
+  passmva=0;	
+  passloose=0;
+
+}
+
 void ZeeSelector::Loop(){
   if(!valid) return;
 
@@ -93,6 +129,7 @@ void ZeeSelector::Loop(){
 
   for (int eventi=0; eventi<nEntries; eventi++) {
     eleInfo.clear();
+    this->clear();
     if(eventi%500==0) {
       cout << ">> Processing Entry " << eventi << "/" << nEntries << endl;
     }    

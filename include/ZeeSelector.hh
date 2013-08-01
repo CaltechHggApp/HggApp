@@ -49,6 +49,8 @@ private:
   
   bool passPresel(VecbosEle&);
 
+  void clear();
+
   HggEGEnergyCorrector *elecorr;
 
   // Mass Selection
