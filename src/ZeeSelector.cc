@@ -30,10 +30,11 @@ void ZeeSelector::processConfig(ReadConfig& cfg){
     applyScaleSmear = atoi(cfg.getParameter("ScaleSmear").c_str());
     std::cout << "Doing smearing.  Config: " << smearCFG << "  ScaleSmear: " << applyScaleSmear <<std::endl;
   }
+
+  elecorr = new HggEGEnergyCorrector(0,cfg.getPath(),isData_);
 }
 
 int ZeeSelector::init(){
-  elecorr = new HggEGEnergyCorrector(0,config,isData_);
   return 0;
 }
 
@@ -87,7 +88,7 @@ void ZeeSelector::processEntry(Long64_t iEntry){
 
     //apply scale and smear to the electrons
     for(int i=0;i<nEle;i++){
-      VecbosEle ele = Electrons->at(i);
+      VecbosEle ele = Electrons_->at(i);
       ElectronAdditionalInfo info = {0.,0.,ele.energy,0.};
       if(doScale){
 	  std::pair<float,float> dE = scale->getDEoE(ele,runNumber);
@@ -111,7 +112,7 @@ void ZeeSelector::processEntry(Long64_t iEntry){
 
     // Choose First Electron
     for (int k=0; k<nEle-1;k++) { 
-      VecbosEle ele1 = Electrons->at(k);
+      VecbosEle ele1 = Electrons_->at(k);
       if(ele1.SC.index<0) continue;
       if(!passPresel(ele1)) continue;
 
@@ -124,7 +125,7 @@ void ZeeSelector::processEntry(Long64_t iEntry){
 	  mvapass = 0;
 	  Zeemass = 0;
 	  
-	  VecbosEle ele2 = Electrons->at(j);
+	  VecbosEle ele2 = Electrons_->at(j);
 	  if(ele2.SC.index<0) continue;
 	  if(!passPresel(ele2)) continue;
 	  // Verify Opposite Charges
@@ -134,7 +135,7 @@ void ZeeSelector::processEntry(Long64_t iEntry){
 
 	  if(ele1.pt < ele2.pt) swap(ele1,ele2);
 
-	  // Calculate Invariant Mass for Z Boson from Two Electrons
+	  // Calculate Invariant Mass for Z Boson from Two Electrons_
 	  TLorentzVector Ele1;
 	  Ele1.SetPtEtaPhiM(ele1.correctedEnergy/cosh(ele1.eta),ele1.eta,ele1.phi,0);
 	  TLorentzVector Ele2;
@@ -218,23 +219,6 @@ void ZeeSelector::processEntry(Long64_t iEntry){
 	}
     }
     nEleOut = nEle;
-}
-
-void ZeeSelector::setBranchAddresses(){
-  if(!valid) return;
-  //Event info
-  fChain->SetBranchAddress("runNumber",&runNumber);
-  fChain->SetBranchAddress("evtNumber",&evtNumber);
-  //fChain->SetBranchAddress("isRealData",&_isData);
-  
-  //information for the Electrons
-  fChain->SetBranchAddress("nEle",&nEle);
-  fChain->SetBranchAddress("Electrons",&Electrons);
- 
-  // information for the vertex
-  fChain->SetBranchAddress("nVtx", &nVtx);
-  fChain->SetBranchAddress("rho", &rho);
-
 }
 
 void ZeeSelector::setupOutputTree(){
