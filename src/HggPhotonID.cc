@@ -70,7 +70,7 @@ void HggPhotonID::fillVariables(VecbosPho* pho, int nVertex, float rhoFastJet,in
   try{
     selVtxPos = vertices.at(selVtxIndex);
   }catch(std::exception& e){
-    std::cout << "HggPhotonID:  Attempted to access invalid vertex index " << selVtxIndex << " / " << verteices.size() << std::endl;
+    std::cout << "HggPhotonID:  Attempted to access invalid vertex index " << selVtxIndex << " / " << vertices.size() << std::endl;
     throw e;
   }
   eT = pho->p4FromVtx(selVtxPos,pho->finalEnergy,false).Et();
