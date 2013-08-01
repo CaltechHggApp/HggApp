@@ -116,7 +116,7 @@ void ZeeSelector::processEntry(Long64_t iEntry){
       if(ele1.SC.index<0) continue;
       if(!passPresel(ele1)) continue;
 
-      if(ele1.correctedEnergy/cosh(ele1.eta) < 25) continue; // require 25 GeV Electron
+      if(ele1.correctedEnergy/cosh(ele1.eta) < minElePt) continue; // require 25 GeV Electron
 
       // Choose Second Electron
 	for (int j=k+1; j<nEle_;j++) {   
@@ -131,7 +131,7 @@ void ZeeSelector::processEntry(Long64_t iEntry){
 	  // Verify Opposite Charges
 	  if (ele1.charge == ele2.charge) continue; //require opposite sign electrons
 
-	  if(ele2.correctedEnergy/cosh(ele2.eta) < 25) continue; // require 25 GeV Electron
+	  if(ele2.correctedEnergy/cosh(ele2.eta) < minElePt) continue; // require 25 GeV Electron
 
 	  if(ele1.pt < ele2.pt) swap(ele1,ele2);
 

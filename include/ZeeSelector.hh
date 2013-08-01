@@ -32,6 +32,8 @@ private:
   HggEnergyScale *scale=0;
   HggEnergyScale *smear=0;
 
+  float minElePt=25.;
+
   virtual int init();
   virtual void setupOutputTree();
   virtual void processEntry(Long64_t iEntry);
