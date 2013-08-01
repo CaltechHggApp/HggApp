@@ -230,7 +230,7 @@ void ZeeSelector::Loop(){
 	  };
 	};
       };
-    };
+    }
     if (isZmass ==  true) {
       nEleOut = nEle;
       outTree->Fill();
@@ -294,7 +294,7 @@ void ZeeSelector::setupOutputTree(){
   outTree->Branch("passloose",&passloose,"passloose");  
   outTree->Branch("passtight",&passtight,"passtight");
   outTree->Branch("passmva",&passmva,"passmva");
-  outTree->Branch("nEle",&nEleOut,"nEle");
+  outTree->Branch("nEle",&nEleOut,"nEle/I");
 }
 
 bool ZeeSelector::passPresel(VecbosEle &ele){
