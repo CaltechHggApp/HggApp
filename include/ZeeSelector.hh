@@ -33,7 +33,6 @@ private:
   HggEnergyScale *smear=0;
 
   virtual int init();
-  virtual void setBranchAddresses();
   virtual void setupOutputTree();
   virtual void processEntry(Long64_t iEntry);
 
@@ -53,7 +52,6 @@ private:
   // Mass Selection
   float DZmassref; 
   float Zeemass;
-  int   nEle;
   float lpass;
   float tpass;
   float mvapass;

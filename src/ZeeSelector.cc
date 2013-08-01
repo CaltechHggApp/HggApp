@@ -84,10 +84,10 @@ void ZeeSelector::processEntry(Long64_t iEntry){
     // Reset mass reference
     DZmassref = 100;
     isZmass = false;
-    if(nEle < 2) return; //require two electrons in the event      
+    if(nEle_ < 2) return; //require two electrons in the event      
 
     //apply scale and smear to the electrons
-    for(int i=0;i<nEle;i++){
+    for(int i=0;i<nEle_;i++){
       VecbosEle ele = Electrons_->at(i);
       ElectronAdditionalInfo info = {0.,0.,ele.energy,0.};
       if(doScale){
@@ -111,7 +111,7 @@ void ZeeSelector::processEntry(Long64_t iEntry){
     //loop over all combinations of two electrons
 
     // Choose First Electron
-    for (int k=0; k<nEle-1;k++) { 
+    for (int k=0; k<nEle_-1;k++) { 
       VecbosEle ele1 = Electrons_->at(k);
       if(ele1.SC.index<0) continue;
       if(!passPresel(ele1)) continue;
@@ -119,7 +119,7 @@ void ZeeSelector::processEntry(Long64_t iEntry){
       if(ele1.correctedEnergy/cosh(ele1.eta) < 25) continue; // require 25 GeV Electron
 
       // Choose Second Electron
-	for (int j=k+1; j<nEle;j++) {   
+	for (int j=k+1; j<nEle_;j++) {   
 	  lpass   = 0;
 	  tpass   = 0;
 	  mvapass = 0;
@@ -218,7 +218,7 @@ void ZeeSelector::processEntry(Long64_t iEntry){
 	  }
 	}
     }
-    nEleOut = nEle;
+    nEleOut = nEle_;
 }
 
 void ZeeSelector::setupOutputTree(){
