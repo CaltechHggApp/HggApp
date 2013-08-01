@@ -12,50 +12,46 @@
 #include "TMVA/Reader.h"
 #include "TH1F.h"
 
+#include "BaseSelector.hh"
+
 using namespace std;
 
-class ZeeSelector{
+struct ElectronAdditionalInfo{
+  float dEoE,dEoEErr;
+  float scaledEnergy,scaledEnergyError;
+};
+
+class ZeeSelector : public BaseSelector{
 public:
-  ZeeSelector();
-  ~ZeeSelector();
-  ZeeSelector(vector<string> fNames,string treeName,string outputFile);
-  void loadChain(vector<string> fNames, string treeName);
-  void setOutputFile(string s){outputFile = s;}
-  bool isValid(){return valid;}
-  void setIsData(bool d){isData_=d;}
-  void setConfig(string s){config=s;}
-  void Loop();
+  ZeeSelector(vector<string> fNames,string treeName,string outputFile):BaseSelector(fNames,treeName,outputFile) {}
 private:
-  bool valid;;
-  TChain* fChain;
-  TTree* outTree;
-  TTree* outTreeZee;
-  string outputFile;
-  string config;
-
-  bool isData_;
-
   bool doSmear=false;
   bool doScale=false;
-
   int applyScaleSmear=0;
 
   HggEnergyScale *scale=0;
   HggEnergyScale *smear=0;
 
-  int init();
-  void setBranchAddresses();
-  void setupOutputTree();
-  
+  virtual int init();
+  virtual void setBranchAddresses();
+  virtual void setupOutputTree();
+  virtual void processEntry(Long64_t iEntry);
+
+
+  virtual void clear();
+  virtual void firstInit();
+  virtual void processConfig(ReadConfig &cfg);
+
   bool passPresel(VecbosEle&);
 
-  void clear();
+
 
   HggEGEnergyCorrector *elecorr;
+  std::vector<ElectronAdditionalInfo> eleInfo;
+
 
   // Mass Selection
   float DZmassref; 
-  float DZmass;
   float Zeemass;
   int   nEle;
   float lpass;
@@ -66,16 +62,9 @@ private:
   float PFIsoOverPT1;
   float PFIsoOverPT2;
 
-  // Input variables
-  int runNumber;
-  int evtNumber;
-  int nVtx;
-
-  // Electron Selection
-  std::vector<VecbosEle> *Electrons;
-
   // Variables that will be outputted
   float mass;
+  float DZmass;
   int   nEleOut;
   float Ele1mva;
   float Ele2mva;
