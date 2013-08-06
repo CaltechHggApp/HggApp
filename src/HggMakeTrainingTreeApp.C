@@ -39,9 +39,10 @@ int main(int argc, char* argv[]) {
   a.addArgument("OutputFile",ArgParser::required, "the name of the file to write the output to");
   a.addArgument("ConfigFile",ArgParser::required, "the name of the configuration file");
 
-  a.addLongOption("isData",ArgParser::noArg,"specify that this is real data");
+  a.addLongOption("minPt",ArgParser::reqArg,"specify the minimum SC Pt to save");
   //a.addLongOption("doMuMuGamma",ArgParser::noArg,"Write mu mu gamma output");
-  a.addLongOption("suppressElectronVeto",ArgParser::noArg,"don't veto photons matched to electrons (for Zee)");
+  a.addLongOption("phoMatch",ArgParser::noArg,"require a match to a gen-level photon");
+  a.addLongOption("eleMatch",ArgParser::noArg,"require a match to a gen-level electron");
 
   string ret;
   if(a.process(ret) !=0){
@@ -91,6 +92,10 @@ int main(int argc, char* argv[]) {
 
   HggMakeTrainingTree sel(fileNames,"HggReduce", a.getArgument("OutputFile"));
   sel.setConfig(a.getArgument("ConfigFile"));
+  if(a.longFlagPres("minPt")) sel.setMinPt( atof( a.getLongFlag("minPt").c_str() ) );
+  if(a.longFlagPres("phoMatch")) sel.setRequireGenMatchPhoton(true);
+  if(a.longFlagPres("eleMatch")) sel.setRequireGenMatchElectron(true);
+
   sel.Loop();
   
   cout << "DONE" <<endl;

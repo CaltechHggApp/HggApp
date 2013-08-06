@@ -17,7 +17,7 @@ void HggMakeTrainingTree::clear(){
 }
 
 void HggMakeTrainingTree::firstInit(){
-  setProcessCollection("Electrons",false);
+  setProcessCollection("Electrons",requireGenMatchElectron);
   setProcessCollection("Jets",false);
   setProcessCollection("Muons",false);
 }
@@ -28,10 +28,29 @@ void HggMakeTrainingTree::processEntry(Long64_t iEntry){
   nVtxOut = nVtx;
   rhoOut = rho;
 
-  for(auto photonIt : *Photons_) {
+  for(auto& photonIt : *Photons_) {
     outPhoton = &photonIt;
+    
+    if(outPhoton->SC.energy/cosh(outPhoton->SC.eta) < minPt) continue;
+    if(outPhoton->genMatch.index == -1 && requireGenMatchPhoton) continue;
+
+    //match Electrons
+    if(requireGenMatchElectron) {
+      bool match=false;
+      for(auto& electronIt: *Electrons_) {
+	if(electronIt.SC.index == photonIt.SC.index) {
+	  match=true;
+	  outPhoton->genMatch = electronIt.genMatch;
+	  break;	  
+	}
+      }
+
+      if(match==false) continue;
+    }
+
+    outTree->Fill();
+      
   }
-  outTree->Fill();
   
 }
 
