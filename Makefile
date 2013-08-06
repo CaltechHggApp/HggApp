@@ -185,6 +185,11 @@ MuMuGammaSelectorApp: $(SRCDIR)MuMuGammaSelectorApp.C \
 	$(OUTLIB)MuMuGammaSelector.o
 	$(CXX) $(CXXFLAGS) -o MuMuGammaSelectorApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
+HggMakeTrainingTreeApp: $(SRCDIR)HggMakeTrainingTreeApp.C \
+	$(OUTLIB)VecbosEGObject.o \
+	$(OUTLIB)HggMakeTrainingTree.o
+	$(CXX) $(CXXFLAGS) -o HggMakeTrainingTreeApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
+
 $(OUTLIB)HggSelector.o: $(SRCDIR)HggSelector.cc \
 			$(OUTLIB)HggMassResolution.o \
 			$(OUTLIB)HggPhotonID.o \
@@ -231,6 +236,11 @@ $(OUTLIB)MuMuGammaSelector.o: $(SRCDIR)MuMuGammaSelector.cc \
 			$(OUTLIB)HggPhotonID.o \
 			$(OUTLIB)MitDict.o
 	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)MuMuGammaSelector.o $<
+
+$(OUTLIB)HggMakeTrainingTree.o: $(SRCDIR)HggMakeTrainingTree.cc \
+			$(OUTLIB)BaseSelector.o \
+			$(OUTLIB)VecbosEGObject.o
+	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)HggMakeTrainingTree.o $<
 
 $(OUTLIB)HggPhotonID.o: $(SRCDIR)HggPhotonID.cc \
 			$(OUTLIB)VecbosEGObject.o \
