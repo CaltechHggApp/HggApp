@@ -108,7 +108,7 @@ void BaseSelector::Loop(){
     setDefaults();
     processEntry(jentry);
     
-    outTree->Fill();
+    if(doFill) outTree->Fill();
   }//while(fChain...
 
   outFile->cd();
