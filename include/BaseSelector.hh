@@ -70,6 +70,10 @@ protected:
       CollectionsToProcess.at(n) = b;
     }catch(std::exception& e){
       std::cout << "FATAL ERROR:  Trying to set the status of invalid collection " << n << std::endl;
+      std::cout << "Valid Collections: " << std::endl;
+      for(auto& it : CollectionsToProcess) {
+	std::cout << it.first << "    process: " << it.second << std::endl;
+      }
       throw e;
     }
   }
