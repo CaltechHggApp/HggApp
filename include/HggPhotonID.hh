@@ -30,21 +30,21 @@ public:
   bool isValid(){return valid;}
   void Init();
 
-  bool getPreSelection(VecbosPho*,int,float,int);
-  float getIdMVA(VecbosPho*,int,float,  int);
-  bool getIdCiCPF(VecbosPho*,int,float,  int);
-  bool getIdCiC(VecbosPho*,int,float,  int);
+  bool getPreSelection(VecbosPho* pho, int nVertex, float rhoFastJet, int selVtxIndex);
+  float getIdMVA(VecbosPho* pho, int nVertex, float rhoFastJet, int selVtxIndex);
+  bool getIdCiCPF(VecbosPho* pho, int nVertex, float rhoFastJet, int selVtxIndex);
+  bool getIdCiC(VecbosPho* pho, int nVertex, float rhoFastJet, int selVtxIndex);
   
-  int getCiCCat(VecbosPho*);
+  int getCiCCat(VecbosPho* pho);
 
-  bool getPreSelection2011(VecbosPho*,int,float,int);
-  bool getPreSelectionMay2012(VecbosPho*,int,float,int);
+  bool getPreSelection2011(VecbosPho* pho,int nVertex, float rhoFastJet, int selVtxIndex);
+  bool getPreSelectionMay2012(VecbosPho* pho,int nVertex, float rhoFastJet, int selVtxIndex);
 
   std::map<std::string,TH1F*>* getHists(){return &InputDists;}
 
-  void setVertices(int,float*,float*,float*);
+  void setVertices(int nPV, float* xPV, float* yPV, float* zPV);
 
-  void fillIsoVariables(VecbosPho*,ReducedPhotonData*,int, float, int );
+  void fillIsoVariables(VecbosPho* pho, ReducedPhotonData* data, int nVertex, float rhoFastJet, int selVtxIndex);
   
   void setDoEcalIso(bool b){doECALIso=b;}
 private:
@@ -74,7 +74,7 @@ private:
 
   std::map<std::string,TH1F*> InputDists;
 
-  void fillVariables(VecbosPho*,int,float,int);
+  void fillVariables(VecbosPho* pho,int nVertex, float rhoFastJet, int selVtxIndex);
   //photon ID MVA
   float hoe;
   float sigietaieta;
