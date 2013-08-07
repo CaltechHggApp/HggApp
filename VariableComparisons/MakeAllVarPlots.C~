@@ -1,0 +1,769 @@
+#include "TFile.h"
+#include "TTree.h"
+#include "TChain.h"
+#include "TCanvas.h"
+#include "TString.h"
+#include "TLegend.h"
+#include "TH1F.h"
+#include "THStack.h"
+#include "TGraph.h"
+#include "TStyle.h"
+#include "TTreeFormula.h"
+#include "TLatex.h"
+#include "TList.h"
+
+#include <map>
+#include <vector>
+#include <iostream>
+#include <cmath>
+#include <array>
+#include <assert.h>
+
+
+#include <cstdlib>
+
+class varCorrector{
+public:
+  varCorrector();
+  TString getCorrectString(TString var,bool isEB);
+protected:
+  std::map<TString,TString> correctionsEB;
+  std::map<TString,TString> correctionsEE;
+};
+varCorrector::varCorrector(){
+  correctionsEB["r9"] = "1.0045*r9+0.001";
+  correctionsEE["r9"] = "1.0086*r9-0.0007";
+
+   correctionsEB["sieie"] = "0.891832*sieie+0.0009133";
+   correctionsEE["sieie"] = "0.9947*sieie  +0.00003";
+
+  correctionsEB["sipip"] = "0.993*sipip-0.0";
+
+  correctionsEB["etaWidth"] = "1.04302 *etaWidth-0.000618";
+  correctionsEE["etaWidth"] = "0.903254*etaWidth+0.001346";
+
+  correctionsEB["phiWidth"] = "1.00002*phiWidth-0.000371";
+  correctionsEE["phiWidth"] = "0.99992*phiWidth-4.8e-7";
+
+  correctionsEB["e3x3/energyBC"] = "("+correctionsEB["r9"]+")*rawE/energyBC";
+  correctionsEE["e3x3/energyBC"] = "("+correctionsEE["r9"]+")*rawE/energyBC";
+
+  correctionsEB["e5x5/energyBC"] = "min(1.0,e5x5/energyBC*1.0022)";
+
+  correctionsEB["e5x5/rawE"] = "("+correctionsEB["e5x5/energyBC"]+")*energyBC/rawE";
+  correctionsEE["e5x5/rawE"] = "min(1.0,1.022*e5x5/rawE)";
+
+  correctionsEB["eMax/energyBC"] = "1.012*eMax/energyBC";
+  correctionsEE["eMax/energyBC"] = "1.005*eMax/energyBC";
+  
+  correctionsEB["e2nd/energyBC"] = "1.00*e2nd/energyBC";
+  correctionsEE["e2nd/energyBC"] = "1.02*e2nd/energyBC";
+  
+  correctionsEB["eTop/energyBC"] = "0.94*eTop/energyBC";
+  correctionsEE["eTop/energyBC"] = "0.96*eTop/energyBC";
+  
+  correctionsEB["eBottom/energyBC"] = "0.94*eBottom/energyBC";
+  correctionsEE["eBottom/energyBC"] = "0.96*eBottom/energyBC";
+  
+  correctionsEB["eLeft/energyBC"] = "0.94*eLeft/energyBC";
+  correctionsEE["eLeft/energyBC"] = "0.96*eLeft/energyBC";
+  
+  correctionsEB["eRight/energyBC"] = "0.94*eRight/energyBC";
+  correctionsEE["eRight/energyBC"] = "0.96*eRight/energyBC";
+  
+  correctionsEB["e2x5Max/energyBC"] = "1.006 *e2x5Max/energyBC";
+  correctionsEE["e2x5Max/energyBC"] = "1.0075*e2x5Max/energyBC";
+
+  correctionsEB["e2x5Top/energyBC"] = "1.09*e2x5Top/energyBC";
+  correctionsEE["e2x5Top/energyBC"] = "1.13*e2x5Top/energyBC";
+
+  correctionsEB["e2x5Bottom/energyBC"] = "1.09*e2x5Bottom/energyBC";
+  correctionsEE["e2x5Bottom/energyBC"] = "1.13*e2x5Bottom/energyBC";
+
+  correctionsEB["e2x5Left/energyBC"] = "1.09*e2x5Left/energyBC";
+  correctionsEE["e2x5Left/energyBC"] = "1.13*e2x5Left/energyBC";
+
+  correctionsEB["e2x5Right/energyBC"] = "1.09*e2x5Right/energyBC";
+  correctionsEE["e2x5Right/energyBC"] = "1.13*e2x5Right/energyBC";
+
+  correctionsEE["se"] = "(etaSC<1.8)*(0.1845*se*se+se-0.00)+(etaSC>=1.8)*(0.168*se*se+se)";
+  correctionsEB["se"] = "(etaSC<0.8)*(0.11*se*se+1.025*se)+(etaSC>=0.8)*(0.044*se*se+1.025*se)";
+}
+
+TString varCorrector::getCorrectString(TString var, bool isEB){
+  std::map<TString,TString> *themap;
+  if( isEB ) themap = &correctionsEB;
+  else themap = &correctionsEE;
+
+  if( themap->find(var) == themap->end() ) return var; // no correction
+  return (*themap)[var];
+}
+
+
+class varCorrector4cat{
+public:
+  varCorrector4cat();
+  TString getCorrectString(TString var,float eta);
+protected:
+  std::map<TString,TString> correctionsEBlow;
+  std::map<TString,TString> correctionsEBhigh;
+  std::map<TString,TString> correctionsEElow;
+  std::map<TString,TString> correctionsEEhigh;
+};
+varCorrector4cat::varCorrector4cat(){
+  correctionsEBlow["sieie"] = "0.991833*sieie+1.55e-06";
+  correctionsEBhigh["sieie"] = "0.999988*sieie-5.777e-5";
+  correctionsEElow["sieie"] = "sieie";
+  correctionsEElow["sieie"] = "0.9912*sieie+1.4477e-8";
+
+  correctionsEBlow["sieip"] = "0.975*sieip";
+  correctionsEBhigh["sieip"] = "0.95*sieip";
+  correctionsEElow["sieip"] = "1.025*sieip";
+  correctionsEElow["sieip"] = "1.05*sieip";
+
+  correctionsEBlow["sipip"] = "sipip";
+  correctionsEBhigh["sipip"] = "1.00162*sipip";
+  correctionsEElow["sipip"] = "0.975*sipip";
+  correctionsEElow["sipip"] = "1.025*sipip";
+
+  correctionsEBlow["etaWidth"] = "0.975*etaWidth";
+  correctionsEBhigh["etaWidth"] = "0.975*etaWidth";
+  correctionsEElow["etaWidth"] = "0.947114*etaWidth+0.00020317";
+  correctionsEElow["etaWidth"] = "etaWidth+0.0015";
+
+  correctionsEBlow["phiWidth"] = "1.0043*phiWidth-2.79585e-5";
+  correctionsEBhigh["phiWidth"] = "0.999763*phiWidth-3.76816e-05";
+  correctionsEElow["phiWidth"] = "0.975*phiWidth-0.0002414";
+  correctionsEElow["phiWidth"] = "1.00904*phiWidth+0.00182084";
+
+  correctionsEBlow["HE"] = "0.975*HE";
+  correctionsEBhigh["HE"] = "0.975*HE+7.6055e-5";
+  correctionsEElow["HE"] = "0.85*HE";
+  correctionsEElow["HE"] = "1.025*HE-0.0015";
+
+  correctionsEBlow["r9"] = "1*r9+0.0045";
+  correctionsEBhigh["r9"] = "0.993464*r9+0.0075";
+  correctionsEElow["r9"] = "1.00381*r9-0.0165";
+  correctionsEElow["r9"] = "1*r90.006";
+}
+
+TString varCorrector4cat::getCorrectString(TString var, float eta){
+  std::map<TString,TString> *themap;
+  if( fabs(eta) < 1 ) themap = &correctionsEBlow;
+  else if( fabs(eta) < 1.44 ) themap = &correctionsEBhigh;
+  else if( fabs(eta) < 2. ) themap = &correctionsEElow;
+  else themap = &correctionsEEhigh;
+
+  if( themap->find(var) == themap->end() ) return var; // no correction
+  return (*themap)[var];
+}
+
+
+class weightManager{
+public:
+  weightManager();
+  float getWeight(TString name,float lumi=1); //lumi in 1/fb
+protected:
+  std::map<TString,float> Nevents;
+  std::map<TString,float> crossSection;
+};
+
+weightManager::weightManager(){
+  crossSection["DiPhotonBox_Pt10to25"] = 424.8;
+  crossSection["DiPhotonBox_Pt25to250"] = 15.54;
+  crossSection["DiPhotonBox_Pt250"] = 1.18E-3;
+
+  crossSection["DiPhotonJets"] = 75.4;
+
+  crossSection["DiPhotonJets_sherpa"] = 120.354 * 1.1; //k-factor
+
+  crossSection["GJets_Pt20to40"] = 8.19E4*1.84E-3;
+  crossSection["GJets_Pt40"] = 8.84E3*5.39E-2;
+
+  crossSection["QCD_Pt30to40"] = 5.2E7*2.35E-4;
+  crossSection["QCD_Pt40"] = 2.37E7*2.18E-3;
+
+  crossSection["DYJetsToLL_M-50"] = 3.53E3*2.1; //fake rate correction
+
+  Nevents["DiPhotonBox_Pt10to25"] = 138960;
+  Nevents["DiPhotonBox_Pt25to250"] = 493197;
+  Nevents["DiPhotonBox_Pt250"] = 464253;
+
+  Nevents["DiPhotonJets"] = 1391248;
+
+  Nevents["DiPhotonJets_sherpa"] = 14403906;
+  
+  Nevents["GJets_Pt20to40"] = 5605445;
+  Nevents["GJets_Pt40"] = 5956139;
+
+  Nevents["QCD_Pt30to40"]=5584126;
+  Nevents["QCD_Pt40"]=8996255;  
+
+  Nevents["DYJetsToLL_M-50"] = 30461028;
+}
+
+float weightManager::getWeight(TString name,float lumi){
+  if(crossSection.find(name)==crossSection.end()) return 0;
+
+  float cs = crossSection[name];
+  float N  = Nevents[name];
+
+  float expected = lumi*1000.*cs;
+  
+  return expected/N;
+}
+
+class plotManager{
+public:
+  plotManager(TString inTag="");
+  void addCategory(TString name,TString cut);
+  void addVariable(TString name,TString var,int bins, float low, float high,bool correct=false);
+  void processChain(TChain *fChain,float weight);
+  std::array<TH1F*,3> getHistogram(TString cat, TString var);
+  void addVetos(std::vector<TString>* v){vetos = v;}
+  void saveAll(TFile *f);
+  void setUse4Cat(bool b = true){use4Cat=b;}
+private:
+  std::vector<TString>* vetos;
+  std::vector<TTreeFormula*> vetoFormulas;
+  bool freeze;
+  TString histNameTag;
+  bool use4Cat;
+  varCorrector corrector;
+  varCorrector4cat corrector4cat;
+
+  std::vector<TString> catNames;
+  std::vector<TString> catCuts;
+  TTreeFormula* etaVal;
+  TTreeFormula* isRealPho;
+  TTreeFormula* isRealEle;
+  TTreeFormula* isTrigger;
+
+
+  std::vector<TString> varNames;
+  std::vector<TString> variables;
+  std::vector<int> xBins;
+  std::vector<float> xLow;
+  std::vector<float> xHigh;
+  std::vector<bool> useCorrection;
+
+  std::vector< std::vector< TH1F* > > fakeHistograms; // outer vector: category % inner vector: variables
+  std::vector< std::vector< TH1F* > > realPhoHistograms; // outer vector: category % inner vector: variables
+  std::vector< std::vector< TH1F* > > realEleHistograms; // outer vector: category % inner vector: variables
+  void buildHistograms();
+  std::vector< TTreeFormula* > catFormulas;
+  std::vector< TTreeFormula* > varFormulas;  
+  void buildFormulas(TChain *fChain);
+  void updateFormulas();
+  void destroyFormulas();
+  void processEntry(float weight);
+};
+
+
+plotManager::plotManager(TString inTag):freeze(false),vetos(0),use4Cat(false){
+  histNameTag = inTag;
+}
+
+void plotManager::addCategory(TString name, TString cut){
+  if(freeze) return;
+  catNames.push_back(name);
+  catCuts.push_back(cut);
+}
+
+void plotManager::addVariable(TString name,TString var,int bins, float low, float high,bool correct){
+  if(freeze) return;
+  varNames.push_back(name);
+  variables.push_back(var);
+  xBins.push_back(bins);
+  xLow.push_back(low);
+  xHigh.push_back(high);
+  useCorrection.push_back(correct);
+}
+
+void plotManager::buildHistograms(){
+  if(freeze) return;
+  freeze = true;
+  for(int i=0;i<catNames.size();i++){
+    std::vector<TH1F*> perCat_rp;
+    std::vector<TH1F*> perCat_re;
+    std::vector<TH1F*> perCat_f;
+    for(int j=0;j<variables.size();j++){
+      perCat_rp.push_back( new TH1F(varNames.at(j)+"_"+catNames.at(i)+"_"+histNameTag+"_realPho","",xBins.at(j),xLow.at(j),xHigh.at(j)) );
+      perCat_re.push_back( new TH1F(varNames.at(j)+"_"+catNames.at(i)+"_"+histNameTag+"_realEle","",xBins.at(j),xLow.at(j),xHigh.at(j)) );
+      perCat_f.push_back( new TH1F(varNames.at(j)+"_"+catNames.at(i)+"_"+histNameTag+"_fake","",xBins.at(j),xLow.at(j),xHigh.at(j)) );
+      perCat_rp.back()->Sumw2();
+      perCat_re.back()->Sumw2();
+      perCat_f.back()->Sumw2();
+    }
+    realPhoHistograms.push_back(perCat_rp);
+    realEleHistograms.push_back(perCat_re);
+    fakeHistograms.push_back(perCat_f);
+  }
+}
+
+void plotManager::buildFormulas(TChain *fChain){
+  if(!freeze) return;
+  etaVal = new TTreeFormula("isEB","abs(etaSC)",(TTree*)fChain);
+  isRealPho = new TTreeFormula("isRealPho","realPho==1",(TTree*)fChain);
+  isRealEle = new TTreeFormula("isRealEle","realEle==1",(TTree*)fChain);
+  isTrigger = new TTreeFormula("isTrigger","Trigger==1",(TTree*)fChain);
+  for(int i=0;i<variables.size();i++){
+    if(useCorrection.at(i)){
+      if(use4Cat) varFormulas.push_back( new TTreeFormula( varNames.at(i)+"_"+histNameTag, corrector4cat.getCorrectString(variables.at(i),  etaVal->EvalInstance()),           (TTree*)fChain ) );
+      else        varFormulas.push_back( new TTreeFormula( varNames.at(i)+"_"+histNameTag, corrector.getCorrectString(variables.at(i),      (etaVal->EvalInstance() < 1.48) ), (TTree*)fChain ) );
+    }
+    else varFormulas.push_back( new TTreeFormula( varNames.at(i)+"_"+histNameTag, variables.at(i), (TTree*)fChain ) );
+  }
+  for(int i=0;i<catNames.size();i++){
+    catFormulas.push_back( new TTreeFormula( catNames.at(i)+"_"+histNameTag, catCuts.at(i), (TTree*)fChain ) );
+  }
+
+  if(vetos){
+    for(int i=0;i<vetos->size();i++){
+      vetoFormulas.push_back(new TTreeFormula(Form("veto%d",i),vetos->at(i),(TTree*)fChain));
+    }
+  }
+}
+
+void plotManager::updateFormulas(){
+  std::vector<TTreeFormula*>::iterator it = varFormulas.begin();
+  for(; it != varFormulas.end(); it++) (*it)->UpdateFormulaLeaves();
+  it = catFormulas.begin();
+  for(; it != catFormulas.end(); it++) (*it)->UpdateFormulaLeaves();
+  it = vetoFormulas.begin();
+  for(; it != vetoFormulas.end(); it++) (*it)->UpdateFormulaLeaves();
+
+  etaVal->UpdateFormulaLeaves();
+  isRealPho->UpdateFormulaLeaves();
+  isRealEle->UpdateFormulaLeaves();
+  isTrigger->UpdateFormulaLeaves();
+}
+
+void plotManager::destroyFormulas(){
+  varFormulas.clear();
+  catFormulas.clear();
+  vetoFormulas.clear();
+  delete etaVal;
+  delete isRealPho;
+  delete isRealEle;
+  delete isTrigger;
+}
+
+void plotManager::processEntry(float weight){
+  if(!freeze) return;
+  if(! isTrigger->EvalInstance() ) return;
+  for(int i=0;i<vetoFormulas.size();i++){
+    if( vetoFormulas.at(i)->EvalInstance() ) return;
+  }
+  for(int i=0;i<catNames.size();i++){    
+    if( !catFormulas.at(i)->EvalInstance() ) continue; //not in this category
+    for(int j=0;j<variables.size();j++){
+      TH1F* hist;
+      if(isRealPho->EvalInstance())      hist = realPhoHistograms.at(i).at(j);      
+      else if(isRealEle->EvalInstance()) hist = realEleHistograms.at(i).at(j);      
+      else                               hist = fakeHistograms.at(i).at(j);      
+      hist->Fill(varFormulas.at(j)->EvalInstance(),weight);
+    }
+  }
+}
+
+void plotManager::processChain(TChain *fChain,float weight){
+  if(!freeze) buildHistograms();
+
+  buildFormulas(fChain);
+
+  Long64_t iEntry=-1;
+  Int_t iTree=-1;
+  while( fChain->GetEntry(++iEntry) ){
+    if( fChain->GetTreeNumber() != iTree ){
+      updateFormulas();
+      iTree = fChain->GetTreeNumber();
+    }
+    if( !(iEntry %10000) ) std::cout << "Processing Entry " << iEntry << std::endl;
+    processEntry(weight);
+  }
+
+  destroyFormulas();
+}
+
+std::array<TH1F*,3> plotManager::getHistogram(TString cat, TString var){
+  std::array<TH1F*,3> output = {0,0,0};
+  for(int i=0;i<catNames.size();i++){
+    if(catNames.at(i)!=cat) continue;
+    for(int j=0;j<variables.size();j++){
+      if(varNames.at(j) != var) continue;
+      output[0] = realPhoHistograms.at(i).at(j);
+      output[1] = realEleHistograms.at(i).at(j);
+      output[2] = fakeHistograms.at(i).at(j);
+      return output;
+    }
+  }  
+  return output;
+}
+
+void plotManager::saveAll(TFile *f){
+  f->cd();
+  for(int i=0;i<catNames.size();i++){
+    for(int j=0;j<variables.size();j++){
+      realPhoHistograms.at(i).at(j)->Write();
+      realEleHistograms.at(i).at(j)->Write();
+      fakeHistograms.at(i).at(j)->Write();
+    }
+  }    
+}
+
+
+void setstyle();
+
+TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc, TString xName,TString label="");
+
+#define __USE_SHERPA  0
+
+int main(int argc,char** argv){
+  bool useSherpa=false;
+  if(argc>1) {
+    if( strcmp(argv[1],"SHERPA")==0 ) useSherpa=true;
+  }
+
+  if(useSherpa) std::cout << "SHERPA!!" << std::endl;
+
+  float lumi=6.3;
+  weightManager weights;
+
+  plotManager mcPlotter("mc");
+  plotManager dataPlotter("data");
+  mcPlotter.setUse4Cat();
+  dataPlotter.setUse4Cat();
+
+  setstyle();
+
+  std::vector<TString> samples = {
+    "GJets_Pt20to40.root",
+    "GJets_Pt40.root",
+    "QCD_Pt30to40.root",
+    "QCD_Pt40.root",
+    "DYJetsToLL_M-50.root" };
+
+
+  if(useSherpa) {
+    samples.push_back("DiPhotonJets_sherpa.root");
+  }
+  else {
+    samples.push_back("DiPhotonBox_Pt10to25.root");
+    samples.push_back("DiPhotonBox_Pt25to250.root");
+    samples.push_back("DiPhotonBox_Pt250.root");
+    samples.push_back("DiPhotonJets.root");    
+  }
+
+  const int Nsamples = samples.size();
+
+  std::vector<TString> data = {
+    "DoublePhoton_Run2012B_13Jul2012.root"
+  };
+
+  const int Ndata = data.size();
+
+
+  std::vector<TString> globalVetos;
+  globalVetos.push_back("etaSC > -1.775 && etaSC < -1.764 && phi > 1.2 && phi < 1.6");
+  globalVetos.push_back("etaSC > 1.591 && etaSC < 1.595 && phi > -2.06 && phi < -2.045");
+  //globalVetos.push_back("etaSC > -0.9 && etaSC < -0.7 && phi > 2.9 && phi < 3.1");
+  globalVetos.push_back("etaSC > 1.74 && etaSC < 1.76 && phi > 2.1 && phi < 2.15");
+  globalVetos.push_back("etaSC > 1.564 && etaSC < 1.565 && phi > 0.528 && phi < 0.532");
+
+  //output->Draw("phi:etaSC","!(etaSC > -1.8 && etaSC < -1.76 && phi > 1.2 && phi < 1.5) && !(etaSC>1.591 && etaSC<1.595 && phi > -2.06 && phi < -2.045) && !(etaSC > 1.74 && etaSC < 1.76 && phi > 2.1 && phi < 2.15) && !(etaSC > 1.564 && etaSC < 1.565 && phi > 0.528 && phi < 0.532) && !(etaSC > -1.6888 && etaSC < -1.6868 && phi > 1.8 && phi < 1.802) && sieie < 1e-5 && abs(etaSC) > 1.557 && abs(etaSC)<2
+
+  const int Ncat=52;
+  TString cats[Ncat] = {
+    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 80 && electronMatch==0",
+    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 80 && electronMatch==0",
+    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 80 && electronMatch==0",
+    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 80 && electronMatch==0",
+    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 80 && electronMatch==1",
+    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 80 && electronMatch==1",
+    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 80 && electronMatch==1",
+    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 80 && electronMatch==1",
+
+    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 87 && mass < 94 && electronMatch==0",
+    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 87 && mass < 94 && electronMatch==0",
+    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 87 && mass < 94 && electronMatch==0",
+    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 87 && mass < 94 && electronMatch==0",
+    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 87 && mass < 94 && electronMatch==1",
+    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 87 && mass < 94 && electronMatch==1",
+    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 87 && mass < 94 && electronMatch==1",
+    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 87 && mass < 94 && electronMatch==1",
+
+    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
+    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
+    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
+    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
+    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==1",
+    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==1",
+    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==1",
+    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==1",
+
+    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==0 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
+    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==0 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
+    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==0 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
+    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==0 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
+    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==0 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==1",
+    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==0 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==1",
+    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==0 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==1",
+    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==0 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==1",
+
+    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==0",
+    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==0",
+    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==0",
+    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==0",
+    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==1",
+    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==1",
+    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==1",
+    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==1",
+
+    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==0 && se < 0.012",
+    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==0 && se < 0.018",
+    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==0 && se < 0.025",
+    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==0 && se < 0.023",
+    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==1  && se < 0.012",
+    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==1 && se < 0.018",
+    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==1  && se < 0.025",
+    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==1 && se < 0.023",
+
+    "abs(etaSC)>=2.00 && abs(etaSC) < 2.10 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
+    "abs(etaSC)>=2.10 && abs(etaSC) < 2.20 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
+    "abs(etaSC)>=2.20 && abs(etaSC) < 2.30 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
+    "abs(etaSC)>=2.30 && abs(etaSC) < 2.40 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
+
+  };
+
+  TString catNames[Ncat] = {
+    "EBlow_pt25_passCiCIso_pho_Trigger","EBhigh_pt25_passCiCIso_pho_Trigger","EElow_pt25_passCiCIso_pho_Trigger","EEhigh_pt25_passCiCIso_pho_Trigger",
+    "EBlow_pt25_passCiCIso_ele_Trigger","EBhigh_pt25_passCiCIso_ele_Trigger","EElow_pt25_passCiCIso_ele_Trigger","EEhigh_pt25_passCiCIso_ele_Trigger",
+
+    "EBlow_pt25_passCiCIso_pho_Z","EBhigh_pt25_passCiCIso_pho_Z","EElow_pt25_passCiCIso_pho_Z","EEhigh_pt25_passCiCIso_pho_Z",
+    "EBlow_pt25_passCiCIso_ele_Z","EBhigh_pt25_passCiCIso_ele_Z","EElow_pt25_passCiCIso_ele_Z","EEhigh_pt25_passCiCIso_ele_Z",
+
+    "EBlow_pt25_passCiCIso_pho_110_150","EBhigh_pt25_passCiCIso_pho_110_150","EElow_pt25_passCiCIso_pho_110_150","EEhigh_pt25_passCiCIso_pho_110_150",
+    "EBlow_pt25_passCiCIso_ele_110_150","EBhigh_pt25_passCiCIso_ele_110_150","EElow_pt25_passCiCIso_ele_110_150","EEhigh_pt25_passCiCIso_ele_110_150",
+
+    "EBlow_pt25_failCiCIso_pho_110_150","EBhigh_pt25_failCiCIso_pho_110_150","EElow_pt25_failCiCIso_pho_110_150","EEhigh_pt25_failCiCIso_pho_110_150",
+    "EBlow_pt25_failCiCIso_ele_110_150","EBhigh_pt25_failCiCIso_ele_110_150","EElow_pt25_failCiCIso_ele_110_150","EEhigh_pt25_failCiCIso_ele_110_150",
+
+    "EBlow_pt25_passCiCIso_pho_110_180","EBhigh_pt25_passCiCIso_pho_110_180","EElow_pt25_passCiCIso_pho_110_180","EEhigh_pt25_passCiCIso_pho_110_180",
+    "EBlow_pt25_passCiCIso_ele_110_180","EBhigh_pt25_passCiCIso_ele_110_180","EElow_pt25_passCiCIso_ele_110_180","EEhigh_pt25_passCiCIso_ele_110_180",
+
+    "EBlow_pt25_passCiCIso_se_pho_110_180","EBhigh_pt25_passCiCIso_se_pho_110_180","EElow_pt25_passCiCIso_se_pho_110_180","EEhigh_pt25_passCiCIso_se_pho_110_180",
+    "EBlow_pt25_passCiCIso_se_ele_110_180","EBhigh_pt25_passCiCIso_se_ele_110_180","EElow_pt25_passCiCIso_se_ele_110_180","EEhigh_pt25_passCiCIso_se_ele_110_180",
+
+    "EE_2p0_2p1_pt25_passCiCIso_ele_110_150",
+    "EE_2p1_2p2_pt25_passCiCIso_ele_110_150",
+    "EE_2p2_2p3_pt25_passCiCIso_ele_110_150",
+    "EE_2p3_2p4_pt25_passCiCIso_ele_110_150",
+  };
+
+  for(int i=0;i<Ncat;i++){
+    mcPlotter.addCategory(catNames[i],cats[i]);
+    dataPlotter.addCategory(catNames[i],cats[i]);
+  }
+
+  mcPlotter.addVetos(&globalVetos);
+  dataPlotter.addVetos(&globalVetos);
+  const int Nvar=19;
+  TString vars[Nvar] = {"se","r9","sieie","sieip","sipip","etaWidth","phiWidth","HE",  "energyBC/rawE","e3x3/energyBC","e5x5/energyBC","eMax/energyBC","e2x5Max/energyBC","nBC","etaBC-etaSC","pt*cosh(etaSC)/rawE","mass","pt","etaSC"};
+  int     bins[Nvar] = {50  , 80 , 50 ,   50 ,    50 ,    50 ,       50 ,       50 ,   50 ,            50 ,            50 ,             50 ,           50,                 20,  50,            50,                  80,   100, 50 };
+  float   low [Nvar] = {0.0 , 0.2, 0.0,   0.0,    0.0,    0.0,       0.0,       0.0,   0.0,            0.0,            0.0,             0.0,           0.0,                0,   0.0,           0.5,                 80,    0,   -2.5};
+  float   high[Nvar] = {0.04, 1.0, 0.04,  0.0004,  0.1,    0.05,      0.2,       0.2,   2.0,            2.0,            2.0,             2.0,           2.0,               20,  0.03,          1.5,                 200,   1000, 2.5};
+
+
+  for(int i=0;i<Nvar;i++){
+    mcPlotter.addVariable  (vars[i],vars[i],bins[i],low[i],high[i]);
+    mcPlotter.addVariable  ("corr_"+vars[i],vars[i],bins[i],low[i],high[i],true);
+    dataPlotter.addVariable(vars[i],vars[i],bins[i],low[i],high[i]);
+    dataPlotter.addVariable("corr_"+vars[i],vars[i],bins[i],low[i],high[i],true);
+  }
+
+  for(int iSample=0;iSample<Nsamples;iSample++){
+    TFile *f = new TFile("output/"+samples[iSample]);
+    TChain *fChain = (TChain*)f->Get("output");
+    TString sampleName = samples[iSample];
+    sampleName.Remove(sampleName.Last('.'));
+    mcPlotter.processChain(fChain,weights.getWeight(sampleName,lumi));
+  }
+
+  for(int iData=0;iData<Ndata;iData++){
+    TFile *f = new TFile("output/"+data[iData]);
+    TChain *fChain = (TChain*)f->Get("output");
+    dataPlotter.processChain(fChain,1);
+  }
+
+
+  TString outputFileName = (useSherpa ? "output_histgrams_SHERPA.root" : "output_histograms_pythia.root");
+  TFile outputFile(outputFileName,"RECREATE");
+
+  for(int iCat=0;iCat<Ncat;iCat++){
+    for(int iVar=0;iVar<Nvar;iVar++){
+      std::array<TH1F*,3> mc = mcPlotter.getHistogram(catNames[iCat],vars[iVar]);
+      std::array<TH1F*,3> mcCorr = mcPlotter.getHistogram(catNames[iCat],"corr_"+vars[iVar]);
+      std::array<TH1F*,3> data = dataPlotter.getHistogram(catNames[iCat],vars[iVar]);
+      std::array<TH1F*,3> dataCorr = dataPlotter.getHistogram(catNames[iCat],"corr_"+vars[iVar]);
+      TCanvas *cv = makeCanvas(data,mc,vars[iVar],catNames[iCat]);
+
+
+      TString saveVar = vars[iVar];
+      TString folder  = "figs/";
+	
+      if(useSherpa) {
+	saveVar = "SHERPA__"+saveVar;
+	folder  = folder+"SHERPA/";
+      }
+      saveVar.ReplaceAll("/","By");
+      saveVar.ReplaceAll("-","_minus_");
+      saveVar.ReplaceAll("(","_");
+      saveVar.ReplaceAll(")","_");
+
+      
+      TString path = folder+saveVar+"_"+catNames[iCat];
+
+      cv->SaveAs(path+"_lin.png");
+      ((TPad*)cv->GetPrimitive("plotPad"))->SetLogy();
+      cv->SaveAs(path+"_log.png");
+
+      /*
+      if(saveVar!="se"){
+	//TCanvas *cv2 = makeCanvas(dataCorr,mc);
+	TCanvas *cv2 = makeCanvas(data,mcCorr,vars[iVar],catNames[iCat]);
+	cv2->SaveAs(Form("%s/%s_corr_%s_lin.png",saveVar.Data(),catNames[iCat].Data()));
+	((TPad*)cv2->GetPrimitive("plotPad"))->SetLogy();
+	cv2->SaveAs(Form("%s/%s_corr_%s_log.png",saveVar.Data(),catNames[iCat].Data()));
+
+      }else{
+	TCanvas *cv2 = makeCanvas(data,mcCorr,vars[iVar],catNames[iCat]);
+	cv2->SaveAs(Form("%s/%s_corr_%s_lin.png",saveVar.Data(),catNames[iCat].Data()));
+	((TPad*)cv2->GetPrimitive("plotPad"))->SetLogy();
+	cv2->SaveAs(Form("%s/%s_corr_%s_log.png",saveVar.Data(),catNames[iCat].Data()));	
+      }
+      */
+      outputFile.cd();
+      for(auto h : mc)       h->Write();
+      for(auto h : mcCorr)   h->Write();
+      for(auto h : data)     h->Write();
+      for(auto h : dataCorr) h->Write();
+    }
+  }  
+    outputFile.Close();
+    return 0;  
+}
+
+void setstyle(){
+  gStyle->SetOptTitle(0);
+  gStyle->SetOptStat(0);
+  gStyle->SetPadTickX(1);
+  gStyle->SetPadTickY(1);
+  gStyle->SetPadGridX(true);
+  gStyle->SetPadGridY(true);
+  
+}
+
+TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc,TString xName,TString label){
+  TH1F *data_total = (TH1F*)data[0]->Clone("data_total");
+  data_total->Add(data[1]);
+  data_total->Add(data[2]);
+  
+  float data_norm = data_total->Integral();
+  std::cout << "# data events:  " << data_norm << std::endl;
+  
+  THStack mc_stack("mc_stack","");
+  TH1F*   mc_total = (TH1F*)mc[0]->Clone("mc_total");
+  mc_total->Add(mc[1]);
+  mc_total->Add(mc[2]);
+  //compute the total integral for normalization
+  double mc_integral=0;
+  for(auto h : mc) {
+    mc_integral+=h->Integral(); 
+  }
+
+  //make the stack
+  std::array<Color_t,3> colors = {kBlue,kGreen,kRed};
+  assert(colors.size() == mc.size());
+
+  auto h = mc.begin();
+  auto c = colors.begin();
+
+  for(; h!=mc.end(); h++,c++) {
+    //scale MC to data
+    (*h)->Scale(data_norm/mc_integral);
+    (*h)->SetFillColor(*c);
+    mc_stack.Add(*h);
+  }
+
+  TCanvas *cv = new TCanvas();
+  TPad *pad1 = new TPad("plotPad","",0.005,0.21,0.995,0.995);
+  pad1->cd();
+  //cv->Divide(1,2);
+  //cv->cd(1);
+  
+
+  if(data_total->GetMaximum() > mc_stack.GetMaximum()) data_total->SetAxisRange(1e-2,data_total->GetMaximum()*1.2,"Y");
+  else data_total->SetAxisRange(1e-2,mc_stack.GetMaximum()*1.2,"Y");
+  data_total->SetMarkerStyle(8);
+  data_total->Draw("PE1");
+  mc_stack.Draw("HISTSAME");
+  data_total->Draw("PE1SAME");
+  
+  TLegend leg(0.6,0.7,0.85,0.9);
+  leg.SetFillColor(0);
+  leg.SetBorderSize(0);
+  leg.AddEntry(data_total,"Data","P");
+  leg.AddEntry(mc[0],"Real Photons","F");
+  leg.AddEntry(mc[1],"Real Electrons","F");
+  leg.AddEntry(mc[2],"Fakes","F");
+  leg.Draw("SAME");
+
+  TLatex lbl(0.60,0.96,label);
+  lbl.SetNDC();
+  lbl.SetTextSize(0.045);
+  lbl.SetTextColor(kBlack);
+
+  TLatex var(0.12,0.96,xName);
+  var.SetNDC();
+  var.SetTextSize(0.045);
+  var.SetTextColor(kBlack);
+
+  lbl.Draw();
+  var.Draw();
+
+  
+  TPad *pad2 = new TPad("ratioPad","",0.005,0.005,0.995,0.25);
+  pad2->cd();
+  //cv->cd(2);
+  
+  TH1F* ratio = (TH1F*)mc[0]->Clone("ratio");
+  ratio->SetFillColor(0);
+  
+  for(int j=0;j<ratio->GetNbinsX();j++){
+    float dataN = data_total->GetBinContent(j);
+    float mcN = mc_total->GetBinContent(j);
+    float mcE = mc_total->GetBinError(j);
+    if(mcN){
+      ratio->SetBinContent(j,dataN/mcN);
+      if(dataN) ratio->SetBinError(j,dataN/mcN*sqrt(1/dataN+mcE*mcE/mcN/mcN));
+      else ratio->SetBinError(j,0.6);
+    }else{
+      ratio->SetBinContent(j,1);
+      ratio->SetBinError(j,0.6);
+    }
+  }
+  
+  ratio->SetYTitle("Data/MC");
+  ratio->SetAxisRange(-0.1,2.0,"Y");
+  ratio->SetXTitle(xName);
+  ratio->SetFillColor(0);
+  ratio->Draw("E1");
+  
+  cv->cd();
+  pad1->Draw();
+  pad2->Draw();
+
+
+  return cv;  
+}
