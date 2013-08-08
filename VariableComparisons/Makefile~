@@ -1,5 +1,0 @@
-##
-## 
-##
-
-ROOTCFLAGS    = $(shell $(ROOTSYS)/bin/root-config --cflags)
