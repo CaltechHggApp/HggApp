@@ -48,7 +48,7 @@ OUTLIBEGAMMA	 = $(INCLUDEDIRCOMMON)/EgammaAnalysisTools/lib/
 .SUFFIXES: .cc,.C, .hh
 .PREFIXES: ./lib/
 
-all:  lib HggApp HggSelectorApp ZeeSelectorApp MakeHggTrainingTreeApp
+all:  lib HggApp HggSelectorApp ZeeSelectorApp HggMakeTrainingTreeApp
 
 lib: 	$(OUTLIBCOMMON)Conditions.o \
 	$(OUTLIBCOMMON)Selection.o \
