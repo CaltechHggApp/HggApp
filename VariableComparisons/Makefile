@@ -17,6 +17,8 @@ SRCDIR        = ./src/
 BINDIR        = ./bin/
 LIBDIR        = ./lib/
 
+HGGAPPLIB     = ../lib/
+
 all: $(BINDIR)MakeAllVarPlots
 .PHONY: all
 
@@ -32,8 +34,10 @@ $(LIBDIR)plotManager.o: $(SRCDIR)plotManager.cc \
 	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
 
 $(BINDIR)MakeAllVarPlots:  $(SRCDIR)MakeAllVarPlots.C \
-			$(LIBDIR)plotManager.o
-	$(CXX) $(CXXFLAGS) -I$(INCLUDEDIR) -o $@ $(LIBDIR)/*.o $(GLIBS) $<	
+			$(LIBDIR)plotManager.o \
+			$(SRCDIR)getCategories.C \
+			$(HGGAPPLIB)ArgParser.o
+	$(CXX) $(CXXFLAGS) -I$(INCLUDEDIR) -o $@ $(LIBDIR)/*.o $(HGGAPPLIB)ArgParser.o $(GLIBS) $<	
 
 
 
