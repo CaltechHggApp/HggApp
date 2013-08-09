@@ -19,8 +19,11 @@
 #include <array>
 #include <assert.h>
 #include <string>
+#include <tuple>
 
 #include "../include/ArgParser.hh"
+#include "include/HistogramStack.hh"
+
 
 #include <cstdlib>
 
@@ -36,6 +39,7 @@ void setstyle();
 TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc, TString xName,TString label="");
 
 void writeRootFile(TString fileName,bool useSherpa,bool test);
+void DrawFromRootFile(TString fileName,bool useSherpa,bool test);
 
 int main(int argc,char** argv){
   ArgParser a(argc,argv);
@@ -72,6 +76,15 @@ int main(int argc,char** argv){
 
   bool useSherpa = a.longFlagPres("sherpa");
   bool isTest    = a.longFlagPres("test");
+
+  switch(mode) {
+  case kSave:
+    writeRootFile(fileName,useSherpa,isTest);
+    break;
+  case kDraw:
+    DrawFromRootFile(fileName,useSherpa,isTest);
+    break;
+  }
 
 
   return 0;
@@ -130,9 +143,13 @@ void writeRootFile(TString fileName,bool useSherpa,bool test) {
   auto cats = catInfo.first;
   auto catNames = catInfo.second;
 
+
+
   assert(cats.size() == catNames.size());
 
-  if(isTest) {
+  int Ncat = cats.size();
+
+  if(test) {
     Ncat = Ndata = Nsamples = 1;
   }
 
@@ -143,19 +160,14 @@ void writeRootFile(TString fileName,bool useSherpa,bool test) {
 
   mcPlotter.addVetos(&globalVetos);
   dataPlotter.addVetos(&globalVetos);
-  const int Nvar=19;
-  TString vars[Nvar] = {"se","r9","sieie","sieip","sipip","etaWidth","phiWidth","HE",  "energyBC/rawE","e3x3/energyBC","e5x5/energyBC","eMax/energyBC","e2x5Max/energyBC","nBC","etaBC-etaSC","pt*cosh(etaSC)/rawE","mass","pt","etaSC"};
-  int     bins[Nvar] = {50  , 80 , 50 ,   50 ,    50 ,    50 ,       50 ,       50 ,   50 ,            50 ,            50 ,             50 ,           50,                 20,  50,            50,                  80,   100, 50 };
-  float   low [Nvar] = {0.0 , 0.2, 0.0,   0.0,    0.0,    0.0,       0.0,       0.0,   0.0,            0.0,            0.0,             0.0,           0.0,                0,   0.0,           0.5,                 80,    0,   -2.5};
-  float   high[Nvar] = {0.04, 1.0, 0.04,  0.0004,  0.1,    0.05,      0.2,       0.2,   2.0,            2.0,            2.0,             2.0,           2.0,               20,  0.03,          1.5,                 200,   1000, 2.5};
 
-
-  for(int i=0;i<Nvar;i++){
-    mcPlotter.addVariable  (vars[i],vars[i],bins[i],low[i],high[i]);
-    mcPlotter.addVariable  ("corr_"+vars[i],vars[i],bins[i],low[i],high[i],true);
-    dataPlotter.addVariable(vars[i],vars[i],bins[i],low[i],high[i]);
-    dataPlotter.addVariable("corr_"+vars[i],vars[i],bins[i],low[i],high[i],true);
+  auto vars = getVars();
+  for(auto it : vars) {
+    mcPlotter.addVariable  (translateVar(std::get<0>(it)),std::get<0>(it),std::get<1>(it),std::get<2>(it),std::get<3>(it));
+    dataPlotter.addVariable  (translateVar(std::get<0>(it)),std::get<0>(it),std::get<1>(it),std::get<2>(it),std::get<3>(it));
   }
+
+  int Nvar = vars.size();
 
   for(int iSample=0;iSample<Nsamples;iSample++){
     TFile *f = new TFile("output/"+samples[iSample]);
@@ -176,44 +188,69 @@ void writeRootFile(TString fileName,bool useSherpa,bool test) {
   outputFile.cd();
   for(int iCat=0;iCat<Ncat;iCat++){
     for(int iVar=0;iVar<Nvar;iVar++){
-      std::array<TH1F*,3> mc = mcPlotter.getHistogram(catNames[iCat],vars[iVar]);
-      std::array<TH1F*,3> mcCorr = mcPlotter.getHistogram(catNames[iCat],"corr_"+vars[iVar]);
-      std::array<TH1F*,3> data = dataPlotter.getHistogram(catNames[iCat],vars[iVar]);
-      std::array<TH1F*,3> dataCorr = dataPlotter.getHistogram(catNames[iCat],"corr_"+vars[iVar]);
+      std::array<TH1F*,3> mc = mcPlotter.getHistogram(catNames[iCat],std::get<0>(vars[iVar]));
+      //std::array<TH1F*,3> mcCorr = mcPlotter.getHistogram(catNames[iCat],"corr_"+vars[iVar]);
+      std::array<TH1F*,3> data = dataPlotter.getHistogram(catNames[iCat],std::get<0>(vars[iVar]));
+      //std::array<TH1F*,3> dataCorr = dataPlotter.getHistogram(catNames[iCat],"corr_"+vars[iVar]);
       for(auto h : mc)       h->Write();
-      for(auto h : mcCorr)   h->Write();
+      //for(auto h : mcCorr)   h->Write();
       for(auto h : data)     h->Write();
-      for(auto h : dataCorr) h->Write();
+      //for(auto h : dataCorr) h->Write();
     }
   }
-}
+
+} //void writeRootFile
 
 
-
-  for(int iCat=0;iCat<Ncat;iCat++){
-    for(int iVar=0;iVar<Nvar;iVar++){
-      std::array<TH1F*,3> mc = mcPlotter.getHistogram(catNames[iCat],vars[iVar]);
-      std::array<TH1F*,3> mcCorr = mcPlotter.getHistogram(catNames[iCat],"corr_"+vars[iVar]);
-      std::array<TH1F*,3> data = dataPlotter.getHistogram(catNames[iCat],vars[iVar]);
-      std::array<TH1F*,3> dataCorr = dataPlotter.getHistogram(catNames[iCat],"corr_"+vars[iVar]);
-      TCanvas *cv = makeCanvas(data,mc,vars[iVar],catNames[iCat]);
+void DrawFromRootFile(TString fileName,bool isTest,bool useSherpa) {
+  auto catInfo = getCategories();
+  auto vars     = getVars();
 
 
-      TString saveVar = vars[iVar];
-      TString folder  = "figs/";
+  std::vector<TString> catNames = catInfo.second;
+  int Ncat = catNames.size();
+  int Nvar = vars.size();
+
+  TFile *file = new TFile(fileName);
+
+  for(auto catNameIt : catNames) {
+    for(auto varIt : vars) {
+      TString varName = std::get<0>(varIt);
+      std::array<TH1F*,3> mc,data;
+
+
+    }//for(auto varIt : vars)
+  }//  for(auto catNameIt : catNames)
+
+  const int nTypes=3;
+
+  TString folder  = "figs/";
+  if(useSherpa) folder  = folder+"SHERPA/";
+
+
+  std::array<TString,nTypes> histSuffix = {"realPho","realEle","fake"};
+  for(auto catIt : catNames) {
+    for(auto varIt : vars) {
+      std::array<TH1F*,nTypes> mc,data;
+      TString transVar = translateVar(std::get<0>(varIt));
+
+      for(int i=0;i<nTypes;i++) {
+	std::cout << transVar+"_"+catIt+"_mc_"+histSuffix[i] << std::endl;
+	mc[i] = (TH1F*)file->Get( transVar+"_"+catIt+"_mc_"+histSuffix[i] );
+	data[i] = (TH1F*)file->Get( transVar+"_"+catIt+"_data_"+histSuffix[i] );
+      }
+      if(mc[0]==0) continue;
+      TCanvas *cv = makeCanvas(data,mc,std::get<0>(varIt),catIt);
+
+
+      TString saveVar = transVar;
       if(isTest) saveVar+="__TEST";
       
       if(useSherpa) {
 	saveVar = "SHERPA__"+saveVar;
-	folder  = folder+"SHERPA/";
       }
-      saveVar.ReplaceAll("/","By");
-      saveVar.ReplaceAll("-","_minus_");
-      saveVar.ReplaceAll("(","_");
-      saveVar.ReplaceAll(")","_");
 
-      
-      TString path = folder+saveVar+"_"+catNames[iCat];
+      TString path = folder+saveVar+"_"+catIt;
 
       cv->SaveAs(path+"_lin.png");
       ((TPad*)cv->GetPrimitive("plotPad"))->SetLogy();
@@ -236,8 +273,6 @@ void writeRootFile(TString fileName,bool useSherpa,bool test) {
       */
     }
   }  
-    outputFile.Close();
-    return 0;  
 }
 
 void setstyle(){
@@ -251,6 +286,7 @@ void setstyle(){
 }
 
 TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc,TString xName,TString label){
+  std::cout << data[0] << std::endl;
   TH1F *data_total = (TH1F*)data[0]->Clone("data_total");
   data_total->Add(data[1]);
   data_total->Add(data[2]);
@@ -258,15 +294,9 @@ TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc,TString xNam
   float data_norm = data_total->Integral();
   std::cout << "# data events:  " << data_norm << std::endl;
   
-  THStack mc_stack("mc_stack","");
-  TH1F*   mc_total = (TH1F*)mc[0]->Clone("mc_total");
-  mc_total->Add(mc[1]);
-  mc_total->Add(mc[2]);
+  
+  HistogramStack mc_stack;
   //compute the total integral for normalization
-  double mc_integral=0;
-  for(auto h : mc) {
-    mc_integral+=h->Integral(); 
-  }
 
   //make the stack
   std::array<Color_t,3> colors = {kBlue,kGreen,kRed};
@@ -277,7 +307,7 @@ TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc,TString xNam
 
   for(; h!=mc.end(); h++,c++) {
     //scale MC to data
-    (*h)->Scale(data_norm/mc_integral);
+    (*h)->Scale(data_norm/mc_stack.getTotal()->Integral());
     (*h)->SetFillColor(*c);
     mc_stack.Add(*h);
   }
@@ -292,8 +322,8 @@ TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc,TString xNam
   //if(data_total->GetMaximum() > mc_stack.GetMaximum()) data_total->SetAxisRange(1e-2,data_total->GetMaximum()*1.2,"Y");
   //else data_total->SetAxisRange(1e-2,mc_stack.GetMaximum()*1.2,"Y");
   data_total->SetMarkerStyle(8);
-  //data_total->Draw("PE1");
-  mc_stack.Draw("HIST");
+  data_total->Draw("PE1");
+  mc_stack.Draw("HISTSAME");
   data_total->Draw("PE1SAME");
   
   TLegend leg(0.6,0.7,0.85,0.9);

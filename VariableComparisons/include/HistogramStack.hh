@@ -17,7 +17,7 @@ private:
   std::vector<T*> hists;
 
   TString rand_tag;
-}
+};
 
 
 
