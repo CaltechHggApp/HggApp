@@ -17,10 +17,10 @@ HistogramStack<T>::HistogramStack() {
 
 template<typename T>
 void HistogramStack<T>::Add(T& h) {
-  T* hclone = (T*)h.Clone(TString(h.GetName())+TString("__HistogramStack_internal_clone_")+rand_tag);
+  T* hclone = (T*)h.Clone(TString(h.GetName())+TString("__HistogramStack_internal_clone_")+TString(rand_tag));
   std::cout << hclone->GetName() << std::endl;
   
-  hclone->Add(hists.back());
+  if(hists.size()>0) hclone->Add(hists.back());
   hists.push_back(hclone);
 }
 

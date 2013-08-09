@@ -202,7 +202,7 @@ void writeRootFile(TString fileName,bool useSherpa,bool test) {
 } //void writeRootFile
 
 
-void DrawFromRootFile(TString fileName,bool isTest,bool useSherpa) {
+void DrawFromRootFile(TString fileName,bool useSherpa,bool isTest) {
   auto catInfo = getCategories();
   auto vars     = getVars();
 
@@ -235,7 +235,6 @@ void DrawFromRootFile(TString fileName,bool isTest,bool useSherpa) {
       TString transVar = translateVar(std::get<0>(varIt));
 
       for(int i=0;i<nTypes;i++) {
-	std::cout << transVar+"_"+catIt+"_mc_"+histSuffix[i] << std::endl;
 	mc[i] = (TH1F*)file->Get( transVar+"_"+catIt+"_mc_"+histSuffix[i] );
 	data[i] = (TH1F*)file->Get( transVar+"_"+catIt+"_data_"+histSuffix[i] );
       }
@@ -295,8 +294,10 @@ TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc,TString xNam
   std::cout << "# data events:  " << data_norm << std::endl;
   
   
-  HistogramStack mc_stack;
+  HistogramStack<TH1F> mc_stack;
   //compute the total integral for normalization
+  double mc_integral = 0;
+  for(auto h : mc) mc_integral+=h->Integral();
 
   //make the stack
   std::array<Color_t,3> colors = {kBlue,kGreen,kRed};
@@ -307,9 +308,9 @@ TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc,TString xNam
 
   for(; h!=mc.end(); h++,c++) {
     //scale MC to data
-    (*h)->Scale(data_norm/mc_stack.getTotal()->Integral());
+    (*h)->Scale(data_norm/mc_integral);
     (*h)->SetFillColor(*c);
-    mc_stack.Add(*h);
+    mc_stack.Add(**h);
   }
 
   TCanvas *cv = new TCanvas();
@@ -358,8 +359,8 @@ TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc,TString xNam
   
   for(int j=0;j<ratio->GetNbinsX();j++){
     float dataN = data_total->GetBinContent(j);
-    float mcN = mc_total->GetBinContent(j);
-    float mcE = mc_total->GetBinError(j);
+    float mcN = mc_stack.getTotal()->GetBinContent(j);
+    float mcE = mc_stack.getTotal()->GetBinError(j);
     if(mcN){
       ratio->SetBinContent(j,dataN/mcN);
       if(dataN) ratio->SetBinError(j,dataN/mcN*sqrt(1/dataN+mcE*mcE/mcN/mcN));
