@@ -20,12 +20,12 @@ public:
   plotManager(TString inTag="");
   void addCategory(TString name,TString cut);
   void addVariable(TString name,TString var,int bins, float low, float high,bool correct=false);
-  void processChain(TChain *fChain,float weight);
+  virtual void processChain(TChain *fChain,float weight);
   std::array<TH1F*,3> getHistogram(TString cat, TString var);
   void addVetos(std::vector<TString>* v){vetos = v;}
   void saveAll(TFile *f);
   void setUse4Cat(bool b = true){use4Cat=b;}
-private:
+protected:
   std::vector<TString>* vetos;
   std::vector<TTreeFormula*> vetoFormulas;
   bool freeze;

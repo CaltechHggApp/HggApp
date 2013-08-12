@@ -192,9 +192,9 @@ void writeRootFile(TString fileName,bool useSherpa,bool test) {
       //std::array<TH1F*,3> mcCorr = mcPlotter.getHistogram(catNames[iCat],"corr_"+vars[iVar]);
       std::array<TH1F*,3> data = dataPlotter.getHistogram(catNames[iCat],std::get<0>(vars[iVar]));
       //std::array<TH1F*,3> dataCorr = dataPlotter.getHistogram(catNames[iCat],"corr_"+vars[iVar]);
-      for(auto h : mc)       h->Write();
+      for(auto h : mc)       if(h) {h->Write();}
       //for(auto h : mcCorr)   h->Write();
-      for(auto h : data)     h->Write();
+      for(auto h : data)     if(h) {h->Write();}
       //for(auto h : dataCorr) h->Write();
     }
   }
