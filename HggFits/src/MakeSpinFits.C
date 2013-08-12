@@ -857,9 +857,9 @@ RooAbsPdf* MakeSpinFits::Make2DBkgModel(TString massMcName,TString costMcName,TS
 */
 
 void MakeSpinFits::MakeBackground(){
-  RooDataSet Background_Combined(*(ws->data("Data_Combined")),"Background");
+  RooDataSet Background_Combined(*((RooDataSet*)ws->data("Data_Combined")),"Background");
   for (auto mcIt=mcLabel.begin(); mcIt != mcLabel.end(); mcIt++){
-    append(*(ws->data(*mcIt+"_Combined")),*mcIt);
+    Background_Combined.append(*((RooDataSet*)ws->data(*mcIt+"_Combined")));
   }
   ws->import(Background_Combined);
 }
