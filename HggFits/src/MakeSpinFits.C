@@ -855,6 +855,14 @@ RooAbsPdf* MakeSpinFits::Make2DSignalModel(TString massMcName,TString costMcName
 
 RooAbsPdf* MakeSpinFits::Make2DBkgModel(TString massMcName,TString costMcName,TString catTag,TString inset){return 0;}
 */
+
+void MakeSpinFits::MakeBackground(){
+  RooDataSet Background_Combined(*(ws->data("Data_Combined")),"Background");
+  for (auto mcIt=mcLabel.begin(); mcIt != mcLabel.end(); mcIt++){
+    append(*(ws->data(*mcIt+"_Combined")),*mcIt);
+  }
+  ws->import(Background_Combined);
+}
 void MakeSpinFits::MakeBackgroundOnlyFit(TString catTag, float cosTlow, float cosThigh,bool fitMCbackground){
   std::cout << "MakeSpinFits::MakeBackgroundOnlyFit" <<std::endl;
   if(ws==0) return;
@@ -1045,6 +1053,18 @@ void MakeSpinFits::run(){
   ws->import(cosThetaBins);
 
   binDatasetCosT(*(ws->data("Data_Combined")),"Data");
+  MakeBackground();
+  binDatasetCosT(*(ws->data("Background_Combined")),"Background");
+
+
+  for(auto catIt=catLabels.begin(); catIt != catLabels.end(); catIt++){
+    MakeBackgroundOnlyFit(*catIt);
+    for(int i=0;i<NcosTbins;i++) MakeBackgroundOnlyFit(*catIt,cosTbinEdges[i],cosTbinEdges[i+1]);	
+    MakeBackgroundOnlyFit(*catIt,-2,2,true);
+    for(int i=0;i<NcosTbins;i++) MakeBackgroundOnlyFit(*catIt,cosTbinEdges[i],cosTbinEdges[i+1],true);	
+  }
+  if(bkgOnly) return;
+
 
   //run fits in the correct order for each MC type
   for(auto mcIt=mcLabel.begin(); mcIt != mcLabel.end(); mcIt++){
@@ -1067,14 +1087,6 @@ void MakeSpinFits::run(){
 	MakeSignalFitForFit(*catIt+Form("_cosT_%0.2f_%0.2f",cosTbinEdges[i],cosTbinEdges[i+1]),*mcIt);
       }
     }
-
-    for(auto catIt=catLabels.begin(); catIt != catLabels.end(); catIt++){
-      MakeBackgroundOnlyFit(*catIt);
-      for(int i=0;i<NcosTbins;i++) MakeBackgroundOnlyFit(*catIt,cosTbinEdges[i],cosTbinEdges[i+1]);	
-      MakeBackgroundOnlyFit(*catIt);
-      for(int i=0;i<NcosTbins;i++) MakeBackgroundOnlyFit(*catIt,cosTbinEdges[i],cosTbinEdges[i+1]);	
-    }
-
 
     MakeCombinedSignalTest(*mcIt);
     MakeFloatingSignalTest(*mcIt);
