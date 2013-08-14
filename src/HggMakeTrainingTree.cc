@@ -47,6 +47,8 @@ void HggMakeTrainingTree::processEntry(Long64_t iEntry){
 
       if(match==false) continue;
     }
+ 
+    if(outPhoton->genMatch.index == -1 && requireGenMatchElectron) continue;
 
     outTree->Fill();
       
