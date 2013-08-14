@@ -26,6 +26,9 @@
 
 
 #include <cstdlib>
+#include <algorithm>
+#include <iomanip>
+
 
 //local includes
 #include "include/weightManager.hh"
@@ -34,18 +37,16 @@
 #include "src/getCategories.C"
 
 
-void setstyle();
-
-TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc, TString xName,TString label="");
+//TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc, TString xName,TString label="");
 
 void writeRootFile(TString fileName,bool useSherpa,bool test);
-void DrawFromRootFile(TString fileName,bool useSherpa,bool test);
+void CalcFromRootFile(TString fileName,bool useSherpa,bool test);
 
 int main(int argc,char** argv){
   ArgParser a(argc,argv);
 
 
-  a.addArgument("mode",ArgParser::required,"specify the operation mode (save,draw)");
+  a.addArgument("mode",ArgParser::required,"specify the operation mode (save,calculate)");
   a.addArgument("rootFileName",ArgParser::required,"specify the name of the root file");
   a.addLongOption("sherpa",ArgParser::noArg,"use SHERPA diphoton jets sample");
   a.addLongOption("test",ArgParser::noArg,"Only process 1 MC file (useful for testing)");
@@ -62,11 +63,11 @@ int main(int argc,char** argv){
     return 0;
   }
   
-  enum OpMode{kNone,kSave,kDraw};
+  enum OpMode{kNone,kSave,kCalc};
   OpMode mode = kNone;
 
   if(a.getArgument("mode").compare("save")==0) mode=kSave;
-  if(a.getArgument("mode").compare("draw")==0) mode=kDraw;
+  if(a.getArgument("mode").compare("calculate")==0) mode=kCalc;
   
   if(mode==kNone) {
     std::cout << "\nInvalid Mode Speficied:  " << a.getArgument("mode") << std::endl << std::endl;
@@ -81,8 +82,8 @@ int main(int argc,char** argv){
   case kSave:
     writeRootFile(fileName,useSherpa,isTest);
     break;
-  case kDraw:
-    DrawFromRootFile(fileName,useSherpa,isTest);
+  case kCalc:
+    CalcFromRootFile(fileName,useSherpa,isTest);
     break;
   }
 
@@ -100,8 +101,6 @@ void writeRootFile(TString fileName,bool useSherpa,bool test) {
   plotManager2D dataPlotter("data");
   mcPlotter.setUse4Cat();
   dataPlotter.setUse4Cat();
-
-  setstyle();
 
   std::vector<TString> samples = {
     "GJets_Pt20to40.root",
@@ -174,6 +173,7 @@ void writeRootFile(TString fileName,bool useSherpa,bool test) {
     TChain *fChain = (TChain*)f->Get("output");
     TString sampleName = samples[iSample];
     sampleName.Remove(sampleName.Last('.'));
+    std::cout << sampleName << std::endl;
     mcPlotter.processChain(fChain,weights.getWeight(sampleName,lumi));
   }
 
@@ -190,8 +190,36 @@ void writeRootFile(TString fileName,bool useSherpa,bool test) {
 
 } //void writeRootFile
 
+struct plotRef{
+  TString var1,var2,cat;
+  float mc_corr,data_corr;
+  float diff;
+  void calcDiff() { diff = fabs(mc_corr-data_corr); }
+};
 
-void DrawFromRootFile(TString fileName,bool useSherpa,bool isTest) {
+
+void getCorrFromRef(plotRef& ref,TFile *file) {
+  std::array<TString,3> histSuffix = {"realPho","realEle","fake"};
+  TH2F* mc =   (TH2F*)file->Get( ref.var1+"_"+ref.var2+"_"+ref.cat+"_mc_"+histSuffix[0] );
+  if(mc==0) return;
+  TH2F* data = (TH2F*)file->Get( ref.var1+"_"+ref.var2+"_"+ref.cat+"_data_"+histSuffix[0] );
+
+  for(int i=1;i<3;i++) {
+    mc->Add(  (TH2F*)file->Get( ref.var1+"_"+ref.var2+"_"+ref.cat+"_mc_"+histSuffix[i] )  );
+    data->Add(  (TH2F*)file->Get( ref.var1+"_"+ref.var2+"_"+ref.cat+"_data_"+histSuffix[i] )  );
+  }
+
+  ref.mc_corr = mc->GetCorrelationFactor();
+  ref.data_corr = data->GetCorrelationFactor();
+  ref.calcDiff();
+}
+
+bool ComparePlotRef(const plotRef& a, const plotRef& b) {
+  return a.diff > b.diff;
+  //return a.data_corr < b.data_corr;
+}
+
+void CalcFromRootFile(TString fileName,bool useSherpa,bool isTest) {
   auto catInfo = getCategories();
   auto vars     = getVars();
 
@@ -202,174 +230,36 @@ void DrawFromRootFile(TString fileName,bool useSherpa,bool isTest) {
 
   TFile *file = new TFile(fileName);
 
-  for(auto catNameIt : catNames) {
-    for(auto varIt : vars) {
-      TString varName = std::get<0>(varIt);
-      std::array<TH1F*,3> mc,data;
+  std::vector<plotRef> correlationList;
 
-
-    }//for(auto varIt : vars)
-  }//  for(auto catNameIt : catNames)
-
-  const int nTypes=3;
-
-  TString folder  = "figs/";
-  if(useSherpa) folder  = folder+"SHERPA/";
-
-
-  std::array<TString,nTypes> histSuffix = {"realPho","realEle","fake"};
+  std::array<TString,3> histSuffix = {"realPho","realEle","fake"};
   for(auto catIt : catNames) {
-    for(auto varIt : vars) {
-      std::array<TH1F*,nTypes> mc,data;
-      TString transVar = translateVar(std::get<0>(varIt));
-
-      for(int i=0;i<nTypes;i++) {
-	mc[i] = (TH1F*)file->Get( transVar+"_"+catIt+"_mc_"+histSuffix[i] );
-	data[i] = (TH1F*)file->Get( transVar+"_"+catIt+"_data_"+histSuffix[i] );
+    for(auto var1It : vars) {
+      for(auto var2It: vars) {
+	plotRef r = {std::get<0>(var1It),std::get<0>(var2It),catIt,-2,2};
+	getCorrFromRef(r,file);
+	if(r.mc_corr<-1) continue;
+	correlationList.push_back(r);
       }
-      if(mc[0]==0) continue;
-      TCanvas *cv = makeCanvas(data,mc,std::get<0>(varIt),catIt);
-
-
-      TString saveVar = transVar;
-      if(isTest) saveVar+="__TEST";
-      
-      if(useSherpa) {
-	saveVar = "SHERPA__"+saveVar;
-      }
-
-      TString path = folder+saveVar+"_"+catIt;
-
-      cv->SaveAs(path+"_lin.png");
-      ((TPad*)cv->GetPrimitive("plotPad"))->SetLogy();
-      cv->SaveAs(path+"_log.png");
-
-      /*
-      if(saveVar!="se"){
-	//TCanvas *cv2 = makeCanvas(dataCorr,mc);
-	TCanvas *cv2 = makeCanvas(data,mcCorr,vars[iVar],catNames[iCat]);
-	cv2->SaveAs(Form("%s/%s_corr_%s_lin.png",saveVar.Data(),catNames[iCat].Data()));
-	((TPad*)cv2->GetPrimitive("plotPad"))->SetLogy();
-	cv2->SaveAs(Form("%s/%s_corr_%s_log.png",saveVar.Data(),catNames[iCat].Data()));
-
-      }else{
-	TCanvas *cv2 = makeCanvas(data,mcCorr,vars[iVar],catNames[iCat]);
-	cv2->SaveAs(Form("%s/%s_corr_%s_lin.png",saveVar.Data(),catNames[iCat].Data()));
-	((TPad*)cv2->GetPrimitive("plotPad"))->SetLogy();
-	cv2->SaveAs(Form("%s/%s_corr_%s_log.png",saveVar.Data(),catNames[iCat].Data()));	
-      }
-      */
-    }
-  }  
-}
-
-void setstyle(){
-  gStyle->SetOptTitle(0);
-  gStyle->SetOptStat(0);
-  gStyle->SetPadTickX(1);
-  gStyle->SetPadTickY(1);
-  gStyle->SetPadGridX(true);
-  gStyle->SetPadGridY(true);
-  
-}
-
-TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc,TString xName,TString label){
-  std::cout << data[0] << std::endl;
-  TH1F *data_total = (TH1F*)data[0]->Clone("data_total");
-  data_total->Add(data[1]);
-  data_total->Add(data[2]);
-  
-  float data_norm = data_total->Integral();
-  std::cout << "# data events:  " << data_norm << std::endl;
-  
-  
-  HistogramStack<TH1F> mc_stack;
-  //compute the total integral for normalization
-  double mc_integral = 0;
-  for(auto h : mc) mc_integral+=h->Integral();
-
-  //make the stack
-  std::array<Color_t,3> colors = {kBlue,kGreen,kRed};
-  assert(colors.size() == mc.size());
-
-  auto h = mc.begin();
-  auto c = colors.begin();
-
-  for(; h!=mc.end(); h++,c++) {
-    //scale MC to data
-    (*h)->Scale(data_norm/mc_integral);
-    (*h)->SetFillColor(*c);
-    mc_stack.Add(**h);
-  }
-
-  TCanvas *cv = new TCanvas();
-  TPad *pad1 = new TPad("plotPad","",0.005,0.21,0.995,0.995);
-  pad1->cd();
-  //cv->Divide(1,2);
-  //cv->cd(1);
-  
-
-  //if(data_total->GetMaximum() > mc_stack.GetMaximum()) data_total->SetAxisRange(1e-2,data_total->GetMaximum()*1.2,"Y");
-  //else data_total->SetAxisRange(1e-2,mc_stack.GetMaximum()*1.2,"Y");
-  data_total->SetMarkerStyle(8);
-  data_total->Draw("PE1");
-  mc_stack.Draw("HISTSAME");
-  data_total->Draw("PE1SAME");
-  
-  TLegend leg(0.6,0.7,0.85,0.9);
-  leg.SetFillColor(0);
-  leg.SetBorderSize(0);
-  leg.AddEntry(data_total,"Data","P");
-  leg.AddEntry(mc[0],"Real Photons","F");
-  leg.AddEntry(mc[1],"Real Electrons","F");
-  leg.AddEntry(mc[2],"Fakes","F");
-  leg.Draw("SAME");
-
-  TLatex lbl(0.60,0.96,label);
-  lbl.SetNDC();
-  lbl.SetTextSize(0.045);
-  lbl.SetTextColor(kBlack);
-
-  TLatex var(0.12,0.96,xName);
-  var.SetNDC();
-  var.SetTextSize(0.045);
-  var.SetTextColor(kBlack);
-
-  lbl.Draw();
-  var.Draw();
-
-  
-  TPad *pad2 = new TPad("ratioPad","",0.005,0.005,0.995,0.25);
-  pad2->cd();
-  //cv->cd(2);
-  
-  TH1F* ratio = (TH1F*)mc[0]->Clone("ratio");
-  ratio->SetFillColor(0);
-  
-  for(int j=0;j<ratio->GetNbinsX();j++){
-    float dataN = data_total->GetBinContent(j);
-    float mcN = mc_stack.getTotal()->GetBinContent(j);
-    float mcE = mc_stack.getTotal()->GetBinError(j);
-    if(mcN){
-      ratio->SetBinContent(j,dataN/mcN);
-      if(dataN) ratio->SetBinError(j,dataN/mcN*sqrt(1/dataN+mcE*mcE/mcN/mcN));
-      else ratio->SetBinError(j,0.6);
-    }else{
-      ratio->SetBinContent(j,1);
-      ratio->SetBinError(j,0.6);
     }
   }
+  std::sort(correlationList.begin(),correlationList.end(),ComparePlotRef);
   
-  ratio->SetYTitle("Data/MC");
-  ratio->SetAxisRange(-0.1,2.0,"Y");
-  ratio->SetXTitle(xName);
-  ratio->SetFillColor(0);
-  ratio->Draw("E1");
-  
-  cv->cd();
-  pad1->Draw();
-  pad2->Draw();
-
-
-  return cv;  
+  //std::cout << "var1    var2   cat     corr_mc     corr_data      diff" << std::endl;
+  std::cout << std::setw(50) << "var1";
+  std::cout << std::setw(50) << "var2";
+  std::cout << std::setw(80) << "cat";
+  std::cout << std::setw(25) << "Corr MC";
+  std::cout << std::setw(25) << "Corr Data";
+  std::cout << std::endl;
+  int i=0;
+  for(auto r: correlationList) {
+    if(++i >=60) break;
+  std::cout << std::setw(50) << r.var1;
+  std::cout << std::setw(50) << r.var2;
+  std::cout << std::setw(80) << r.cat;
+  std::cout << std::setw(25) << r.mc_corr;
+  std::cout << std::setw(25) << r.data_corr;
+  std::cout << std::endl;
+  }
 }

@@ -18,7 +18,7 @@ protected:
 
   void buildHistograms2D();
   void processEntry2D(float weight);
-
+  bool freeze2D=false;
 };
 
 #endif

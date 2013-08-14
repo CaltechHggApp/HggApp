@@ -2,8 +2,8 @@
 #include "assert.h"
 
 void plotManager2D::buildHistograms2D(){
-  if(freeze) return;
-  freeze = true;
+  if(freeze2D) return;
+  freeze2D = true;
   for(int i=0;i<catNames.size();i++){
     std::vector<std::vector<TH2F*>> perCat_rp;
     std::vector<std::vector<TH2F*>> perCat_re;
@@ -112,6 +112,10 @@ void plotManager2D::saveAll2D(TFile *f){
 	realPho2DHistograms.at(i).at(j).at(k)->Write();
 	realEle2DHistograms.at(i).at(j).at(k)->Write();
 	fake2DHistograms.at(i).at(j).at(k)->Write();
+	TH2F* total = (TH2F*)realPho2DHistograms.at(i).at(j).at(k)->Clone(variables.at(j)+"_"+variables.at(k)+"_"+catNames.at(i)+"_"+histNameTag+"_total");
+	total->Add((TH2F*)realEle2DHistograms.at(i).at(j).at(k));
+	total->Add((TH2F*)fake2DHistograms.at(i).at(j).at(k));
+	total->Write();
       }
     }
   }    
