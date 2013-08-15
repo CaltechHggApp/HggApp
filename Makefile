@@ -48,7 +48,7 @@ OUTLIBEGAMMA	 = $(INCLUDEDIRCOMMON)/EgammaAnalysisTools/lib/
 .SUFFIXES: .cc,.C, .hh
 .PREFIXES: ./lib/
 
-all:  lib HggApp HggSelectorApp ZeeSelectorApp HggMakeTrainingTreeApp
+all:  lib HggApp HggSelectorApp ZeeSelectorApp HggMakeTrainingTreeApp MakePUDist
 
 lib: 	$(OUTLIBCOMMON)Conditions.o \
 	$(OUTLIBCOMMON)Selection.o \
@@ -102,6 +102,9 @@ HggApp: $(SRCDIR)HggApp.C \
 	$(OUTLIB)GBRForest.o \
 	$(OUTLIB)ArgParser.o
 	$(CXX) $(CXXFLAGS) -o HggApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
+
+MakePUDist: $(SRCDIR)MakePUDist.C
+	$(CXX) $(CXXFLAGS) -o MakePUDist $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
 HggSelectorApp: $(SRCDIR)HggSelectorApp.C \
 	$(OUTLIBCOMMON)Conditions.o \

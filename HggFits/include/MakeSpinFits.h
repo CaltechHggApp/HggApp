@@ -142,6 +142,8 @@ public:
 
   void AddCombinedBkgOnlySWeight(TString mcName); //!< add the SWeighted datasets from the combined fit
 
+  void MakeBackground(); //!< Sum Background MC datasets into a new dataset Background_Combined
+
   /*!
     Takes all the labels of a RooCategory in the given workspace into a vector of TStrings
 
@@ -171,6 +173,8 @@ public:
 
   void setCosTBins(const int N, const float *edges); //!< specify the bin boundaries for cosT binning.  N = size(edges)
 
+  void setMakeBkgOnly(bool b=true){bkgOnly=b;}
+
   static std::pair<float,float> getCosTRangeFromCatName(TString name);
 protected:
   RooWorkspace *ws;
@@ -182,6 +186,7 @@ protected:
 
   bool addSWeight;
   bool useCB;
+  bool bkgOnly;
   TFile *inputFile;
   TFile *outputFile;
 

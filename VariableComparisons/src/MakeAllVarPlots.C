@@ -18,6 +18,11 @@
 #include <cmath>
 #include <array>
 #include <assert.h>
+#include <string>
+#include <tuple>
+
+#include "../include/ArgParser.hh"
+#include "include/HistogramStack.hh"
 
 
 #include <cstdlib>
@@ -26,20 +31,66 @@
 #include "include/weightManager.hh"
 #include "include/varCorrector.hh"
 #include "include/plotManager.hh"
+#include "src/getCategories.C"
 
 
 void setstyle();
 
 TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc, TString xName,TString label="");
 
-#define __USE_SHERPA  0
+void writeRootFile(TString fileName,bool useSherpa,bool test);
+void DrawFromRootFile(TString fileName,bool useSherpa,bool test);
 
 int main(int argc,char** argv){
-  bool useSherpa=false;
-  if(argc>1) {
-    if( strcmp(argv[1],"SHERPA")==0 ) useSherpa=true;
+  ArgParser a(argc,argv);
+
+
+  a.addArgument("mode",ArgParser::required,"specify the operation mode (save,draw)");
+  a.addArgument("rootFileName",ArgParser::required,"specify the name of the root file");
+  a.addLongOption("sherpa",ArgParser::noArg,"use SHERPA diphoton jets sample");
+  a.addLongOption("test",ArgParser::noArg,"Only process 1 MC file (useful for testing)");
+  a.addShortOption('h',ArgParser::noArg,"print help");
+  std::string ret;
+  if(a.process(ret)!=0) {
+    std::cout << "\nInvalid Option " << ret << std::endl << std::endl;;
+    a.printOptions(argv[0]);
+    return 0;
   }
 
+  if(a.shortFlagPres('h')) {
+    a.printOptions(argv[0]);
+    return 0;
+  }
+  
+  enum OpMode{kNone,kSave,kDraw};
+  OpMode mode = kNone;
+
+  if(a.getArgument("mode").compare("save")==0) mode=kSave;
+  if(a.getArgument("mode").compare("draw")==0) mode=kDraw;
+  
+  if(mode==kNone) {
+    std::cout << "\nInvalid Mode Speficied:  " << a.getArgument("mode") << std::endl << std::endl;
+    return -1;
+  }
+  TString fileName = a.getArgument("rootFileName");
+
+  bool useSherpa = a.longFlagPres("sherpa");
+  bool isTest    = a.longFlagPres("test");
+
+  switch(mode) {
+  case kSave:
+    writeRootFile(fileName,useSherpa,isTest);
+    break;
+  case kDraw:
+    DrawFromRootFile(fileName,useSherpa,isTest);
+    break;
+  }
+
+
+  return 0;
+}
+
+void writeRootFile(TString fileName,bool useSherpa,bool test) {
   if(useSherpa) std::cout << "SHERPA!!" << std::endl;
 
   float lumi=6.3;
@@ -70,13 +121,13 @@ int main(int argc,char** argv){
     samples.push_back("DiPhotonJets.root");    
   }
 
-  const int Nsamples = samples.size();
+  int Nsamples = samples.size();
 
   std::vector<TString> data = {
     "DoublePhoton_Run2012B_13Jul2012.root"
   };
 
-  const int Ndata = data.size();
+  int Ndata = data.size();
 
 
   std::vector<TString> globalVetos;
@@ -88,93 +139,19 @@ int main(int argc,char** argv){
 
   //output->Draw("phi:etaSC","!(etaSC > -1.8 && etaSC < -1.76 && phi > 1.2 && phi < 1.5) && !(etaSC>1.591 && etaSC<1.595 && phi > -2.06 && phi < -2.045) && !(etaSC > 1.74 && etaSC < 1.76 && phi > 2.1 && phi < 2.15) && !(etaSC > 1.564 && etaSC < 1.565 && phi > 0.528 && phi < 0.532) && !(etaSC > -1.6888 && etaSC < -1.6868 && phi > 1.8 && phi < 1.802) && sieie < 1e-5 && abs(etaSC) > 1.557 && abs(etaSC)<2
 
-  const int Ncat=52;
-  TString cats[Ncat] = {
-    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 80 && electronMatch==0",
-    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 80 && electronMatch==0",
-    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 80 && electronMatch==0",
-    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 80 && electronMatch==0",
-    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 80 && electronMatch==1",
-    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 80 && electronMatch==1",
-    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 80 && electronMatch==1",
-    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 80 && electronMatch==1",
+  auto catInfo = getCategories();
+  auto cats = catInfo.first;
+  auto catNames = catInfo.second;
 
-    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 87 && mass < 94 && electronMatch==0",
-    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 87 && mass < 94 && electronMatch==0",
-    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 87 && mass < 94 && electronMatch==0",
-    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 87 && mass < 94 && electronMatch==0",
-    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 87 && mass < 94 && electronMatch==1",
-    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 87 && mass < 94 && electronMatch==1",
-    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 87 && mass < 94 && electronMatch==1",
-    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 87 && mass < 94 && electronMatch==1",
 
-    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
-    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
-    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
-    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
-    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==1",
-    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==1",
-    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==1",
-    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==1",
 
-    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==0 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
-    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==0 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
-    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==0 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
-    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==0 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
-    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==0 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==1",
-    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==0 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==1",
-    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==0 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==1",
-    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==0 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==1",
+  assert(cats.size() == catNames.size());
 
-    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==0",
-    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==0",
-    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==0",
-    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==0",
-    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==1",
-    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==1",
-    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==1",
-    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==1",
+  int Ncat = cats.size();
 
-    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==0 && se < 0.012",
-    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==0 && se < 0.018",
-    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==0 && se < 0.025",
-    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==0 && se < 0.023",
-    "abs(etaSC)<1.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==1  && se < 0.012",
-    "abs(etaSC)>=1.00 && abs(etaSC)<1.44 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==1 && se < 0.018",
-    "abs(etaSC)>1.57 && abs(etaSC)<2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==1  && se < 0.025",
-    "abs(etaSC)>=2.00 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 180 && electronMatch==1 && se < 0.023",
-
-    "abs(etaSC)>=2.00 && abs(etaSC) < 2.10 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
-    "abs(etaSC)>=2.10 && abs(etaSC) < 2.20 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
-    "abs(etaSC)>=2.20 && abs(etaSC) < 2.30 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
-    "abs(etaSC)>=2.30 && abs(etaSC) < 2.40 && passPre==1 && passCiC_iso==1 && pt>25 && pt/mass > 1./3. && Trigger==1 && mass > 110 && mass < 150 && electronMatch==0",
-
-  };
-
-  TString catNames[Ncat] = {
-    "EBlow_pt25_passCiCIso_pho_Trigger","EBhigh_pt25_passCiCIso_pho_Trigger","EElow_pt25_passCiCIso_pho_Trigger","EEhigh_pt25_passCiCIso_pho_Trigger",
-    "EBlow_pt25_passCiCIso_ele_Trigger","EBhigh_pt25_passCiCIso_ele_Trigger","EElow_pt25_passCiCIso_ele_Trigger","EEhigh_pt25_passCiCIso_ele_Trigger",
-
-    "EBlow_pt25_passCiCIso_pho_Z","EBhigh_pt25_passCiCIso_pho_Z","EElow_pt25_passCiCIso_pho_Z","EEhigh_pt25_passCiCIso_pho_Z",
-    "EBlow_pt25_passCiCIso_ele_Z","EBhigh_pt25_passCiCIso_ele_Z","EElow_pt25_passCiCIso_ele_Z","EEhigh_pt25_passCiCIso_ele_Z",
-
-    "EBlow_pt25_passCiCIso_pho_110_150","EBhigh_pt25_passCiCIso_pho_110_150","EElow_pt25_passCiCIso_pho_110_150","EEhigh_pt25_passCiCIso_pho_110_150",
-    "EBlow_pt25_passCiCIso_ele_110_150","EBhigh_pt25_passCiCIso_ele_110_150","EElow_pt25_passCiCIso_ele_110_150","EEhigh_pt25_passCiCIso_ele_110_150",
-
-    "EBlow_pt25_failCiCIso_pho_110_150","EBhigh_pt25_failCiCIso_pho_110_150","EElow_pt25_failCiCIso_pho_110_150","EEhigh_pt25_failCiCIso_pho_110_150",
-    "EBlow_pt25_failCiCIso_ele_110_150","EBhigh_pt25_failCiCIso_ele_110_150","EElow_pt25_failCiCIso_ele_110_150","EEhigh_pt25_failCiCIso_ele_110_150",
-
-    "EBlow_pt25_passCiCIso_pho_110_180","EBhigh_pt25_passCiCIso_pho_110_180","EElow_pt25_passCiCIso_pho_110_180","EEhigh_pt25_passCiCIso_pho_110_180",
-    "EBlow_pt25_passCiCIso_ele_110_180","EBhigh_pt25_passCiCIso_ele_110_180","EElow_pt25_passCiCIso_ele_110_180","EEhigh_pt25_passCiCIso_ele_110_180",
-
-    "EBlow_pt25_passCiCIso_se_pho_110_180","EBhigh_pt25_passCiCIso_se_pho_110_180","EElow_pt25_passCiCIso_se_pho_110_180","EEhigh_pt25_passCiCIso_se_pho_110_180",
-    "EBlow_pt25_passCiCIso_se_ele_110_180","EBhigh_pt25_passCiCIso_se_ele_110_180","EElow_pt25_passCiCIso_se_ele_110_180","EEhigh_pt25_passCiCIso_se_ele_110_180",
-
-    "EE_2p0_2p1_pt25_passCiCIso_ele_110_150",
-    "EE_2p1_2p2_pt25_passCiCIso_ele_110_150",
-    "EE_2p2_2p3_pt25_passCiCIso_ele_110_150",
-    "EE_2p3_2p4_pt25_passCiCIso_ele_110_150",
-  };
+  if(test) {
+    Ncat = Ndata = Nsamples = 1;
+  }
 
   for(int i=0;i<Ncat;i++){
     mcPlotter.addCategory(catNames[i],cats[i]);
@@ -183,19 +160,14 @@ int main(int argc,char** argv){
 
   mcPlotter.addVetos(&globalVetos);
   dataPlotter.addVetos(&globalVetos);
-  const int Nvar=19;
-  TString vars[Nvar] = {"se","r9","sieie","sieip","sipip","etaWidth","phiWidth","HE",  "energyBC/rawE","e3x3/energyBC","e5x5/energyBC","eMax/energyBC","e2x5Max/energyBC","nBC","etaBC-etaSC","pt*cosh(etaSC)/rawE","mass","pt","etaSC"};
-  int     bins[Nvar] = {50  , 80 , 50 ,   50 ,    50 ,    50 ,       50 ,       50 ,   50 ,            50 ,            50 ,             50 ,           50,                 20,  50,            50,                  80,   100, 50 };
-  float   low [Nvar] = {0.0 , 0.2, 0.0,   0.0,    0.0,    0.0,       0.0,       0.0,   0.0,            0.0,            0.0,             0.0,           0.0,                0,   0.0,           0.5,                 80,    0,   -2.5};
-  float   high[Nvar] = {0.04, 1.0, 0.04,  0.0004,  0.1,    0.05,      0.2,       0.2,   2.0,            2.0,            2.0,             2.0,           2.0,               20,  0.03,          1.5,                 200,   1000, 2.5};
 
-
-  for(int i=0;i<Nvar;i++){
-    mcPlotter.addVariable  (vars[i],vars[i],bins[i],low[i],high[i]);
-    mcPlotter.addVariable  ("corr_"+vars[i],vars[i],bins[i],low[i],high[i],true);
-    dataPlotter.addVariable(vars[i],vars[i],bins[i],low[i],high[i]);
-    dataPlotter.addVariable("corr_"+vars[i],vars[i],bins[i],low[i],high[i],true);
+  auto vars = getVars();
+  for(auto it : vars) {
+    mcPlotter.addVariable  (translateVar(std::get<0>(it)),std::get<0>(it),std::get<1>(it),std::get<2>(it),std::get<3>(it));
+    dataPlotter.addVariable  (translateVar(std::get<0>(it)),std::get<0>(it),std::get<1>(it),std::get<2>(it),std::get<3>(it));
   }
+
+  int Nvar = vars.size();
 
   for(int iSample=0;iSample<Nsamples;iSample++){
     TFile *f = new TFile("output/"+samples[iSample]);
@@ -212,32 +184,72 @@ int main(int argc,char** argv){
   }
 
 
-  TString outputFileName = (useSherpa ? "output_histgrams_SHERPA.root" : "output_histograms_pythia.root");
-  TFile outputFile(outputFileName,"RECREATE");
-
+  TFile outputFile(fileName,"RECREATE");
+  outputFile.cd();
   for(int iCat=0;iCat<Ncat;iCat++){
     for(int iVar=0;iVar<Nvar;iVar++){
-      std::array<TH1F*,3> mc = mcPlotter.getHistogram(catNames[iCat],vars[iVar]);
-      std::array<TH1F*,3> mcCorr = mcPlotter.getHistogram(catNames[iCat],"corr_"+vars[iVar]);
-      std::array<TH1F*,3> data = dataPlotter.getHistogram(catNames[iCat],vars[iVar]);
-      std::array<TH1F*,3> dataCorr = dataPlotter.getHistogram(catNames[iCat],"corr_"+vars[iVar]);
-      TCanvas *cv = makeCanvas(data,mc,vars[iVar],catNames[iCat]);
+      std::array<TH1F*,3> mc = mcPlotter.getHistogram(catNames[iCat],std::get<0>(vars[iVar]));
+      //std::array<TH1F*,3> mcCorr = mcPlotter.getHistogram(catNames[iCat],"corr_"+vars[iVar]);
+      std::array<TH1F*,3> data = dataPlotter.getHistogram(catNames[iCat],std::get<0>(vars[iVar]));
+      //std::array<TH1F*,3> dataCorr = dataPlotter.getHistogram(catNames[iCat],"corr_"+vars[iVar]);
+      for(auto h : mc)       if(h) {h->Write();}
+      //for(auto h : mcCorr)   h->Write();
+      for(auto h : data)     if(h) {h->Write();}
+      //for(auto h : dataCorr) h->Write();
+    }
+  }
+
+} //void writeRootFile
 
 
-      TString saveVar = vars[iVar];
-      TString folder  = "figs/";
-	
+void DrawFromRootFile(TString fileName,bool useSherpa,bool isTest) {
+  auto catInfo = getCategories();
+  auto vars     = getVars();
+
+
+  std::vector<TString> catNames = catInfo.second;
+  int Ncat = catNames.size();
+  int Nvar = vars.size();
+
+  TFile *file = new TFile(fileName);
+
+  for(auto catNameIt : catNames) {
+    for(auto varIt : vars) {
+      TString varName = std::get<0>(varIt);
+      std::array<TH1F*,3> mc,data;
+
+
+    }//for(auto varIt : vars)
+  }//  for(auto catNameIt : catNames)
+
+  const int nTypes=3;
+
+  TString folder  = "figs/";
+  if(useSherpa) folder  = folder+"SHERPA/";
+
+
+  std::array<TString,nTypes> histSuffix = {"realPho","realEle","fake"};
+  for(auto catIt : catNames) {
+    for(auto varIt : vars) {
+      std::array<TH1F*,nTypes> mc,data;
+      TString transVar = translateVar(std::get<0>(varIt));
+
+      for(int i=0;i<nTypes;i++) {
+	mc[i] = (TH1F*)file->Get( transVar+"_"+catIt+"_mc_"+histSuffix[i] );
+	data[i] = (TH1F*)file->Get( transVar+"_"+catIt+"_data_"+histSuffix[i] );
+      }
+      if(mc[0]==0) continue;
+      TCanvas *cv = makeCanvas(data,mc,std::get<0>(varIt),catIt);
+
+
+      TString saveVar = transVar;
+      if(isTest) saveVar+="__TEST";
+      
       if(useSherpa) {
 	saveVar = "SHERPA__"+saveVar;
-	folder  = folder+"SHERPA/";
       }
-      saveVar.ReplaceAll("/","By");
-      saveVar.ReplaceAll("-","_minus_");
-      saveVar.ReplaceAll("(","_");
-      saveVar.ReplaceAll(")","_");
 
-      
-      TString path = folder+saveVar+"_"+catNames[iCat];
+      TString path = folder+saveVar+"_"+catIt;
 
       cv->SaveAs(path+"_lin.png");
       ((TPad*)cv->GetPrimitive("plotPad"))->SetLogy();
@@ -258,15 +270,8 @@ int main(int argc,char** argv){
 	cv2->SaveAs(Form("%s/%s_corr_%s_log.png",saveVar.Data(),catNames[iCat].Data()));	
       }
       */
-      outputFile.cd();
-      for(auto h : mc)       h->Write();
-      for(auto h : mcCorr)   h->Write();
-      for(auto h : data)     h->Write();
-      for(auto h : dataCorr) h->Write();
     }
   }  
-    outputFile.Close();
-    return 0;  
 }
 
 void setstyle(){
@@ -280,6 +285,7 @@ void setstyle(){
 }
 
 TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc,TString xName,TString label){
+  std::cout << data[0] << std::endl;
   TH1F *data_total = (TH1F*)data[0]->Clone("data_total");
   data_total->Add(data[1]);
   data_total->Add(data[2]);
@@ -287,15 +293,11 @@ TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc,TString xNam
   float data_norm = data_total->Integral();
   std::cout << "# data events:  " << data_norm << std::endl;
   
-  THStack mc_stack("mc_stack","");
-  TH1F*   mc_total = (TH1F*)mc[0]->Clone("mc_total");
-  mc_total->Add(mc[1]);
-  mc_total->Add(mc[2]);
+  
+  HistogramStack<TH1F> mc_stack;
   //compute the total integral for normalization
-  double mc_integral=0;
-  for(auto h : mc) {
-    mc_integral+=h->Integral(); 
-  }
+  double mc_integral = 0;
+  for(auto h : mc) mc_integral+=h->Integral();
 
   //make the stack
   std::array<Color_t,3> colors = {kBlue,kGreen,kRed};
@@ -308,7 +310,7 @@ TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc,TString xNam
     //scale MC to data
     (*h)->Scale(data_norm/mc_integral);
     (*h)->SetFillColor(*c);
-    mc_stack.Add(*h);
+    mc_stack.Add(**h);
   }
 
   TCanvas *cv = new TCanvas();
@@ -318,8 +320,8 @@ TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc,TString xNam
   //cv->cd(1);
   
 
-  if(data_total->GetMaximum() > mc_stack.GetMaximum()) data_total->SetAxisRange(1e-2,data_total->GetMaximum()*1.2,"Y");
-  else data_total->SetAxisRange(1e-2,mc_stack.GetMaximum()*1.2,"Y");
+  //if(data_total->GetMaximum() > mc_stack.GetMaximum()) data_total->SetAxisRange(1e-2,data_total->GetMaximum()*1.2,"Y");
+  //else data_total->SetAxisRange(1e-2,mc_stack.GetMaximum()*1.2,"Y");
   data_total->SetMarkerStyle(8);
   data_total->Draw("PE1");
   mc_stack.Draw("HISTSAME");
@@ -357,8 +359,8 @@ TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc,TString xNam
   
   for(int j=0;j<ratio->GetNbinsX();j++){
     float dataN = data_total->GetBinContent(j);
-    float mcN = mc_total->GetBinContent(j);
-    float mcE = mc_total->GetBinError(j);
+    float mcN = mc_stack.getTotal()->GetBinContent(j);
+    float mcE = mc_stack.getTotal()->GetBinError(j);
     if(mcN){
       ratio->SetBinContent(j,dataN/mcN);
       if(dataN) ratio->SetBinError(j,dataN/mcN*sqrt(1/dataN+mcE*mcE/mcN/mcN));

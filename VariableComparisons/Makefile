@@ -17,7 +17,9 @@ SRCDIR        = ./src/
 BINDIR        = ./bin/
 LIBDIR        = ./lib/
 
-all: $(BINDIR)MakeAllVarPlots
+HGGAPPLIB     = ../lib/
+
+all: $(BINDIR)MakeAllVarPlots $(BINDIR)MakeAll2DVarPlots
 .PHONY: all
 
 $(LIBDIR)weightManager.o: $(SRCDIR)weightManager.cc
@@ -31,9 +33,28 @@ $(LIBDIR)plotManager.o: $(SRCDIR)plotManager.cc \
 			$(LIBDIR)varCorrector.o
 	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
 
+$(LIBDIR)plotManager2D.o: $(SRCDIR)plotManager2D.cc \
+			$(LIBDIR)plotManager.o \
+			$(LIBDIR)weightManager.o \
+			$(LIBDIR)varCorrector.o
+	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
+$(LIBDIR)HistogramStack.o: $(SRCDIR)HistogramStack.cc 
+	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
 $(BINDIR)MakeAllVarPlots:  $(SRCDIR)MakeAllVarPlots.C \
-			$(LIBDIR)plotManager.o
-	$(CXX) $(CXXFLAGS) -I$(INCLUDEDIR) -o $@ $(LIBDIR)/*.o $(GLIBS) $<	
+			$(LIBDIR)plotManager.o \
+			$(SRCDIR)getCategories.C \
+			$(LIBDIR)HistogramStack.o \
+			$(HGGAPPLIB)ArgParser.o
+	$(CXX) $(CXXFLAGS) -I$(INCLUDEDIR) -o $@ $(LIBDIR)/*.o $(HGGAPPLIB)ArgParser.o $(GLIBS) $<	
+
+$(BINDIR)MakeAll2DVarPlots:  $(SRCDIR)MakeAll2DVarPlots.C \
+			$(LIBDIR)plotManager2D.o \
+			$(SRCDIR)getCategories.C \
+			$(LIBDIR)HistogramStack.o \
+			$(HGGAPPLIB)ArgParser.o
+	$(CXX) $(CXXFLAGS) -I$(INCLUDEDIR) -o $@ $(LIBDIR)/*.o $(HGGAPPLIB)ArgParser.o $(GLIBS) $<	
 
 
 
