@@ -56,6 +56,7 @@ protected:
 
   double computeDenom(); //!< compute the denominator for the covariance matrix and the SWeight
 
+  void createObservables(); //!< create internal RooArgSet of __variables. Used to normalize pdfs.
   void computeSWeight(); //!< internal computer
   RooDataSet* __sWeightDataSet;
   RooArgSet* __sWeightVars;
@@ -66,6 +67,7 @@ protected:
   std::vector<TString> __speciesNames;
 
   std::vector<RooRealVar*> __variables;
+  RooArgSet __observables;
 
   RooAbsData *__dataSet;
   
