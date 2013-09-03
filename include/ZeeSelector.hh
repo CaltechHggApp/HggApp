@@ -58,7 +58,7 @@ private:
   float tpass;
   float mvapass;
   bool  isZmass;
-  float rho;
+  //float rho;
   float PFIsoOverPT1;
   float PFIsoOverPT2;
 
