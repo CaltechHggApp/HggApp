@@ -915,8 +915,6 @@ void MakeSpinFits::MakeBackgroundOnlyFit(TString catTag, float cosTlow, float co
     RooFormulaVar *p3mod = new RooFormulaVar(dataTag+Form("_BKGFIT_%s_p3mod",outputTag.Data()),"","@0*@0",*p3);
     RooFormulaVar *p4mod = new RooFormulaVar(dataTag+Form("_BKGFIT_%s_p4mod",outputTag.Data()),"","@0*@0",*p4);
 
-  
-
     RooArgList *args;
     if(cosTlow > -1 || cosThigh < 1){
       args = new RooArgList(*pCmod,*p0mod,*p1mod,*p2mod,*p3mod);
@@ -927,6 +925,29 @@ void MakeSpinFits::MakeBackgroundOnlyFit(TString catTag, float cosTlow, float co
     BkgShape = new RooBernstein(dataTag+Form("_BKGFIT_%s_bkgShape",outputTag.Data()),"Background Model",mass,*args);
     break;
     }
+
+  case kPow:
+    { // pdf = m^alpha
+      RooRealVar *alpha = new RooRealVar(dataTag+Form("_BKGFIT_%s_alpha",outputTag.Data()),"",-3.,-10.,0.);
+      BkgShape = new RooGenericPdf(dataTag+Form("_BKGFIT_%s_bkgShape",outputTag.Data()),"","@0^@1",RooArgList(mass,*alpha));
+      break;
+    }
+      
+  case kDoublePow:
+    { //pdf = f*m^alpha_1 + (1-f)*m^alpha_2
+      RooRealVar *alpha1 = new RooRealVar(dataTag+Form("_BKGFIT_%s_alpha1",outputTag.Data()),"",-3.,-10.,0.);
+      RooRealVar *alpha2 = new RooRealVar(dataTag+Form("_BKGFIT_%s_alpha2",outputTag.Data()),"",-1.,-10.,0.);
+      RooRealVar *f_bkg  = new RooRealVar(dataTag+Form("_BKGFIT_%s_f",outputTag.Data()),"",0.1,0,1);
+      RooGenericPdf *pow1 = new RooGenericPdf(dataTag+Form("_BKGFIT_%s_pow1",outputTag.Data()),"","@0^@1",RooArgList(mass,*alpha1));
+      RooGenericPdf *pow2 = new RooGenericPdf(dataTag+Form("_BKGFIT_%s_pow1",outputTag.Data()),"","@0^@1",RooArgList(mass,*alpha2));
+
+      BkgShape = new RooAddPdf(dataTag+Form("_BKGFIT_%s_bkgShape",outputTag.Data()),"",RooArgList(*pow1,*pow2),*f_bkg);
+      break;
+    }
+      
+  
+
+
   default:
     std::cout << "INVALID BACKGROUND MODEL" << std::endl;
     assert(false);

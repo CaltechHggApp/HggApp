@@ -40,6 +40,8 @@ Date: Jan 2013
 #include "RooProdPdf.h"
 #include "RooCategory.h"
 #include "RooIntegralMorph.h"
+#include "RooGenericPdf.h"
+
 
 #include <HggOutputReader2.h>
 #include <dataSetInfo.h>
@@ -135,7 +137,7 @@ public:
   static float computeFWHM(RooAbsPdf* pdf, float mean, RooRealVar* var); //!< compute the Full Width at Half Maximum for a pdf
   static float computeSigEff(RooAbsPdf* pdf,float mean, RooRealVar* var);//!< compute the sigma effective for a pdf
 
-  enum BkgFitType{kExp,kPoly}; //!< allowed types for background fit
+  enum BkgFitType{kExp,kPoly,kPow,kDoublePow}; //!< allowed types for background fit
 
   void setBkgFit(BkgFitType t){fitType=t;} //!< specify which type of background fit to use
   void setUseCrystalBall(){useCB=true;}    //!< specify to use a crystal ball in the signal fit

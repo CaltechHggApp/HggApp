@@ -16,6 +16,7 @@ int main(int argc, char** argv){
   a.addLongOption("CrystalBall",ArgParser::noArg,"convolute a crystal ball with the signal model");
   a.addLongOption("DY",ArgParser::noArg,"Specify that we are fitting the Zee peak");
   a.addLongOption("FixPeak",ArgParser::noArg,"fix the peak position of the signal model at the generated mass");
+  a.addLongOption("BkgOnly",ArgParser::noArg,"only run the background fits");
 
   string ret;
   if(a.process(ret) != 0){
@@ -52,6 +53,8 @@ int main(int argc, char** argv){
     if(a.longFlagPres("DY")) msf.setMeanRange(90,92,91);
     else msf.setMeanRange(124,126,125);
   }
+
+  if(a.longFlagPres("BkgOnly")) msf.setMakeBkgOnly();
 
   msf.setAddSWeight(true);
   msf.run();
