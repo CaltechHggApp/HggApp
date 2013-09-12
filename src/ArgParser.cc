@@ -217,7 +217,7 @@ std::vector<std::string>::const_iterator ArgParser::getUnlimitedArgument(std::st
 }
 
 template<typename T,typename S>
-S ArgParser::getWithCheck(T key, std::map<T,S> m,S def){
+S ArgParser::getWithCheck(T key, std::map<T,S>& m,S def){
   if(status!=0) return def;
   if(m.find(key) == m.end()) return def;
   return m[key];

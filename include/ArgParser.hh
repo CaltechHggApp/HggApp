@@ -40,7 +40,7 @@ private:
 
   //methods
   template <typename T,typename S>
-  S getWithCheck(T,std::map<T,S>,S);
+  S getWithCheck(T,std::map<T,S> &,S);
   int internalProcess(std::string &ret);
 
   //variables
