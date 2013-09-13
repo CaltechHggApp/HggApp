@@ -1,5 +1,5 @@
 #include "RooGaussianCorr.hh"
-
+ClassImp(RooGaussianCorr);
 #include "TMath.h"
 
 RooGaussianCorr::RooGaussianCorr(const char* name, const char *title, RooArgList &variables, RooArgList &means, TMatrixDSym &covarianceMatrix) :

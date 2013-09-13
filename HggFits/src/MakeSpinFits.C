@@ -939,7 +939,7 @@ void MakeSpinFits::MakeBackgroundOnlyFit(TString catTag, float cosTlow, float co
       RooRealVar *alpha2 = new RooRealVar(dataTag+Form("_BKGFIT_%s_alpha2",outputTag.Data()),"",-1.,-10.,0.);
       RooRealVar *f_bkg  = new RooRealVar(dataTag+Form("_BKGFIT_%s_f",outputTag.Data()),"",0.1,0,1);
       RooGenericPdf *pow1 = new RooGenericPdf(dataTag+Form("_BKGFIT_%s_pow1",outputTag.Data()),"","@0^@1",RooArgList(mass,*alpha1));
-      RooGenericPdf *pow2 = new RooGenericPdf(dataTag+Form("_BKGFIT_%s_pow1",outputTag.Data()),"","@0^@1",RooArgList(mass,*alpha2));
+      RooGenericPdf *pow2 = new RooGenericPdf(dataTag+Form("_BKGFIT_%s_pow2",outputTag.Data()),"","@0^@1",RooArgList(mass,*alpha2));
 
       BkgShape = new RooAddPdf(dataTag+Form("_BKGFIT_%s_bkgShape",outputTag.Data()),"",RooArgList(*pow1,*pow2),*f_bkg);
       break;

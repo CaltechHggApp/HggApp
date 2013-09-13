@@ -16,6 +16,8 @@
 #include "TMatrixT.h"
 #include "TVectorD.h"
 #include "TIterator.h"
+#include "TMemberInspector.h"
+#include "TBuffer.h"
 
 #include "assert.h"
 #include <iostream>
@@ -26,6 +28,9 @@ public:
   RooGaussianCorr(const char* name, const char *title,RooArgList &variables, RooArgList &means, TMatrixDSym &covarianceMatrix);
   RooGaussianCorr(const RooGaussianCorr & other,const char* name=0);
   ~RooGaussianCorr() { delete __invCovMatrix; }
+
+  //virtual void ShowMembers(TMemberInspector& insp, char* parent){}
+  //virtual void Streamer(TBuffer& b) {}
 protected:
   RooListProxy __variables;
   RooListProxy __means;
@@ -36,5 +41,5 @@ protected:
   double evaluate() const;
 private:
   void invert();
-  ClassDef(RooGaussianCorr,1)
+  ClassDef(RooGaussianCorr,0)
 };

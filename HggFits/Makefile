@@ -141,5 +141,12 @@ $(OUTLIB)MixSpinDatasets.o:	$(SRCDIR)MixSpinDatasets.C \
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)MixSpinDatasets.o $<
 
 
-$(OUTLIB)RooGaussianCorr.o:	$(SRCDIR)RooGaussianCorr.cc
+$(OUTLIB)RooGaussianCorr.o:	$(SRCDIR)RooGaussianCorr.cc \
+				$(OUTLIB)MyDict.o
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
+MyDict.cxx: LinkDef.h
+	rootcint -l -f $@ -c -v -I$(INCLUDEDIR) $(CXXFLAGS) -p $(INCLUDEDIR)RooGaussianCorr.hh LinkDef.h
+
+$(OUTLIB)MyDict.o: MyDict.cxx
+	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)MyDict.o $<
