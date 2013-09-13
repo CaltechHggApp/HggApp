@@ -859,6 +859,7 @@ RooAbsPdf* MakeSpinFits::Make2DBkgModel(TString massMcName,TString costMcName,TS
 void MakeSpinFits::MakeBackground(){
   RooDataSet Background_Combined(*((RooDataSet*)ws->data("Data_Combined")),"Background_Combined");
   for (auto mcIt=mcLabel.begin(); mcIt != mcLabel.end(); mcIt++){
+    if( mcIt->Contains("DYToLL-M50") ) continue; //hack since the normalization is broken for this
     Background_Combined.append(*((RooDataSet*)ws->data(*mcIt+"_Combined")));
   }
   ws->import(Background_Combined);
