@@ -864,6 +864,76 @@ void MakeSpinFits::MakeBackground(){
   }
   ws->import(Background_Combined);
 }
+RooAbsPdf* MakeSpinFits::getBackgroundPdf(TString dataTag,TString FitTypeTag, TString outputTag) {
+  RooRealVar mass = *(ws->var("mass"));
+  //background model
+  RooAbsPdf* BkgShape;
+ 
+  switch(fitType){
+  case kExp:
+    {
+      //double exponential
+    RooRealVar* alpha1 = new RooRealVar(dataTag+Form("_%s_%s_alpha1",FitTypeTag.Data(),outputTag.Data()),"alpha1",-0.1,-1.,0.);
+    RooRealVar* alpha2 = new RooRealVar(dataTag+Form("_%s_%s_alpha2",FitTypeTag.Data(),outputTag.Data()),"alpha2",-0.1,-1.,0.);
+    RooRealVar* f_bkg  = new RooRealVar(dataTag+Form("_%s_%s_f",FitTypeTag.Data(),outputTag.Data()),"f_bkg",0.1,0,1);
+    RooExponential* exp1 = new RooExponential(dataTag+Form("_%s_%s_exp1",FitTypeTag.Data(),outputTag.Data()),"exp1",mass,*alpha1);
+    RooExponential* exp2 = new RooExponential(dataTag+Form("_%s_%s_exp2",FitTypeTag.Data(),outputTag.Data()),"exp2",mass,*alpha2);
+    
+    BkgShape = new RooAddPdf(dataTag+Form("_%s_%s_bkgShape",FitTypeTag.Data(),outputTag.Data()),"Background Model",
+			     RooArgList(*exp1,*exp2),*f_bkg);
+    break;
+    }
+  case kPoly:
+    {
+      //5th order polynomial
+    RooRealVar *pC = new RooRealVar(dataTag+Form("_%s_%s_pC",FitTypeTag.Data(),outputTag.Data()),"pC",1);
+    RooRealVar *p0 = new RooRealVar(dataTag+Form("_%s_%s_p0",FitTypeTag.Data(),outputTag.Data()),"p0",0,-10,10);
+    RooRealVar *p1 = new RooRealVar(dataTag+Form("_%s_%s_p1",FitTypeTag.Data(),outputTag.Data()),"p1",0,-10,10);
+    RooRealVar *p2 = new RooRealVar(dataTag+Form("_%s_%s_p2",FitTypeTag.Data(),outputTag.Data()),"p2",0,-10,10);
+    RooRealVar *p3 = new RooRealVar(dataTag+Form("_%s_%s_p3",FitTypeTag.Data(),outputTag.Data()),"p3",0,-10,10);
+    RooRealVar *p4 = new RooRealVar(dataTag+Form("_%s_%s_p4",FitTypeTag.Data(),outputTag.Data()),"p4",0,-10,10);
+    //enforce all coefficients positive
+    RooFormulaVar *pCmod = new RooFormulaVar(dataTag+Form("_%s_%s_pCmod",FitTypeTag.Data(),outputTag.Data()),"","@0*@0",*pC);
+    RooFormulaVar *p0mod = new RooFormulaVar(dataTag+Form("_%s_%s_p0mod",FitTypeTag.Data(),outputTag.Data()),"","@0*@0",*p0);
+    RooFormulaVar *p1mod = new RooFormulaVar(dataTag+Form("_%s_%s_p1mod",FitTypeTag.Data(),outputTag.Data()),"","@0*@0",*p1);
+    RooFormulaVar *p2mod = new RooFormulaVar(dataTag+Form("_%s_%s_p2mod",FitTypeTag.Data(),outputTag.Data()),"","@0*@0",*p2);
+    RooFormulaVar *p3mod = new RooFormulaVar(dataTag+Form("_%s_%s_p3mod",FitTypeTag.Data(),outputTag.Data()),"","@0*@0",*p3);
+    RooFormulaVar *p4mod = new RooFormulaVar(dataTag+Form("_%s_%s_p4mod",FitTypeTag.Data(),outputTag.Data()),"","@0*@0",*p4);
+
+    RooArgList *args;
+    args = new RooArgList(*pCmod,*p1mod,*p1mod,*p2mod,*p3mod,*p4mod);
+
+    BkgShape = new RooBernstein(dataTag+Form("_%s_%s_bkgShape",FitTypeTag.Data(),outputTag.Data()),"Background Model",mass,*args);
+    break;
+    }
+
+  case kPow:
+    { // pdf = m^alpha
+      RooRealVar *alpha = new RooRealVar(dataTag+Form("_%s_%s_alpha",FitTypeTag.Data(),outputTag.Data()),"",-3.,-10.,0.);
+      BkgShape = new RooGenericPdf(dataTag+Form("_%s_%s_bkgShape",FitTypeTag.Data(),outputTag.Data()),"","@0^@1",RooArgList(mass,*alpha));
+      break;
+    }
+      
+  case kDoublePow:
+    { //pdf = f*m^alpha_1 + (1-f)*m^alpha_2
+      RooRealVar *alpha1 = new RooRealVar(dataTag+Form("_%s_%s_alpha1",FitTypeTag.Data(),outputTag.Data()),"",-3.,-10.,0.);
+      RooRealVar *alpha2 = new RooRealVar(dataTag+Form("_%s_%s_alpha2",FitTypeTag.Data(),outputTag.Data()),"",-1.,-10.,0.);
+      RooRealVar *f_bkg  = new RooRealVar(dataTag+Form("_%s_%s_f",FitTypeTag.Data(),outputTag.Data()),"",0.1,0,1);
+      RooGenericPdf *pow1 = new RooGenericPdf(dataTag+Form("_%s_%s_pow1",FitTypeTag.Data(),outputTag.Data()),"","@0^@1",RooArgList(mass,*alpha1));
+      RooGenericPdf *pow2 = new RooGenericPdf(dataTag+Form("_%s_%s_pow1",FitTypeTag.Data(),outputTag.Data()),"","@0^@1",RooArgList(mass,*alpha2));
+
+      BkgShape = new RooAddPdf(dataTag+Form("_%s_%s_bkgShape",FitTypeTag.Data(),outputTag.Data()),"",RooArgList(*pow1,*pow2),*f_bkg);
+      break;
+    }
+      
+  default:
+    std::cout << "INVALID BACKGROUND MODEL" << std::endl;
+    assert(false);
+    break;
+  }
+  return BkgShape;
+}
+
 void MakeSpinFits::MakeBackgroundOnlyFit(TString catTag, float cosTlow, float cosThigh,bool fitMCbackground){
   std::cout << "MakeSpinFits::MakeBackgroundOnlyFit" <<std::endl;
   if(ws==0) return;
@@ -881,79 +951,7 @@ void MakeSpinFits::MakeBackgroundOnlyFit(TString catTag, float cosTlow, float co
     ds = (RooDataSet*)ds->reduce(  Form("cosT >= %0.3f && cosT < %0.3f",cosTlow,cosThigh) );
   }
 
-
-  //background model
-  RooAbsPdf* BkgShape;
- 
-  switch(fitType){
-  case kExp:
-    {
-      //double exponential
-    RooRealVar* alpha1 = new RooRealVar(dataTag+Form("_BKGFIT_%s_alpha1",outputTag.Data()),"alpha1",-0.1,-1.,0.);
-    RooRealVar* alpha2 = new RooRealVar(dataTag+Form("_BKGFIT_%s_alpha2",outputTag.Data()),"alpha2",-0.1,-1.,0.);
-    RooRealVar* f_bkg  = new RooRealVar(dataTag+Form("_BKGFIT_%s_f",outputTag.Data()),"f_bkg",0.1,0,1);
-    RooExponential* exp1 = new RooExponential(dataTag+Form("_BKGFIT_%s_exp1",outputTag.Data()),"exp1",mass,*alpha1);
-    RooExponential* exp2 = new RooExponential(dataTag+Form("_BKGFIT_%s_exp2",outputTag.Data()),"exp2",mass,*alpha2);
-    
-    BkgShape = new RooAddPdf(dataTag+Form("_BKGFIT_%s_bkgShape",outputTag.Data()),"Background Model",
-			     RooArgList(*exp1,*exp2),*f_bkg);
-    break;
-    }
-  case kPoly:
-    {
-      //5th order polynomial
-    RooRealVar *pC = new RooRealVar(dataTag+Form("_BKGFIT_%s_pC",outputTag.Data()),"pC",1);
-    RooRealVar *p0 = new RooRealVar(dataTag+Form("_BKGFIT_%s_p0",outputTag.Data()),"p0",0,-10,10);
-    RooRealVar *p1 = new RooRealVar(dataTag+Form("_BKGFIT_%s_p1",outputTag.Data()),"p1",0,-10,10);
-    RooRealVar *p2 = new RooRealVar(dataTag+Form("_BKGFIT_%s_p2",outputTag.Data()),"p2",0,-10,10);
-    RooRealVar *p3 = new RooRealVar(dataTag+Form("_BKGFIT_%s_p3",outputTag.Data()),"p3",0,-10,10);
-    RooRealVar *p4 = new RooRealVar(dataTag+Form("_BKGFIT_%s_p4",outputTag.Data()),"p4",0,-10,10);
-    //enforce all coefficients positive
-    RooFormulaVar *pCmod = new RooFormulaVar(dataTag+Form("_BKGFIT_%s_pCmod",outputTag.Data()),"","@0*@0",*pC);
-    RooFormulaVar *p0mod = new RooFormulaVar(dataTag+Form("_BKGFIT_%s_p0mod",outputTag.Data()),"","@0*@0",*p0);
-    RooFormulaVar *p1mod = new RooFormulaVar(dataTag+Form("_BKGFIT_%s_p1mod",outputTag.Data()),"","@0*@0",*p1);
-    RooFormulaVar *p2mod = new RooFormulaVar(dataTag+Form("_BKGFIT_%s_p2mod",outputTag.Data()),"","@0*@0",*p2);
-    RooFormulaVar *p3mod = new RooFormulaVar(dataTag+Form("_BKGFIT_%s_p3mod",outputTag.Data()),"","@0*@0",*p3);
-    RooFormulaVar *p4mod = new RooFormulaVar(dataTag+Form("_BKGFIT_%s_p4mod",outputTag.Data()),"","@0*@0",*p4);
-
-    RooArgList *args;
-    if(cosTlow > -1 || cosThigh < 1){
-      args = new RooArgList(*pCmod,*p0mod,*p1mod,*p2mod,*p3mod);
-    }else{
-      args = new RooArgList(*pCmod,*p0mod,*p1mod,*p2mod,*p3mod,*p4mod);
-    }
-
-    BkgShape = new RooBernstein(dataTag+Form("_BKGFIT_%s_bkgShape",outputTag.Data()),"Background Model",mass,*args);
-    break;
-    }
-
-  case kPow:
-    { // pdf = m^alpha
-      RooRealVar *alpha = new RooRealVar(dataTag+Form("_BKGFIT_%s_alpha",outputTag.Data()),"",-3.,-10.,0.);
-      BkgShape = new RooGenericPdf(dataTag+Form("_BKGFIT_%s_bkgShape",outputTag.Data()),"","@0^@1",RooArgList(mass,*alpha));
-      break;
-    }
-      
-  case kDoublePow:
-    { //pdf = f*m^alpha_1 + (1-f)*m^alpha_2
-      RooRealVar *alpha1 = new RooRealVar(dataTag+Form("_BKGFIT_%s_alpha1",outputTag.Data()),"",-3.,-10.,0.);
-      RooRealVar *alpha2 = new RooRealVar(dataTag+Form("_BKGFIT_%s_alpha2",outputTag.Data()),"",-1.,-10.,0.);
-      RooRealVar *f_bkg  = new RooRealVar(dataTag+Form("_BKGFIT_%s_f",outputTag.Data()),"",0.1,0,1);
-      RooGenericPdf *pow1 = new RooGenericPdf(dataTag+Form("_BKGFIT_%s_pow1",outputTag.Data()),"","@0^@1",RooArgList(mass,*alpha1));
-      RooGenericPdf *pow2 = new RooGenericPdf(dataTag+Form("_BKGFIT_%s_pow1",outputTag.Data()),"","@0^@1",RooArgList(mass,*alpha2));
-
-      BkgShape = new RooAddPdf(dataTag+Form("_BKGFIT_%s_bkgShape",outputTag.Data()),"",RooArgList(*pow1,*pow2),*f_bkg);
-      break;
-    }
-      
-  
-
-
-  default:
-    std::cout << "INVALID BACKGROUND MODEL" << std::endl;
-    assert(false);
-    break;
-  }
+  RooAbsPdf* BkgShape = getBackgroundPdf(dataTag,"BKGFIT",outputTag);
 
   RooRealVar *Nbkg = new RooRealVar(dataTag+Form("_BKGFIT_%s_Nbkg",outputTag.Data()),"N background Events",ds->sumEntries(),0,1e9);
   //extended fit model

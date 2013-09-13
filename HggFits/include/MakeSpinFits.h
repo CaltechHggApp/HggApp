@@ -86,9 +86,8 @@ public:
 
   void MakeCombinedSignalSpin(TString mcName); //!< Make RooHistPdfs of the cos(theta) distribution for inclusive signal samples
 
+  RooAbsPdf* getBackgroundPdf(TString dataTag, TString FitTypeTag,TString outputTag); //!< build and return a background fit
   void MakeBackgroundOnlyFit(TString catTag,float cosTlow=-2,float cosThigh=2,bool fitMCbackground=false); //!< Make a background only fit to data in single category the type of fit is controlled by the fitType member
-
-
   /*! 
     Performs a simultaneous S+B fit to the target data.  The S parameters are fixed by the MC but the B parameters are allowed to float freely.
     \sa MakeCombinedSignalTest()
