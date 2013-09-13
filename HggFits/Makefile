@@ -111,7 +111,8 @@ $(OUTLIB)MakeSpinWorkspace.o:	$(SRCDIR)MakeSpinWorkspace.C \
 
 $(OUTLIB)MakeSpinFits.o:	$(SRCDIR)MakeSpinFits.C \
 				$(OUTLIB)HggOutputReader2.o \
-				$(OUTLIB)MakeSpinSPlot.o
+				$(OUTLIB)MakeSpinSPlot.o \
+				$(OUTLIB)RooGaussianCorr.o
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)MakeSpinFits.o $<
 
 $(OUTLIB)MakeSpinPlots.o:	$(SRCDIR)MakeSpinPlots.C \
@@ -139,3 +140,6 @@ $(OUTLIB)MixSpinDatasets.o:	$(SRCDIR)MixSpinDatasets.C \
 				$(OUTLIB)MakeSpinFits.o
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)MixSpinDatasets.o $<
 
+
+$(OUTLIB)RooGaussianCorr.o:	$(SRCDIR)RooGaussianCorr.cc
+		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
