@@ -41,7 +41,7 @@ Date: Jan 2013
 #include "RooCategory.h"
 #include "RooIntegralMorph.h"
 #include "RooGenericPdf.h"
-
+#include "RooFitResult.h"
 
 #include <HggOutputReader2.h>
 #include <dataSetInfo.h>
@@ -87,7 +87,10 @@ public:
   void MakeCombinedSignalSpin(TString mcName); //!< Make RooHistPdfs of the cos(theta) distribution for inclusive signal samples
 
   RooAbsPdf* getBackgroundPdf(TString dataTag, TString FitTypeTag,TString outputTag); //!< build and return a background fit
-  void MakeBackgroundOnlyFit(TString catTag,float cosTlow=-2,float cosThigh=2,bool fitMCbackground=false); //!< Make a background only fit to data in single category the type of fit is controlled by the fitType member
+  void MakeBackgroundOnlyFit(TString catTag,float cosTlow=-2,float cosThigh=2,bool fitMCbackground=false); //!< Make a background only fit to data in single ceategory the type of fit is controlled by the fitType member
+  void MakeConstrainedBackgroundOnlyFit(TString catTag,float cosTlow=-2,float cosThigh=2); //!< Make a background only fit to data in single ceategory the type of fit is controlled by the fitType member
+
+  RooAbsPdf* getConstraintPdf(const TString& dataTag,const TString& FitTypeTag,const TString& outputTag,const RooFitResult& fitRes, const RooArgSet& variables, const RooArgSet& const_variables);
   /*! 
     Performs a simultaneous S+B fit to the target data.  The S parameters are fixed by the MC but the B parameters are allowed to float freely.
     \sa MakeCombinedSignalTest()
