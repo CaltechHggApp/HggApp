@@ -1079,7 +1079,7 @@ void MakeSpinFits::run(){
     for(int i=0;i<NcosTbins;i++) MakeBackgroundOnlyFit(*catIt,cosTbinEdges[i],cosTbinEdges[i+1],true);	
     MakeConstrainedBackgroundOnlyFit(*catIt,-2,2);
     for(int i=0;i<NcosTbins;i++) MakeConstrainedBackgroundOnlyFit(*catIt,cosTbinEdges[i],cosTbinEdges[i+1]);
-    return; //testing only
+
   }
   if(bkgOnly) return;
 
