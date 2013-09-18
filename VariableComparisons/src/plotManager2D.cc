@@ -42,6 +42,7 @@ void plotManager2D::processEntry2D(float weight){
   for(int i=0;i<vetoFormulas.size();i++){
     if( vetoFormulas.at(i)->EvalInstance() ) return;
   }
+  float pu_weight = computePUWeight();
   for(int i=0;i<catNames.size();i++){    
     if( !catFormulas.at(i)->EvalInstance() ) continue; //not in this category
     for(int j=0;j<variables.size();j++){
@@ -50,7 +51,7 @@ void plotManager2D::processEntry2D(float weight){
 	if(isRealPho->EvalInstance())      hist = realPho2DHistograms.at(i).at(j).at(k);      
 	else if(isRealEle->EvalInstance()) hist = realEle2DHistograms.at(i).at(j).at(k);      
 	else                               hist = fake2DHistograms.at(i).at(j).at(k);      
-	hist->Fill(varFormulas.at(j)->EvalInstance(),varFormulas.at(k)->EvalInstance(),weight);
+	hist->Fill(varFormulas.at(j)->EvalInstance(),varFormulas.at(k)->EvalInstance(),weight*pu_weight);
       }
     }
   }
@@ -112,7 +113,7 @@ void plotManager2D::saveAll2D(TFile *f){
 	realPho2DHistograms.at(i).at(j).at(k)->Write();
 	realEle2DHistograms.at(i).at(j).at(k)->Write();
 	fake2DHistograms.at(i).at(j).at(k)->Write();
-	TH2F* total = (TH2F*)realPho2DHistograms.at(i).at(j).at(k)->Clone(variables.at(j)+"_"+variables.at(k)+"_"+catNames.at(i)+"_"+histNameTag+"_total");
+	TH2F* total = (TH2F*)realPho2DHistograms.at(i).at(j).at(k)->Clone(varNames.at(j)+"_"+varNames.at(k)+"_"+catNames.at(i)+"_"+histNameTag+"_total");
 	total->Add((TH2F*)realEle2DHistograms.at(i).at(j).at(k));
 	total->Add((TH2F*)fake2DHistograms.at(i).at(j).at(k));
 	total->Write();

@@ -11,6 +11,7 @@
 #include "TTreeFormula.h"
 #include "TLatex.h"
 #include "TList.h"
+#include "TMath.h"
 
 #include <map>
 #include <vector>
@@ -38,8 +39,17 @@ void setstyle();
 
 TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc, TString xName,TString label="");
 
-void writeRootFile(TString fileName,bool useSherpa,bool test);
-void DrawFromRootFile(TString fileName,bool useSherpa,bool test);
+enum RunPeriod {kAll,kAB,kABC,kD};
+struct options_t {
+  bool isTest = false;
+  bool useSherpa = false;
+  RunPeriod period = kAll;
+};
+
+void writeRootFile(TString fileName,options_t opt);
+void DrawFromRootFile(TString fileName,options_t opt); //bool useSherpa,bool test);
+
+
 
 int main(int argc,char** argv){
   ArgParser a(argc,argv);
@@ -49,6 +59,7 @@ int main(int argc,char** argv){
   a.addArgument("rootFileName",ArgParser::required,"specify the name of the root file");
   a.addLongOption("sherpa",ArgParser::noArg,"use SHERPA diphoton jets sample");
   a.addLongOption("test",ArgParser::noArg,"Only process 1 MC file (useful for testing)");
+  a.addLongOption("run",ArgParser::reqArg,"Specify the run period to plot [ABC,D]");
   a.addShortOption('h',ArgParser::noArg,"print help");
   std::string ret;
   if(a.process(ret)!=0) {
@@ -74,15 +85,22 @@ int main(int argc,char** argv){
   }
   TString fileName = a.getArgument("rootFileName");
 
-  bool useSherpa = a.longFlagPres("sherpa");
-  bool isTest    = a.longFlagPres("test");
+  options_t opt;
+  opt.useSherpa = a.longFlagPres("sherpa");
+  opt.isTest    = a.longFlagPres("test");
+  opt.period = kAll;
+  if(a.longFlagPres("run")) {
+    if(a.getLongFlag("run").compare("AB")==0) opt.period = kAB;
+    if(a.getLongFlag("run").compare("ABC")==0) opt.period = kABC;
+    if(a.getLongFlag("run").compare("D")==0) opt.period = kD;    
+  }
 
   switch(mode) {
   case kSave:
-    writeRootFile(fileName,useSherpa,isTest);
+    writeRootFile(fileName,opt); //useSherpa,isTest);
     break;
   case kDraw:
-    DrawFromRootFile(fileName,useSherpa,isTest);
+    DrawFromRootFile(fileName,opt); //useSherpa,isTest);
     break;
   }
 
@@ -90,8 +108,12 @@ int main(int argc,char** argv){
   return 0;
 }
 
-void writeRootFile(TString fileName,bool useSherpa,bool test) {
+void writeRootFile(TString fileName, options_t opt) { //bool useSherpa,bool test) {
+  bool useSherpa = opt.useSherpa;
+  bool test    = opt.isTest;
+
   if(useSherpa) std::cout << "SHERPA!!" << std::endl;
+
 
   float lumi=6.3;
   weightManager weights;
@@ -104,10 +126,10 @@ void writeRootFile(TString fileName,bool useSherpa,bool test) {
   setstyle();
 
   std::vector<TString> samples = {
-    "GJets_Pt20to40.root",
-    "GJets_Pt40.root",
     "QCD_Pt30to40.root",
     "QCD_Pt40.root",
+    "GJets_Pt20to40.root",
+    "GJets_Pt40.root",
     "DYJetsToLL_M-50.root" };
 
 
@@ -123,9 +145,18 @@ void writeRootFile(TString fileName,bool useSherpa,bool test) {
 
   int Nsamples = samples.size();
 
-  std::vector<TString> data = {
-    "DoublePhoton_Run2012B_13Jul2012.root"
-  };
+  std::vector<TString> data;
+  if(opt.period == kABC || opt.period == kAB || opt.period == kAll) {
+    data.push_back("Photon_Run2012A_22Jan2013.root");
+    data.push_back("DoublePhoton_Run2012B_22Jan2013.root");
+  }
+  if(opt.period ==kABC || opt.period ==kAll) {
+    data.push_back("DoublePhoton_Run2012C_22Jan2013.root");
+  }
+  if(opt.period == kD || opt.period == kAll) {
+    data.push_back("DoublePhoton_Run2012D_22Jan2013.root");
+  }
+
 
   int Ndata = data.size();
 
@@ -169,14 +200,41 @@ void writeRootFile(TString fileName,bool useSherpa,bool test) {
 
   int Nvar = vars.size();
 
+  
+  TFile *data_pu_file = new TFile("/home/amott/HggApp/PU/truepileup_69400mb_2012_RunABCD_22Jan2013.root");
+  TH1D  *data_pu_hist = (TH1D*)data_pu_file->Get("pileup_hist")->Clone("data_pu_hist");
+  data_pu_hist->SetDirectory(0);
+  data_pu_file->Close();
+  std::cout << data_pu_hist->GetName() <<std::endl;
+
+  mcPlotter.setTargetPU(data_pu_hist);
+  
+
+  TFile outputFile(fileName,"RECREATE");
+  outputFile.cd();
+  mcPlotter.buildHistograms();
   for(int iSample=0;iSample<Nsamples;iSample++){
-    TFile *f = new TFile("output/"+samples[iSample]);
-    TChain *fChain = (TChain*)f->Get("output");
     TString sampleName = samples[iSample];
     sampleName.Remove(sampleName.Last('.'));
+    
+    TFile mc_pu_file("/home/amott/HggApp/PU/"+samples[iSample]);
+    TH1D* mc_pu_hist = (TH1D*)mc_pu_file.Get("pileup_hist")->Clone("mc_pu_hist");
+    mc_pu_hist->SetDirectory(0);
+    mc_pu_file.Close();
+    mcPlotter.setMCPU(mc_pu_hist);
+    
+    TFile *f = new TFile("output/"+samples[iSample]);
+    TChain *fChain = (TChain*)f->Get("output");
     mcPlotter.processChain(fChain,weights.getWeight(sampleName,lumi));
+    f->Close();
+    mcPlotter.setMCPU(0);
+    delete mc_pu_hist;
   }
+  delete data_pu_hist;
+  mcPlotter.setTargetPU(0);
 
+  outputFile.cd();
+  dataPlotter.buildHistograms();
   for(int iData=0;iData<Ndata;iData++){
     TFile *f = new TFile("output/"+data[iData]);
     TChain *fChain = (TChain*)f->Get("output");
@@ -184,28 +242,32 @@ void writeRootFile(TString fileName,bool useSherpa,bool test) {
   }
 
 
-  TFile outputFile(fileName,"RECREATE");
-  outputFile.cd();
-  for(int iCat=0;iCat<Ncat;iCat++){
-    for(int iVar=0;iVar<Nvar;iVar++){
-      std::array<TH1F*,3> mc = mcPlotter.getHistogram(catNames[iCat],std::get<0>(vars[iVar]));
-      //std::array<TH1F*,3> mcCorr = mcPlotter.getHistogram(catNames[iCat],"corr_"+vars[iVar]);
-      std::array<TH1F*,3> data = dataPlotter.getHistogram(catNames[iCat],std::get<0>(vars[iVar]));
-      //std::array<TH1F*,3> dataCorr = dataPlotter.getHistogram(catNames[iCat],"corr_"+vars[iVar]);
-      for(auto h : mc)       if(h) {h->Write();}
-      //for(auto h : mcCorr)   h->Write();
-      for(auto h : data)     if(h) {h->Write();}
-      //for(auto h : dataCorr) h->Write();
-    }
-  }
-
+//   for(int iCat=0;iCat<Ncat;iCat++){
+//     for(int iVar=0;iVar<Nvar;iVar++){
+//       std::array<TH1F*,3> mc = mcPlotter.getHistogram(catNames[iCat],std::get<0>(vars[iVar]));
+//       //std::array<TH1F*,3> mcCorr = mcPlotter.getHistogram(catNames[iCat],"corr_"+vars[iVar]);
+//       std::array<TH1F*,3> data = dataPlotter.getHistogram(catNames[iCat],std::get<0>(vars[iVar]));
+//       //std::array<TH1F*,3> dataCorr = dataPlotter.getHistogram(catNames[iCat],"corr_"+vars[iVar]);
+//       for(auto h : mc)       if(h) {h->Write();}
+//       //for(auto h : mcCorr)   h->Write();
+//       for(auto h : data)     if(h) {h->Write();}
+//       //for(auto h : dataCorr) h->Write();
+//     }
+//   }
+  mcPlotter.saveAll(&outputFile);
+  dataPlotter.saveAll(&outputFile);
+  outputFile.Close();
 } //void writeRootFile
 
 
-void DrawFromRootFile(TString fileName,bool useSherpa,bool isTest) {
+void DrawFromRootFile(TString fileName,options_t opt) { //bool useSherpa,bool isTest) {
   auto catInfo = getCategories();
   auto vars     = getVars();
 
+  bool useSherpa = opt.useSherpa;
+  bool isTest    = opt.isTest;
+
+  setstyle();
 
   std::vector<TString> catNames = catInfo.second;
   int Ncat = catNames.size();
@@ -224,7 +286,11 @@ void DrawFromRootFile(TString fileName,bool useSherpa,bool isTest) {
 
   const int nTypes=3;
 
-  TString folder  = "figs/";
+  TString folder  = "figs";
+  if(opt.period == kAB) folder = folder+"_RunAB";
+  if(opt.period == kABC) folder = folder+"_RunABC";
+  if(opt.period == kD)   folder = folder+"_RunD";
+  folder = folder+"/";
   if(useSherpa) folder  = folder+"SHERPA/";
 
 
@@ -319,6 +385,10 @@ TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc,TString xNam
   //cv->Divide(1,2);
   //cv->cd(1);
   
+  double KS = mc_stack.getTotal()->KolmogorovTest(data_total,"");
+  KS = TMath::Log(KS);
+  std::cout << "KS: " << KS << std::endl;
+
 
   //if(data_total->GetMaximum() > mc_stack.GetMaximum()) data_total->SetAxisRange(1e-2,data_total->GetMaximum()*1.2,"Y");
   //else data_total->SetAxisRange(1e-2,mc_stack.GetMaximum()*1.2,"Y");
@@ -326,28 +396,36 @@ TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc,TString xNam
   data_total->Draw("PE1");
   mc_stack.Draw("HISTSAME");
   data_total->Draw("PE1SAME");
-  
-  TLegend leg(0.6,0.7,0.85,0.9);
-  leg.SetFillColor(0);
-  leg.SetBorderSize(0);
-  leg.AddEntry(data_total,"Data","P");
-  leg.AddEntry(mc[0],"Real Photons","F");
-  leg.AddEntry(mc[1],"Real Electrons","F");
-  leg.AddEntry(mc[2],"Fakes","F");
-  leg.Draw("SAME");
 
-  TLatex lbl(0.60,0.96,label);
-  lbl.SetNDC();
-  lbl.SetTextSize(0.045);
-  lbl.SetTextColor(kBlack);
+  //cv->cd();
+  TLatex *lbl = new TLatex(0.60,0.96,label);
+  lbl->SetNDC();
+  lbl->SetTextSize(0.045);
+  lbl->SetTextColor(kBlack);
 
-  TLatex var(0.12,0.96,xName);
-  var.SetNDC();
-  var.SetTextSize(0.045);
-  var.SetTextColor(kBlack);
+  TLatex *var = new TLatex(0.12,0.96,xName);
+  var->SetNDC();
+  var->SetTextSize(0.045);
+  var->SetTextColor(kBlack);
 
-  lbl.Draw();
-  var.Draw();
+  TLatex *KSval = new TLatex(0.12,0.91, Form("Log(KS Prob): %0.3f",KS));
+  KSval->SetNDC();
+  KSval->SetTextSize(0.045);
+  KSval->SetTextColor(kBlack);
+
+  lbl->Draw();
+  var->Draw();
+  KSval->Draw();
+
+  TLegend *leg = new TLegend(0.6,0.7,0.85,0.9);
+  leg->SetFillColor(0);
+  leg->SetBorderSize(0);
+  leg->AddEntry(data_total,"Data","P");
+  leg->AddEntry(mc[0],"Real Photons","F");
+  leg->AddEntry(mc[1],"Real Electrons","F");
+  leg->AddEntry(mc[2],"Fakes","F");
+  leg->Draw("SAME");
+
 
   
   TPad *pad2 = new TPad("ratioPad","",0.005,0.005,0.995,0.25);

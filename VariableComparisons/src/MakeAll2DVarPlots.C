@@ -123,7 +123,10 @@ void writeRootFile(TString fileName,bool useSherpa,bool test) {
   int Nsamples = samples.size();
 
   std::vector<TString> data = {
-    "DoublePhoton_Run2012B_13Jul2012.root"
+    "Photon_Run2012A_22Jan2013.root",
+    "DoublePhoton_Run2012B_22Jan2013.root",
+    "DoublePhoton_Run2012C_22Jan2013.root",
+    "DoublePhoton_Run2012D_22Jan2013.root"
   };
 
   int Ndata = data.size();
@@ -168,23 +171,52 @@ void writeRootFile(TString fileName,bool useSherpa,bool test) {
 
   int Nvar = vars.size();
 
+  TFile *data_pu_file = new TFile("/home/amott/HggApp/PU/truepileup_69400mb_2012_RunABCD_22Jan2013.root");
+  TH1D  *data_pu_hist = (TH1D*)data_pu_file->Get("pileup_hist")->Clone("data_pu_hist");
+  data_pu_hist->SetDirectory(0);
+  data_pu_file->Close();
+
+  mcPlotter.setTargetPU(data_pu_hist);
+
+
+  TFile outputFile(fileName,"RECREATE");
+  outputFile.cd();
+  mcPlotter.buildHistograms();
+  mcPlotter.buildHistograms2D();
   for(int iSample=0;iSample<Nsamples;iSample++){
-    TFile *f = new TFile("output/"+samples[iSample]);
-    TChain *fChain = (TChain*)f->Get("output");
     TString sampleName = samples[iSample];
     sampleName.Remove(sampleName.Last('.'));
     std::cout << sampleName << std::endl;
-    mcPlotter.processChain(fChain,weights.getWeight(sampleName,lumi));
-  }
 
+    TFile mc_pu_file("/home/amott/HggApp/PU/"+samples[iSample]);
+    TH1D* mc_pu_hist = (TH1D*)mc_pu_file.Get("pileup_hist")->Clone("mc_pu_hist");
+    mc_pu_hist->SetDirectory(0);
+    mc_pu_file.Close();
+    mcPlotter.setMCPU(mc_pu_hist);
+
+    TFile *f = new TFile("output/"+samples[iSample]);
+    TChain *fChain = (TChain*)f->Get("output");
+    mcPlotter.processChain(fChain,weights.getWeight(sampleName,lumi));
+    f->Close();
+    mcPlotter.setMCPU(0);
+    delete mc_pu_hist;
+  }
+  delete data_pu_hist;
+  mcPlotter.setTargetPU(0);
+
+
+  outputFile.cd();
+  dataPlotter.buildHistograms();
+  dataPlotter.buildHistograms2D();
   for(int iData=0;iData<Ndata;iData++){
     TFile *f = new TFile("output/"+data[iData]);
     TChain *fChain = (TChain*)f->Get("output");
     dataPlotter.processChain(fChain,1);
+    f->Close();
   }
 
 
-  TFile outputFile(fileName,"RECREATE");
+  outputFile.cd();
   mcPlotter.saveAll2D(&outputFile);
   dataPlotter.saveAll2D(&outputFile);
 
@@ -236,7 +268,7 @@ void CalcFromRootFile(TString fileName,bool useSherpa,bool isTest) {
   for(auto catIt : catNames) {
     for(auto var1It : vars) {
       for(auto var2It: vars) {
-	plotRef r = {std::get<0>(var1It),std::get<0>(var2It),catIt,-2,2};
+	plotRef r = {translateVar(std::get<0>(var1It)),translateVar(std::get<0>(var2It)),catIt,-2,2};
 	getCorrFromRef(r,file);
 	if(r.mc_corr<-1) continue;
 	correlationList.push_back(r);
@@ -254,7 +286,7 @@ void CalcFromRootFile(TString fileName,bool useSherpa,bool isTest) {
   std::cout << std::endl;
   int i=0;
   for(auto r: correlationList) {
-    if(++i >=60) break;
+    //if(++i >=60) break;
   std::cout << std::setw(50) << r.var1;
   std::cout << std::setw(50) << r.var2;
   std::cout << std::setw(80) << r.cat;

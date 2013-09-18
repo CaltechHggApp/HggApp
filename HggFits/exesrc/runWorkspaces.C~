@@ -132,7 +132,7 @@ int main(int argc, char** argv){
   cout << "Data:    " << data <<endl;
 
   //ADD DATA SAMPLES
-  if(!a.longFlagPres("noData"))   msw.addFile(data,"Data",0,-1,isList);
+  if(!a.longFlagPres("noData"))   msw.addFile(data,"Data",dataSetInfo::kData,-1,isList);
 
   //ADD MC SAMPLES
   std::vector<string> bkgSamples;
@@ -152,7 +152,7 @@ int main(int argc, char** argv){
     if(isSignalString.compare("")!=0) isSignal  = atoi(isSignalString.c_str());
     
     cout << mcName << ":    " << filePath <<endl;
-    msw.addFile(filePath,mcName,(isSignal ? MakeSpinWorkspace::kSignal : MakeSpinWorkspace::kBackground),Ngen,isList,xsec);
+    msw.addFile(filePath,mcName,(isSignal ? dataSetInfo::kSignal : dataSetInfo::kBackground),Ngen,isList,xsec);
     if(!isSignal) bkgSamples.push_back(mcName);
   }
   

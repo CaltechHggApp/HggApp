@@ -1,18 +1,18 @@
 #include "include/plotManager.hh"
-
+#include <assert.h>
 
 plotManager::plotManager(TString inTag):freeze(false),vetos(0),use4Cat(false){
   histNameTag = inTag;
 }
 
 void plotManager::addCategory(TString name, TString cut){
-  if(freeze) return;
+  assert(freeze==false);
   catNames.push_back(name);
   catCuts.push_back(cut);
 }
 
 void plotManager::addVariable(TString name,TString var,int bins, float low, float high,bool correct){
-  if(freeze) return;
+  assert(freeze==false);
   varNames.push_back(name);
   variables.push_back(var);
   xBins.push_back(bins);
@@ -23,6 +23,7 @@ void plotManager::addVariable(TString name,TString var,int bins, float low, floa
 
 void plotManager::buildHistograms(){
   if(freeze) return;
+  std::cout << "build" << std::endl;
   freeze = true;
   for(int i=0;i<catNames.size();i++){
     std::vector<TH1F*> perCat_rp;
@@ -48,6 +49,7 @@ void plotManager::buildFormulas(TChain *fChain){
   isRealPho = new TTreeFormula("isRealPho","realPho==1",(TTree*)fChain);
   isRealEle = new TTreeFormula("isRealEle","realEle==1",(TTree*)fChain);
   isTrigger = new TTreeFormula("isTrigger","Trigger==1",(TTree*)fChain);
+  pu = new TTreeFormula("pu","nPU",(TTree*)fChain);
   for(int i=0;i<variables.size();i++){
     if(useCorrection.at(i)){
       if(use4Cat) varFormulas.push_back( new TTreeFormula( varNames.at(i)+"_"+histNameTag, corrector4cat.getCorrectString(variables.at(i),  etaVal->EvalInstance()),           (TTree*)fChain ) );
@@ -78,6 +80,7 @@ void plotManager::updateFormulas(){
   isRealPho->UpdateFormulaLeaves();
   isRealEle->UpdateFormulaLeaves();
   isTrigger->UpdateFormulaLeaves();
+  pu->UpdateFormulaLeaves();
 }
 
 void plotManager::destroyFormulas(){
@@ -88,6 +91,20 @@ void plotManager::destroyFormulas(){
   delete isRealPho;
   delete isRealEle;
   delete isTrigger;
+  delete pu;
+}
+
+float plotManager::computePUWeight() {
+  if(!target_pu || !mc_pu) return 1;
+  float this_pu = pu->EvalInstance();
+  float target_pu_val = target_pu->GetBinContent(target_pu->FindFixBin(this_pu));
+  float mc_pu_val = mc_pu->GetBinContent(mc_pu->FindFixBin(this_pu));
+  if(mc_pu_val==0) return 0;
+  float w = target_pu_val/mc_pu_val; 
+  if(w<0) w=0;
+  if(w>40) w=40;
+  return w;
+
 }
 
 void plotManager::processEntry(float weight){
@@ -96,14 +113,17 @@ void plotManager::processEntry(float weight){
   for(int i=0;i<vetoFormulas.size();i++){
     if( vetoFormulas.at(i)->EvalInstance() ) return;
   }
+  float pu_weight = computePUWeight();
   for(int i=0;i<catNames.size();i++){    
     if( !catFormulas.at(i)->EvalInstance() ) continue; //not in this category
     for(int j=0;j<variables.size();j++){
-      TH1F* hist;
-      if(isRealPho->EvalInstance())      hist = realPhoHistograms.at(i).at(j);      
+      TH1F* hist=0;
+      if(isRealPho->EvalInstance())      hist = realPhoHistograms.at(i).at(j);
       else if(isRealEle->EvalInstance()) hist = realEleHistograms.at(i).at(j);      
       else                               hist = fakeHistograms.at(i).at(j);      
-      hist->Fill(varFormulas.at(j)->EvalInstance(),weight);
+      assert(hist!=0);
+      float v = varFormulas.at(j)->EvalInstance();
+      hist->Fill(v,weight*pu_weight);      
     }
   }
 }

@@ -10,13 +10,13 @@ public:
   std::array<TH2F*,3> get2DHistogram(TString cat, TString var1,TString var2);
   virtual void processChain(TChain *fChain,float weight);
   void saveAll2D(TFile *f);
+  void buildHistograms2D();
 
 protected:
   std::vector<std::vector<std::vector<TH2F*>>> fake2DHistograms;
   std::vector<std::vector<std::vector<TH2F*>>> realPho2DHistograms;
   std::vector<std::vector<std::vector<TH2F*>>> realEle2DHistograms;
 
-  void buildHistograms2D();
   void processEntry2D(float weight);
   bool freeze2D=false;
 };

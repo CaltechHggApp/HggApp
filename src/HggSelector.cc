@@ -16,8 +16,8 @@ using namespace TMVA;
 
 
 void HggSelector::firstInit(){
-  setProcessCollection("Muons",false);
-  setProcessCollection("Electrons",false);
+  //setProcessCollection("Muons",false);
+  //setProcessCollection("Electrons",false);
 }
 
 //

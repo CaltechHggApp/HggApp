@@ -3,5 +3,7 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
+#include <memory>
+
 #pragma link C++ class RooGaussianCorr+;
 #endif

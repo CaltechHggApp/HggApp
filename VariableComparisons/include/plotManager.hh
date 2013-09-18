@@ -20,11 +20,16 @@ public:
   plotManager(TString inTag="");
   void addCategory(TString name,TString cut);
   void addVariable(TString name,TString var,int bins, float low, float high,bool correct=false);
+  void setTargetPU(TH1D* hist) { target_pu=hist;}
+  void setMCPU(TH1D* hist) { mc_pu=hist;}
   virtual void processChain(TChain *fChain,float weight);
   std::array<TH1F*,3> getHistogram(TString cat, TString var);
   void addVetos(std::vector<TString>* v){vetos = v;}
   void saveAll(TFile *f);
   void setUse4Cat(bool b = true){use4Cat=b;}
+
+
+  void buildHistograms();
 protected:
   std::vector<TString>* vetos;
   std::vector<TTreeFormula*> vetoFormulas;
@@ -40,6 +45,7 @@ protected:
   TTreeFormula* isRealPho;
   TTreeFormula* isRealEle;
   TTreeFormula* isTrigger;
+  TTreeFormula* pu;
 
 
   std::vector<TString> varNames;
@@ -52,13 +58,17 @@ protected:
   std::vector< std::vector< TH1F* > > fakeHistograms; // outer vector: category % inner vector: variables
   std::vector< std::vector< TH1F* > > realPhoHistograms; // outer vector: category % inner vector: variables
   std::vector< std::vector< TH1F* > > realEleHistograms; // outer vector: category % inner vector: variables
-  void buildHistograms();
   std::vector< TTreeFormula* > catFormulas;
   std::vector< TTreeFormula* > varFormulas;  
   void buildFormulas(TChain *fChain);
   void updateFormulas();
   void destroyFormulas();
   void processEntry(float weight);
+
+  float computePUWeight();
+
+  TH1D* target_pu=0;
+  TH1D* mc_pu=0;
 };
 
 
