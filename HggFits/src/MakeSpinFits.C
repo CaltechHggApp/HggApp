@@ -808,9 +808,9 @@ RooAbsPdf* MakeSpinFits::getBackgroundPdf(const TString& dataTag,const TString& 
       
   case kDoublePow:
     { //pdf = f*m^alpha_1 + (1-f)*m^alpha_2
-      RooRealVar *alpha1 = new RooRealVar(dataTag+Form("_%s_%s_alpha1",FitTypeTag.Data(),outputTag.Data()),"",-3.,-10.,0.);
-      RooRealVar *alpha2 = new RooRealVar(dataTag+Form("_%s_%s_alpha2",FitTypeTag.Data(),outputTag.Data()),"",-1.,-10.,0.);
-      RooRealVar *f_bkg  = new RooRealVar(dataTag+Form("_%s_%s_f",FitTypeTag.Data(),outputTag.Data()),"",0.1,0,1);
+      RooRealVar *alpha1 = new RooRealVar(dataTag+Form("_%s_%s_alpha1",FitTypeTag.Data(),outputTag.Data()),"",-4.,-10.,0.);
+      RooRealVar *alpha2 = new RooRealVar(dataTag+Form("_%s_%s_alpha2",FitTypeTag.Data(),outputTag.Data()),"",-3.9,-10.,0.);
+      RooRealVar *f_bkg  = new RooRealVar(dataTag+Form("_%s_%s_f",FitTypeTag.Data(),outputTag.Data()),"",0.1,0.05,0.95);
       RooGenericPdf *pow1 = new RooGenericPdf(dataTag+Form("_%s_%s_pow1",FitTypeTag.Data(),outputTag.Data()),"","@0^@1",RooArgList(*mass,*alpha1));
       RooGenericPdf *pow2 = new RooGenericPdf(dataTag+Form("_%s_%s_pow2",FitTypeTag.Data(),outputTag.Data()),"","@0^@1",RooArgList(*mass,*alpha2));
 
@@ -954,6 +954,7 @@ RooAbsPdf* MakeSpinFits::getConstraintPdf(const TString& dataTag,const TString& 
     while( (uc = iter.next()) ) {
         c = citer.next();
         if(string(uc->GetName()).compare("mass")==0) continue;
+
         RooRealVar  *mean = new RooRealVar(dataTag+Form("_%s_%s_constraint_%s_mean",FitTypeTag.Data(),outputTag.Data(),c->GetName()),"",
                                            ((RooRealVar*)uc)->getVal());
         RooRealVar  *sigma = new RooRealVar(dataTag+Form("_%s_%s_constraint_%s_sigma",FitTypeTag.Data(),outputTag.Data(),c->GetName()),"",
@@ -977,6 +978,9 @@ RooAbsPdf* MakeSpinFits::getCorrelatedConstraintPdf(const TString& dataTag,const
     while( (uc = iter.next()) ) {
         c = citer.next();
         if(string(uc->GetName()).compare("mass")==0) continue;
+        ((RooRealVar*)c)->setVal(((RooRealVar*)uc)->getVal());
+        ((RooRealVar*)c)->setMin(((RooRealVar*)uc)->getVal()-5*((RooRealVar*)uc)->getError());
+        ((RooRealVar*)c)->setMax(((RooRealVar*)uc)->getVal()+5*((RooRealVar*)uc)->getError());
         RooRealVar  *mean = new RooRealVar(dataTag+Form("_%s_%s_constraint_%s_mean",FitTypeTag.Data(),outputTag.Data(),c->GetName()),"",
                                            ((RooRealVar*)uc)->getVal());
         uc_vars->add(*uc);
@@ -1074,7 +1078,8 @@ void MakeSpinFits::run(){
     MakeBackgroundOnlyFit(*catIt,-2,2,true);
     for(int i=0;i<NcosTbins;i++) MakeBackgroundOnlyFit(*catIt,cosTbinEdges[i],cosTbinEdges[i+1],true);	
     MakeConstrainedBackgroundOnlyFit(*catIt,-2,2);
-    for(int i=0;i<NcosTbins;i++) MakeConstrainedBackgroundOnlyFit(*catIt,cosTbinEdges[i],cosTbinEdges[i+1]);	
+    for(int i=0;i<NcosTbins;i++) MakeConstrainedBackgroundOnlyFit(*catIt,cosTbinEdges[i],cosTbinEdges[i+1]);
+    return; //testing only
   }
   if(bkgOnly) return;
 

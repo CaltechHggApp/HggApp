@@ -24,7 +24,7 @@
 
 #include "assert.h"
 #include <iostream>
-
+#include <memory>
 
 class RooGaussianCorr : public RooAbsPdf {
 public:
@@ -41,10 +41,12 @@ public:
 protected:
     RooListProxy __variables;
     RooListProxy __means;
-    const TMatrixDSym *__covMatrix;
+    std::unique_ptr<TMatrixDSym> __covMatrix; //copy the covariance matrix
     TMatrixDSym *__invCovMatrix;
-    
+
+    int dim=0;
     double determinant; // compute this once and save the cached result
+    bool isInverted=false;
     Double_t evaluate() const;
 private:
     void invert();

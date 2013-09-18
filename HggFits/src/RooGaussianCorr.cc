@@ -11,7 +11,7 @@ RooGaussianCorr::RooGaussianCorr(const char* name, const char *title, RooArgList
   RooAbsPdf(name,title),
   __variables("vars","variable list",this),
   __means("means","mean list",this),
-  __covMatrix(covarianceMatrix),
+  __covMatrix(new TMatrixDSym(*covarianceMatrix)),
   __invCovMatrix(0)
 {
   //build the fing RooListProxies
@@ -45,7 +45,7 @@ RooGaussianCorr::RooGaussianCorr(const RooGaussianCorr & other, const char* name
   RooAbsPdf(other,name),
   __variables("vars",this,other.__variables),
   __means("means",this,other.__means),
-  __covMatrix(other.__covMatrix),
+  __covMatrix(new TMatrixDSym(*(other.__covMatrix.get()))),
   __invCovMatrix(0),
   determinant(other.determinant)
 {
@@ -53,20 +53,27 @@ RooGaussianCorr::RooGaussianCorr(const RooGaussianCorr & other, const char* name
 }
 
 void RooGaussianCorr::invert() { //invert the covariance matrix
-  if(__invCovMatrix) delete __invCovMatrix;
-  assert(__covMatrix!=0);
-  __invCovMatrix = (TMatrixDSym*)__covMatrix->Clone("invertedCovarianceMatrix"); //new TMatrixDSym(*__covMatrix); //create a new object which we own
-  __invCovMatrix->Invert(); //invert in place
-}
+    if(isInverted) return;
+    isInverted=true;
+    if(__invCovMatrix) delete __invCovMatrix;
+    assert(__covMatrix!=0);
+    __invCovMatrix = (TMatrixDSym*)__covMatrix->Clone("invertedCovarianceMatrix"); //new TMatrixDSym(*__covMatrix); //create a new object which we own
+    __invCovMatrix->Invert(); //invert in place
 
+    dim = __invCovMatrix->GetNcols(); // the asserts ensure that this is the same dimension as the others
+}
+#include <iostream>
 double RooGaussianCorr::evaluate() const {
   assert(__invCovMatrix != 0);
-
-  int k = __invCovMatrix->GetNcols(); // the asserts ensure that this is the same dimension as the others
-  double norm = 1./TMath::Sqrt(TMath::Power(TMath::TwoPi(),k)*determinant); //normalization factor
-
-  TVectorD varMinusMean(k);
-  for(int i=0;i<k;i++) { // build the vector in place
+  assert(isInverted);
+  assert(dim>0);
+  assert(determinant!=0);  //evaluate will be deep in the guts of the fitter, so use assert to stop immediately
+  
+  //double norm = 1./TMath::Sqrt(TMath::Power(TMath::TwoPi(),dim)*determinant); //normalization factor
+  double norm = 1; //getVal() takes care of the normalization
+  assert(norm!=0);
+  TVectorD varMinusMean(dim);
+  for(int i=0;i<dim;i++) { // build the vector in place
     RooAbsReal *var  = (RooAbsReal*)__variables.at(i);
     RooAbsReal *mean = (RooAbsReal*)__means.at(i);
     varMinusMean(i) = var->getVal() - mean->getVal();
@@ -74,5 +81,16 @@ double RooGaussianCorr::evaluate() const {
   TVectorD varMinusMean2 = varMinusMean; // do the multiplication (v.I.v)
   varMinusMean *= *__invCovMatrix;       // we need some copying, but this should minimize it
   double expfactor = varMinusMean * varMinusMean2;
+  double ret_val = norm*TMath::Exp(-0.5*expfactor);
+
+  /*
+  if(ret_val < 1e-20){
+      std::cout << ret_val  << std::endl;
+      varMinusMean2.Print();
+      __invCovMatrix->Print();
+      varMinusMean.Print();
+  }
+  */
   return norm*TMath::Exp(-0.5*expfactor);
+
 }
