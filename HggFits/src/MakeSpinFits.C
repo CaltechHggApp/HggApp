@@ -940,7 +940,7 @@ void MakeSpinFits::MakeConstrainedBackgroundOnlyFit(const TString& catTag, float
   ws->import(*BkgModel);
   ws->import(*Nbkg);
   ws->import(*res);
-  ws->import(*constrain);
+  //ws->import(*constrain);
 
   delete ds;
 }

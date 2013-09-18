@@ -54,7 +54,8 @@ RooGaussianCorr::RooGaussianCorr(const RooGaussianCorr & other, const char* name
 
 void RooGaussianCorr::invert() { //invert the covariance matrix
   if(__invCovMatrix) delete __invCovMatrix;
-  __invCovMatrix = new TMatrixDSym(*__covMatrix); //create a new object which we own
+  assert(__covMatrix!=0);
+  __invCovMatrix = (TMatrixDSym*)__covMatrix->Clone("invertedCovarianceMatrix"); //new TMatrixDSym(*__covMatrix); //create a new object which we own
   __invCovMatrix->Invert(); //invert in place
 }
 
