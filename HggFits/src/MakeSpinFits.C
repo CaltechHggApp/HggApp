@@ -911,7 +911,7 @@ void MakeSpinFits::MakeConstrainedBackgroundOnlyFit(const TString& catTag, float
   assert(unconst_shape != 0);
   RooArgSet *unconst_vars = unconst_shape->getVariables();
   RooArgSet *const_vars  = BkgShape->getVariables();
-  RooAbsPdf* constrain = getConstraintPdf(dataTag,"CONSTBKGFIT",outputTag,*unconst_res,*unconst_vars,*const_vars);
+  RooAbsPdf* constrain = getCorrelatedConstraintPdf(dataTag,"CONSTBKGFIT",outputTag,*unconst_res,*unconst_vars,*const_vars);
   assert(constrain!=0);
   
   BkgModel->fitTo(*ds,RooFit::Strategy(0),RooFit::NumCPU(NUM_CPU),RooFit::Minos(kFALSE),RooFit::Extended(kTRUE),RooFit::ExternalConstraints(*constrain));
@@ -945,7 +945,7 @@ void MakeSpinFits::MakeConstrainedBackgroundOnlyFit(const TString& catTag, float
   delete ds;
 }
 
-RooAbsPdf* MakeSpinFits::getConstraintPdf(const TString& dataTag,const TString& FitTypeTag,const TString& outputTag,const RooFitResult &fitRes, const RooArgSet& variables, const RooArgSet &const_variables) {
+RooAbsPdf* MakeSpinFits::getConstraintPdf(const TString& dataTag,const TString& FitTypeTag,const TString& outputTag, const RooArgSet& variables, const RooArgSet &const_variables) {
     RooFIter iter  = variables.fwdIterator();
     RooFIter citer = const_variables.fwdIterator();
     RooAbsArg *uc;
@@ -963,6 +963,27 @@ RooAbsPdf* MakeSpinFits::getConstraintPdf(const TString& dataTag,const TString& 
         pdfList->add(*constraint);
     }
     RooProdPdf* total_constraint = new RooProdPdf(dataTag+Form("_%s_%s_constraint",FitTypeTag.Data(),outputTag.Data()),"",*pdfList);
+    return total_constraint;
+}
+
+RooAbsPdf* MakeSpinFits::getCorrelatedConstraintPdf(const TString& dataTag,const TString& FitTypeTag,const TString& outputTag,const RooFitResult &fitRes, const RooArgSet& variables, const RooArgSet &const_variables) {
+    RooFIter iter  = variables.fwdIterator();
+    RooFIter citer = const_variables.fwdIterator();
+    RooAbsArg *uc;
+    RooAbsArg *c;
+    RooArgList *vars = new RooArgList();
+    RooArgList *means = new RooArgList();
+    while( (uc = iter.next()) ) {
+        c = citer.next();
+        if(string(uc->GetName()).compare("mass")==0) continue;
+        RooRealVar  *mean = new RooRealVar(dataTag+Form("_%s_%s_constraint_%s_mean",FitTypeTag.Data(),outputTag.Data(),c->GetName()),"",
+                                           ((RooRealVar*)uc)->getVal());
+        vars->add(*c);
+        means->add(*mean);
+    }
+    const TMatrixDSym& covMatrix = fitRes.covarianceMatrix();
+    RooGaussianCorr* total_constraint = new RooGaussianCorr(dataTag+Form("_%s_%s_constraint",FitTypeTag.Data(),outputTag.Data()),"",
+                                                            *vars,*means,&covMatrix);
     return total_constraint;
 }
 

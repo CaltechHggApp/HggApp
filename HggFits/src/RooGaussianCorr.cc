@@ -7,7 +7,7 @@
 ClassImp(RooGaussianCorr)
 
 
-RooGaussianCorr::RooGaussianCorr(const char* name, const char *title, RooArgList &variables, RooArgList &means, TMatrixDSym *covarianceMatrix) :
+RooGaussianCorr::RooGaussianCorr(const char* name, const char *title, RooArgList &variables, RooArgList &means, const TMatrixDSym *covarianceMatrix) :
   RooAbsPdf(name,title),
   __variables("vars","variable list",this),
   __means("means","mean list",this),

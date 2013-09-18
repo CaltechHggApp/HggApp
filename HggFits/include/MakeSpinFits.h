@@ -43,6 +43,8 @@ Date: Jan 2013
 #include "RooGenericPdf.h"
 #include "RooFitResult.h"
 
+#include "RooGaussianCorr.hh"
+
 #include <HggOutputReader2.h>
 #include <dataSetInfo.h>
 
@@ -90,7 +92,8 @@ public:
   void MakeBackgroundOnlyFit(const TString& catTag,float cosTlow=-2,float cosThigh=2,bool fitMCbackground=false); //!< Make a background only fit to data in single ceategory the type of fit is controlled by the fitType member
   void MakeConstrainedBackgroundOnlyFit(const TString& catTag,float cosTlow=-2,float cosThigh=2); //!< Make a background only fit to data in single ceategory the type of fit is controlled by the fitType member
 
-  RooAbsPdf* getConstraintPdf(const TString& dataTag,const TString& FitTypeTag,const TString& outputTag,const RooFitResult& fitRes, const RooArgSet& variables, const RooArgSet& const_variables);
+  RooAbsPdf* getConstraintPdf(const TString& dataTag,const TString& FitTypeTag,const TString& outputTag, const RooArgSet& variables, const RooArgSet& const_variables);
+  RooAbsPdf* getCorrelatedConstraintPdf(const TString& dataTag,const TString& FitTypeTag,const TString& outputTag,const RooFitResult& fitRes, const RooArgSet& variables, const RooArgSet& const_variables);
   /*! 
     Performs a simultaneous S+B fit to the target data.  The S parameters are fixed by the MC but the B parameters are allowed to float freely.
     \sa MakeCombinedSignalTest()

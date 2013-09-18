@@ -29,7 +29,9 @@
 class RooGaussianCorr : public RooAbsPdf {
 public:
     RooGaussianCorr() {};    
-    RooGaussianCorr(const char* name, const char *title,RooArgList &variables, RooArgList &means, TMatrixDSym *covarianceMatrix);
+    RooGaussianCorr(const char* name, const char *title,RooArgList &variables, RooArgList &means, const TMatrixDSym *covarianceMatrix);
+    RooGaussianCorr(const TString name, const char *title,RooArgList &variables, RooArgList &means, const TMatrixDSym *covarianceMatrix) :
+        RooGaussianCorr(name.Data(),title,variables,means,covarianceMatrix) {}
     RooGaussianCorr(const RooGaussianCorr & other,const char* name=0);
     virtual TObject* clone(const char* newname) const { return new RooGaussianCorr(*this,newname); }
     inline virtual ~RooGaussianCorr() { delete __invCovMatrix; }
@@ -39,7 +41,7 @@ public:
 protected:
     RooListProxy __variables;
     RooListProxy __means;
-    TMatrixDSym *__covMatrix;
+    const TMatrixDSym *__covMatrix;
     TMatrixDSym *__invCovMatrix;
     
     double determinant; // compute this once and save the cached result
