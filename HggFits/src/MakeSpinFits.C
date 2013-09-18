@@ -971,6 +971,7 @@ RooAbsPdf* MakeSpinFits::getCorrelatedConstraintPdf(const TString& dataTag,const
     RooFIter citer = const_variables.fwdIterator(); // iterator through the variables for the constrained fit
     RooAbsArg *uc;
     RooAbsArg *c;
+    RooArgList *uc_vars = new RooArgList(); //list of selected unconstrained variables for the reduced covarianve matrix
     RooArgList *vars = new RooArgList();  // list of variables for the correlated gaussian
     RooArgList *means = new RooArgList(); // lsit of means for the correlated gaussian
     while( (uc = iter.next()) ) {
@@ -978,12 +979,14 @@ RooAbsPdf* MakeSpinFits::getCorrelatedConstraintPdf(const TString& dataTag,const
         if(string(uc->GetName()).compare("mass")==0) continue;
         RooRealVar  *mean = new RooRealVar(dataTag+Form("_%s_%s_constraint_%s_mean",FitTypeTag.Data(),outputTag.Data(),c->GetName()),"",
                                            ((RooRealVar*)uc)->getVal());
+        uc_vars->add(*uc);
         vars->add(*c);
         means->add(*mean);
     }
-    const TMatrixDSym& covMatrix = fitRes.reducedCovarianceMatrix(variables);
+    const TMatrixDSym& covMatrix = fitRes.reducedCovarianceMatrix(*uc_vars);
     RooGaussianCorr* total_constraint = new RooGaussianCorr(dataTag+Form("_%s_%s_constraint",FitTypeTag.Data(),outputTag.Data()),"",
                                                             *vars,*means,&covMatrix);
+    delete uc_vars;
     return total_constraint;
 }
 
