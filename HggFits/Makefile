@@ -56,6 +56,7 @@ clean:
 	rm -f runFits
 	rm -f runPlots
 	rm -f runToyWorkspaces
+	rm -f MyDict.cxx
 
 threadTest: $(EXESRCDIR)threadTest.C
 	$(CXX) $(CXXFLAGS) -o threadTest $(GLIBS) $ $<	
@@ -145,8 +146,9 @@ $(OUTLIB)RooGaussianCorr.o:	$(SRCDIR)RooGaussianCorr.cc \
 				$(OUTLIB)MyDict.o
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
 
+## rootcint -f test.cxx -c -I./include -I/cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/roofit/5.34.07-cms/include -p include/RooGaussianCorr.hh LinkDef.h
 MyDict.cxx: LinkDef.h
-	rootcint -l -f $@ -c -v -I$(INCLUDEDIR) $(CXXFLAGS) -p $(INCLUDEDIR)RooGaussianCorr.hh LinkDef.h
+	rootcint -f $@ -c -I$(INCLUDEDIR) -I$(INCLUDEDIRROOFIT) -p $(INCLUDEDIR)RooGaussianCorr.hh LinkDef.h
 
 $(OUTLIB)MyDict.o: MyDict.cxx
 	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)MyDict.o $<

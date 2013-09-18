@@ -1,3 +1,6 @@
+#ifndef RooGaussianCorr_hh
+#define RooGaussianCorr_hh
+
 //
 // A multidimensional gaussian pdf that implements correlations amongst the input variables
 // use-case is for a multi-dimensional constraint of fitting parameters
@@ -25,21 +28,25 @@
 
 class RooGaussianCorr : public RooAbsPdf {
 public:
-  RooGaussianCorr(const char* name, const char *title,RooArgList &variables, RooArgList &means, TMatrixDSym &covarianceMatrix);
-  RooGaussianCorr(const RooGaussianCorr & other,const char* name=0);
-  ~RooGaussianCorr() { delete __invCovMatrix; }
-
+    RooGaussianCorr() {};    
+    RooGaussianCorr(const char* name, const char *title,RooArgList &variables, RooArgList &means, TMatrixDSym *covarianceMatrix);
+    RooGaussianCorr(const RooGaussianCorr & other,const char* name=0);
+    virtual TObject* clone(const char* newname) const { return new RooGaussianCorr(*this,newname); }
+    inline virtual ~RooGaussianCorr() { delete __invCovMatrix; }
+    
   //virtual void ShowMembers(TMemberInspector& insp, char* parent){}
   //virtual void Streamer(TBuffer& b) {}
 protected:
-  RooListProxy __variables;
-  RooListProxy __means;
-  TMatrixDSym &__covMatrix;
-  TMatrixDSym *__invCovMatrix;
-
-  double determinant; // compute this once and save the cached result
-  double evaluate() const;
+    RooListProxy __variables;
+    RooListProxy __means;
+    TMatrixDSym *__covMatrix;
+    TMatrixDSym *__invCovMatrix;
+    
+    double determinant; // compute this once and save the cached result
+    Double_t evaluate() const;
 private:
-  void invert();
-  ClassDef(RooGaussianCorr,0)
+    void invert();
+    ClassDef(RooGaussianCorr,1)
 };
+
+#endif

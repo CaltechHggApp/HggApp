@@ -1,8 +1,13 @@
-#include "RooGaussianCorr.hh"
-ClassImp(RooGaussianCorr);
+
+#include "Riostream.h"
+
+#include "include/RooGaussianCorr.hh"
 #include "TMath.h"
 
-RooGaussianCorr::RooGaussianCorr(const char* name, const char *title, RooArgList &variables, RooArgList &means, TMatrixDSym &covarianceMatrix) :
+ClassImp(RooGaussianCorr)
+
+
+RooGaussianCorr::RooGaussianCorr(const char* name, const char *title, RooArgList &variables, RooArgList &means, TMatrixDSym *covarianceMatrix) :
   RooAbsPdf(name,title),
   __variables("vars","variable list",this),
   __means("means","mean list",this),
@@ -30,9 +35,9 @@ RooGaussianCorr::RooGaussianCorr(const char* name, const char *title, RooArgList
     assert(0);
   }
 
-  determinant = __covMatrix.Determinant();
-  assert(__covMatrix.GetNcols() == __variables.getSize());
-  assert(__covMatrix.GetNcols() == __means.getSize());
+  determinant = __covMatrix->Determinant();
+  assert(__covMatrix->GetNcols() == __variables.getSize());
+  assert(__covMatrix->GetNcols() == __means.getSize());
   invert();
 }
 
@@ -49,7 +54,7 @@ RooGaussianCorr::RooGaussianCorr(const RooGaussianCorr & other, const char* name
 
 void RooGaussianCorr::invert() { //invert the covariance matrix
   if(__invCovMatrix) delete __invCovMatrix;
-  __invCovMatrix = new TMatrixDSym(__covMatrix); //create a new object which we own
+  __invCovMatrix = new TMatrixDSym(*__covMatrix); //create a new object which we own
   __invCovMatrix->Invert(); //invert in place
 }
 
