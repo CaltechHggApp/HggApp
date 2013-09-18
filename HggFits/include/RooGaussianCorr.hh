@@ -41,7 +41,9 @@ public:
 protected:
     RooListProxy __variables;
     RooListProxy __means;
+#ifndef __CINT__
     std::unique_ptr<TMatrixDSym> __covMatrix; //copy the covariance matrix
+#endif
     TMatrixDSym *__invCovMatrix;
 
     int dim=0;
