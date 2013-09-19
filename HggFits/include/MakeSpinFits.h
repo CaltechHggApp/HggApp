@@ -183,7 +183,9 @@ public:
   void setMakeBkgOnly(bool b=true){bkgOnly=b;}
 
   static std::pair<float,float> getCosTRangeFromCatName(TString name);
-protected:
+
+  void setEmulatedMassHack(TString name) { emulatedMassHack=true; emulatedMassMcName=name; }
+ protected:
   RooWorkspace *ws;
 
   std::vector<TString> mcLabel;
@@ -207,6 +209,9 @@ protected:
 
   float *cosTbinEdges;
   int NcosTbins;
+
+  bool emulatedMassHack=false; // these will be set if we are using MC at one mass to emulate a signal at another mass
+  TString emulatedMassMcName=""; // it will allow us to change what we use for fractions and normalization
 };
 
 #endif

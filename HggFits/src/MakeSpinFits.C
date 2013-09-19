@@ -469,8 +469,10 @@ void MakeSpinFits::MakeCombinedSignalTest(const TString& mcName,bool cosTBinned)
     //RooFormulaVar *thisNbkg = new RooFormulaVar(Form("Data_%s_%s_%s_Nbkg",mcName.Data(),fitTag.Data(),catIt->Data() ),"","@0*@1",RooArgSet(*nBkg,*fBkg));
 
     //compute the fraction of events expected in this category
-    double totalEvents  = ws->data(mcName+dsName)->sumEntries(); 
-    double thisCat =  ws->data(mcName+dsName)->sumEntries(selectionString);
+
+    TString mcNameForCounting = (emulatedMassHack ? emulatedMassMcName : mcName);
+    double totalEvents  = ws->data(mcNameForCounting+dsName)->sumEntries(); 
+    double thisCat =  ws->data(mcNameForCounting+dsName)->sumEntries(selectionString);
     double thisFrac = thisCat/totalEvents;
     double thisFracE = thisFrac * TMath::Sqrt(1/thisCat+1/totalEvents);
 
