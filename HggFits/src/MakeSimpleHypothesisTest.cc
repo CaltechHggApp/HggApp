@@ -75,7 +75,7 @@ void MakeSimpleHypothesisTest::MakeHypothesisTest() {
     fitter.setWorkspace(ws);
     fitter.setEmulatedMassHack("jhu0plus125");
     
-    for(int mh=mh_low; mh<mh_step; mh+=mh_step) { //loop over the masses
+    for(int mh=mh_low; mh<mh_high; mh+=mh_step) { //loop over the masses
         fitter.MakeCombinedSignalTest( Form("Hgg%d",mh),false);
         float NS  = ws->var( Form("Data_Hgg%d_FULLFIT_Nsig",mh) )->getVal();
         float NSE = ws->var( Form("Data_Hgg%d_FULLFIT_Nsig",mh) )->getError();

@@ -42,7 +42,7 @@ private:
     std::vector<TString> catLabels;
 
     int mh_low=100;
-    int mh_high=4900;
+    int mh_high=490;
     int mh_step=1;
     
     
