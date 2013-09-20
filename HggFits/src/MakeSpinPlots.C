@@ -148,7 +148,7 @@ void MakeSpinPlots::DrawBlindFit(TString tag, TString mcName,TString cosThetaBin
   lum->SetTextSize(0.045);
   lum->SetTextColor(kBlack);
 
-  TLatex *owner = new TLatex(0.6,0.88,"Alex Mott (Nov. 13, 2012)");
+  TLatex *owner = new TLatex(0.6,0.88,"Caltech-CMS Preliminary");
   owner->SetNDC();
   owner->SetTextSize(0.045);
   owner->SetTextColor(kBlack);

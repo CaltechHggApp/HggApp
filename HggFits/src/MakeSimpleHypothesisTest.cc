@@ -59,7 +59,7 @@ void MakeSimpleHypothesisTest::MakeFakeSignalModels(const TString& baseMCName,co
 
 
 void MakeSimpleHypothesisTest::MakeAllFakeSignalModels() {
-    for(int mh=126; mh<490; mh++) { //loop over the masses        
+    for(int mh=mh_low; mh<mh_high; mh+=mh_step) { //loop over the masses        
         for(auto catIt = catLabels.begin(); catIt !=catLabels.end(); catIt++) { //loop over the categories
             std::cout << *catIt << std::endl;
             MakeFakeSignalModels("jhu0plus125",*catIt,mh/125.,float(mh));
@@ -68,14 +68,14 @@ void MakeSimpleHypothesisTest::MakeAllFakeSignalModels() {
 }
 
 void MakeSimpleHypothesisTest::MakeHypothesisTest() {
-    TH1F significance("CombinedSignificance","",365,125,490);
-    TH1F NSig("signalYield","",365,125,490);
+    TH1F significance("CombinedSignificance","",401,100,500);
+    TH1F NSig("signalYield","",401,100,500);
 
     MakeSpinFits fitter("","");
     fitter.setWorkspace(ws);
     fitter.setEmulatedMassHack("jhu0plus125");
     
-    for(int mh=126; mh<490; mh++) { //loop over the masses
+    for(int mh=mh_low; mh<mh_step; mh+=mh_step) { //loop over the masses
         fitter.MakeCombinedSignalTest( Form("Hgg%d",mh),false);
         float NS  = ws->var( Form("Data_Hgg%d_FULLFIT_Nsig",mh) )->getVal();
         float NSE = ws->var( Form("Data_Hgg%d_FULLFIT_Nsig",mh) )->getError();

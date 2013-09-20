@@ -40,6 +40,10 @@ private:
     TFile* inputFile=0;
     TFile* outputFile=0;
     std::vector<TString> catLabels;
+
+    int mh_low=100;
+    int mh_high=4900;
+    int mh_step=1;
     
     
 };
