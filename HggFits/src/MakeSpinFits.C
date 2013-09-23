@@ -753,7 +753,9 @@ void MakeSpinFits::MakeBackground(){
   RooDataSet Background_Combined(*((RooDataSet*)ws->data("Data_Combined")),"Background_Combined");
   for (auto mcIt=mcLabel.begin(); mcIt != mcLabel.end(); mcIt++){
     if( mcIt->Contains("DYToLL-M50") ) continue; //hack since the normalization is broken for this
-    Background_Combined.append(*((RooDataSet*)ws->data(*mcIt+"_Combined")));
+    RooDataSet *ds = (RooDataSet*)ws->data(*mcIt+"_Combined");
+    if( TString(ds->GetTitle()).CompareTo("type-1") != 0) continue; //make sure we don't add signal
+    Background_Combined.append(*ds);
   }
   ws->import(Background_Combined);
 }
