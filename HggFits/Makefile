@@ -47,7 +47,7 @@ OUTLIB	         = ./lib/
 .PREFIXES: ./lib/
 
 .PHONY: all
-all: runWorkspaces runFits runPlots runToyWorkspaces
+all: runWorkspaces runFits runPlots runToyWorkspaces runSimpleHypothesisTest runBiasStudy
 
 .PHONY: clean
 clean: 
@@ -89,6 +89,20 @@ runToyWorkspaces:		$(EXESRCDIR)runToyWorkspaces.C \
 				$(OUTLIB)ArgParser.o \
 				$(HGGAPPINC)ReadConfig.hh
 	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o runToyWorkspaces $(OUTLIB)/*.o  $(GLIBS) $ $<	
+
+runSimpleHypothesisTest:		$(EXESRCDIR)runSimpleHypothesisTest.C \
+				$(OUTLIB)MakeSimpleHypothesisTest.o\
+				$(OUTLIB)MakeSpinFits.o\
+				$(OUTLIB)ArgParser.o \
+				$(HGGAPPINC)ReadConfig.hh
+	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(OUTLIB)/*.o  $(GLIBS) $ $<	
+
+runBiasStudy:		$(EXESRCDIR)runBiasStudy.C \
+				$(OUTLIB)MakeBiasStudy.o\
+				$(OUTLIB)MakeSpinFits.o\
+				$(OUTLIB)ArgParser.o \
+				$(HGGAPPINC)ReadConfig.hh
+	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(OUTLIB)/*.o  $(GLIBS) $ $<	
 
 optimizeSigmaE: 		$(SCRIPTS)optimizeSigmaE.C \
 				$(OUTLIB)MakeSpinFits.o
@@ -141,6 +155,13 @@ $(OUTLIB)MixSpinDatasets.o:	$(SRCDIR)MixSpinDatasets.C \
 				$(OUTLIB)MakeSpinFits.o
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)MixSpinDatasets.o $<
 
+$(OUTLIB)MakeSimpleHypothesisTest.o: $(SRCDIR)MakeSimpleHypothesisTest.cc \
+									$(OUTLIB)MakeSpinFits.o
+		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
+$(OUTLIB)MakeBiasStudy.o: $(SRCDIR)MakeBiasStudy.cc \
+									$(OUTLIB)MakeSpinFits.o
+		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
 
 $(OUTLIB)RooGaussianCorr.o:	$(SRCDIR)RooGaussianCorr.cc \
 				$(OUTLIB)MyDict.o

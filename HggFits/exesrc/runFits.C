@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <string>
+#include <map>
 
 int main(int argc, char** argv){
   using namespace std;
@@ -11,7 +12,7 @@ int main(int argc, char** argv){
   ArgParser a(argc,argv);
   a.addArgument("InputWorkspace",ArgParser::required,"input workspace");
   a.addArgument("OutputWorkspace",ArgParser::required,"output workspace");
-  a.addLongOption("BkgFit",ArgParser::reqArg,"Background Fit Type [poly,exp,pow,dpow] (default: exp)");
+  a.addLongOption("BkgFit",ArgParser::reqArg,"Background Fit Type [poly,sexp,dexp,texp,pow,dpow] (default: dexp)");
   a.addLongOption("MCSamples",ArgParser::reqArg,"Specify the MC sample to process (comma separated) or none (default: all)");
   a.addLongOption("CrystalBall",ArgParser::noArg,"convolute a crystal ball with the signal model");
   a.addLongOption("DY",ArgParser::noArg,"Specify that we are fitting the Zee peak");
@@ -30,14 +31,24 @@ int main(int argc, char** argv){
   if(a.longFlagPres("BkgFit")){
     fit = a.getLongFlag("BkgFit");    
   }
+
+  std::map<string,MakeSpinFits::BkgFitType> validFits = {
+      { "poly", MakeSpinFits::kPoly },
+      { "pow",  MakeSpinFits::kPow },
+      { "dpow", MakeSpinFits::kDoublePow },
+      { "sexp", MakeSpinFits::kSingleExp },
+      { "dexp", MakeSpinFits::kDoubleExp },
+      { "texp", MakeSpinFits::kTripleExp },
+      { "mexp", MakeSpinFits::kModifiedExp }
+  };
   
   MakeSpinFits msf(inputWS,outputWS);
-
-  if(fit.compare("poly")==0) msf.setBkgFit(MakeSpinFits::kPoly);
-  if(fit.compare("pow")==0) msf.setBkgFit(MakeSpinFits::kPow);
-  if(fit.compare("dpow")==0) msf.setBkgFit(MakeSpinFits::kDoublePow);
-  else msf.setBkgFit(MakeSpinFits::kExp);
-
+  auto matchedFit = validFits.find(fit);
+  if( matchedFit == validFits.end()) {
+      std::cout << "Invalid Fit " << fit << std::endl;
+      return -1;
+  }
+  msf.setBkgFit(matchedFit->second);
   if(a.longFlagPres("MCSamples")) // specify the samples to test
     {
       vector<string> samples = ReadConfig::tokenizeString( a.getLongFlag("MCSamples"), ",");

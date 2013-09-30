@@ -28,46 +28,48 @@ MakeSpinPlots::~MakeSpinPlots(){
 }
 
 void MakeSpinPlots::runAll(){
-  if(!isSetup) setupDir();
-  std::vector<TString>::const_iterator mcIt = mcNames.begin();
-  for(; mcIt != mcNames.end(); mcIt++){
-    runAll(*mcIt);
-  }
+    if(!isSetup) setupDir();
+    std::cout << "runAll" << std::endl;
+    std::vector<TString>::const_iterator mcIt = mcNames.begin();
+    for(; mcIt != mcNames.end(); mcIt++){
+        if( TString(ws->data( Form("%s_Combined",mcIt->Data()) )->GetTitle()).CompareTo("type1") != 0 ) continue;
+        runAll(*mcIt);
+    }
 }
 
 void MakeSpinPlots::runAll(TString mcName){
-  if(!isSetup) setupDir();
-  if(ws->var(Form("Data_%s_FULLFIT_Nsig",mcName.Data()))==0) return;
-
-  std::vector<TString>::const_iterator catIt = catNames.begin();
-  for(; catIt != catNames.end(); catIt++){
-    runAll(*catIt,mcName);
-  }
-
-  DrawSpinSubTotBackground(mcName,false);
-  DrawSpinSubTotBackground(mcName,true);
+    if(!isSetup) setupDir();
+    if(ws->var(Form("Data_%s_FULLFIT_Nsig",mcName.Data()))==0) return;
+    
+    std::vector<TString>::const_iterator catIt = catNames.begin();
+    for(; catIt != catNames.end(); catIt++){
+        runAll(*catIt,mcName);
+    }
+    
+    DrawSpinSubTotBackground(mcName,false);
+    DrawSpinSubTotBackground(mcName,true);
 }
 
 void MakeSpinPlots::runAll(TString tag, TString mcName){
-  if(!isSetup) setupDir();
-  getFitValues(tag,mcName);
-  DrawBlindFit(tag,mcName);
-  DrawFit(tag,mcName);
-  DrawIndFit(tag,mcName);
-  PlotSignalFits(tag,mcName);
-  for(std::vector<TString>::const_iterator csBinIt = cosThetaBins.begin();
-      csBinIt != cosThetaBins.end(); csBinIt++){
-    TString tmp = tag+"_"+*csBinIt;
-    double sigEff = ws->var(Form("%s_FIT_%s_sigmaEff",mcName.Data(),tmp.Data()))->getVal();
-    fitSigEff[tPair(mcName,tmp)]    = dPair(sigEff,0);
-    PlotSignalFits(tag,mcName,*csBinIt);    
-    DrawBlindFit(tag,mcName,*csBinIt);
-    DrawFit(tag,mcName,*csBinIt);
-  }
-  DrawSpinBackground(tag,mcName,false);
-  DrawSpinBackground(tag,mcName,true);
-  DrawSpinSubBackground(tag,mcName,false);
-  DrawSpinSubBackground(tag,mcName,true);
+    if(!isSetup) setupDir();
+    getFitValues(tag,mcName);
+    DrawBlindFit(tag,mcName);
+    DrawFit(tag,mcName);
+    DrawIndFit(tag,mcName);
+    PlotSignalFits(tag,mcName);
+    for(std::vector<TString>::const_iterator csBinIt = cosThetaBins.begin();
+        csBinIt != cosThetaBins.end(); csBinIt++){
+        TString tmp = tag+"_"+*csBinIt;
+        double sigEff = ws->var(Form("%s_FIT_%s_sigmaEff",mcName.Data(),tmp.Data()))->getVal();
+        fitSigEff[tPair(mcName,tmp)]    = dPair(sigEff,0);
+        PlotSignalFits(tag,mcName,*csBinIt);    
+        DrawBlindFit(tag,mcName,*csBinIt);
+        DrawFit(tag,mcName,*csBinIt);
+    }
+    DrawSpinBackground(tag,mcName,false);
+    DrawSpinBackground(tag,mcName,true);
+    DrawSpinSubBackground(tag,mcName,false);
+    DrawSpinSubBackground(tag,mcName,true);
 }
 
 void MakeSpinPlots::getFitValues(TString tag,TString mcName){
@@ -148,7 +150,7 @@ void MakeSpinPlots::DrawBlindFit(TString tag, TString mcName,TString cosThetaBin
   lum->SetTextSize(0.045);
   lum->SetTextColor(kBlack);
 
-  TLatex *owner = new TLatex(0.6,0.88,"Alex Mott (Nov. 13, 2012)");
+  TLatex *owner = new TLatex(0.6,0.88,"Caltech-CMS Preliminary");
   owner->SetNDC();
   owner->SetTextSize(0.045);
   owner->SetTextColor(kBlack);

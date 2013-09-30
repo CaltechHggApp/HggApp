@@ -88,7 +88,7 @@ public:
 
   void MakeCombinedSignalSpin(const TString& mcName); //!< Make RooHistPdfs of the cos(theta) distribution for inclusive signal samples
 
-  RooAbsPdf* getBackgroundPdf(const TString& dataTag,const TString& FitTypeTag,const TString& outputTag); //!< build and return a background fit
+  static RooAbsPdf* getBackgroundPdf(const TString& dataTag,const TString& FitTypeTag,const TString& outputTag,int type, RooRealVar* mass); //!< build and return a background fit
   void MakeBackgroundOnlyFit(const TString& catTag,float cosTlow=-2,float cosThigh=2,bool fitMCbackground=false); //!< Make a background only fit to data in single ceategory the type of fit is controlled by the fitType member
   void MakeConstrainedBackgroundOnlyFit(const TString& catTag,float cosTlow=-2,float cosThigh=2); //!< Make a background only fit to data in single ceategory the type of fit is controlled by the fitType member
 
@@ -142,7 +142,7 @@ public:
   static float computeFWHM(const RooAbsPdf* const pdf, float mean, RooRealVar* const var); //!< compute the Full Width at Half Maximum for a pdf
   static float computeSigEff(RooAbsPdf* const pdf,float mean, RooRealVar* const var);//!< compute the sigma effective for a pdf
 
-  enum BkgFitType{kExp,kPoly,kPow,kDoublePow}; //!< allowed types for background fit
+  enum BkgFitType{kSingleExp,kDoubleExp,kTripleExp,kModifiedExp,kPoly,kPow,kDoublePow}; //!< allowed types for background fit
 
   void setBkgFit(BkgFitType t){fitType=t;} //!< specify which type of background fit to use
   void setUseCrystalBall(){useCB=true;}    //!< specify to use a crystal ball in the signal fit
@@ -183,7 +183,9 @@ public:
   void setMakeBkgOnly(bool b=true){bkgOnly=b;}
 
   static std::pair<float,float> getCosTRangeFromCatName(TString name);
-protected:
+
+  void setEmulatedMassHack(TString name) { emulatedMassHack=true; emulatedMassMcName=name; }
+ protected:
   RooWorkspace *ws;
 
   std::vector<TString> mcLabel;
@@ -193,7 +195,7 @@ protected:
 
   bool addSWeight;
   bool useCB;
-  bool bkgOnly;
+  bool bkgOnly = false;
   TFile *inputFile;
   TFile *outputFile;
 
@@ -207,6 +209,9 @@ protected:
 
   float *cosTbinEdges;
   int NcosTbins;
+
+  bool emulatedMassHack=false; // these will be set if we are using MC at one mass to emulate a signal at another mass
+  TString emulatedMassMcName=""; // it will allow us to change what we use for fractions and normalization
 };
 
 #endif

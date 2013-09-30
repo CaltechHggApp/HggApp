@@ -14,7 +14,7 @@ MakeSpinFits::MakeSpinFits():
   cosTbinEdges(0)
 {
   ws=0;
-  setBkgFit(MakeSpinFits::kExp);
+  setBkgFit(MakeSpinFits::kDoubleExp);
   setMeanRange(124,126,125);
 }
 
@@ -40,7 +40,7 @@ MakeSpinFits::MakeSpinFits(const TString& inputFileName, const TString& outputFi
     ws->Write(ws->GetName(),TObject::kWriteDelete);
   }
   //default fit type
-  setBkgFit(MakeSpinFits::kExp);
+  setBkgFit(MakeSpinFits::kDoubleExp);
   setMeanRange(123,126,125);
 
   //default cos(theta) binning
@@ -390,7 +390,7 @@ void MakeSpinFits::MakeFullSBFit(const TString& mcName,bool cosTBinned){
     //get the signal Model
     RooAbsPdf *signalModel = ws->pdf( Form("Data_%s_FIT_%s",mcName.Data(),catIt->Data()) );
     //background model
-    RooAbsPdf* BkgShape = getBackgroundPdf("Data","FULLSBFIT",*catIt);
+    RooAbsPdf* BkgShape = getBackgroundPdf("Data","FULLSBFIT",*catIt,fitType,mass);
     
     double thisCatB     = ws->data("Data"+dsName)->sumEntries(selectionString);
     RooRealVar *Nbkg = new RooRealVar(Form("Data_%s_FULLSBFIT_%s_Nbkg",mcName.Data(),catIt->Data()),"N background Events",thisCatB,0,1e9);
@@ -469,8 +469,10 @@ void MakeSpinFits::MakeCombinedSignalTest(const TString& mcName,bool cosTBinned)
     //RooFormulaVar *thisNbkg = new RooFormulaVar(Form("Data_%s_%s_%s_Nbkg",mcName.Data(),fitTag.Data(),catIt->Data() ),"","@0*@1",RooArgSet(*nBkg,*fBkg));
 
     //compute the fraction of events expected in this category
-    double totalEvents  = ws->data(mcName+dsName)->sumEntries(); 
-    double thisCat =  ws->data(mcName+dsName)->sumEntries(selectionString);
+
+    TString mcNameForCounting = (emulatedMassHack ? emulatedMassMcName : mcName);
+    double totalEvents  = ws->data(mcNameForCounting+dsName)->sumEntries(); 
+    double thisCat =  ws->data(mcNameForCounting+dsName)->sumEntries(selectionString);
     double thisFrac = thisCat/totalEvents;
     double thisFracE = thisFrac * TMath::Sqrt(1/thisCat+1/totalEvents);
 
@@ -748,21 +750,34 @@ void MakeSpinFits::Make2DFloatingSignalTest(const TString& massMcName,const TStr
 }
 
 void MakeSpinFits::MakeBackground(){
-  RooDataSet Background_Combined(*((RooDataSet*)ws->data("Data_Combined")),"Background_Combined");
+    //RooDataSet Background_Combined(*((RooDataSet*)ws->data("Data_Combined")),"Background_Combined");
+
+    RooDataSet *Background_Combined =(RooDataSet*) ((RooDataSet*)ws->data("Data_Combined"))->emptyClone("Background_Combined");
+
   for (auto mcIt=mcLabel.begin(); mcIt != mcLabel.end(); mcIt++){
+    if( mcIt->Contains("Data") ) continue; //extra sure
     if( mcIt->Contains("DYToLL-M50") ) continue; //hack since the normalization is broken for this
-    Background_Combined.append(*((RooDataSet*)ws->data(*mcIt+"_Combined")));
+    RooDataSet *ds = (RooDataSet*)ws->data(*mcIt+"_Combined");
+    if( TString(ds->GetTitle()).CompareTo("type-1") != 0) continue; //make sure we don't add signal
+    Background_Combined->append(*ds);
   }
-  ws->import(Background_Combined);
+  ws->import(*Background_Combined);
 }
 
-RooAbsPdf* MakeSpinFits::getBackgroundPdf(const TString& dataTag,const TString& FitTypeTag,const TString& outputTag) {
-  RooRealVar *mass = ws->var("mass");
+RooAbsPdf* MakeSpinFits::getBackgroundPdf(const TString& dataTag,const TString& FitTypeTag,const TString& outputTag,int type, RooRealVar* mass) {
   //background model
   RooAbsPdf* BkgShape;
 
-  switch(fitType){
-  case kExp:
+  switch(type){
+  case kSingleExp:
+    {
+      //single exponential
+    RooRealVar* alpha1 = new RooRealVar(dataTag+Form("_%s_%s_alpha1",FitTypeTag.Data(),outputTag.Data()),"alpha1",-0.1,-1.,0.);
+    BkgShape = new RooExponential(dataTag+Form("_%s_%s_bkgShape",FitTypeTag.Data(),outputTag.Data()),"Background Model",*mass,*alpha1);
+
+    break;
+    }
+  case kDoubleExp:
     {
       //double exponential
     RooRealVar* alpha1 = new RooRealVar(dataTag+Form("_%s_%s_alpha1",FitTypeTag.Data(),outputTag.Data()),"alpha1",-0.1,-1.,0.);
@@ -774,6 +789,29 @@ RooAbsPdf* MakeSpinFits::getBackgroundPdf(const TString& dataTag,const TString& 
     BkgShape = new RooAddPdf(dataTag+Form("_%s_%s_bkgShape",FitTypeTag.Data(),outputTag.Data()),"Background Model",
 			     RooArgList(*exp1,*exp2),*f_bkg);
     break;
+    }
+  case kTripleExp:
+    {
+      //triple exponential
+    RooRealVar* alpha1 = new RooRealVar(dataTag+Form("_%s_%s_alpha1",FitTypeTag.Data(),outputTag.Data()),"alpha1",-0.1,-1.,0.);
+    RooRealVar* alpha2 = new RooRealVar(dataTag+Form("_%s_%s_alpha2",FitTypeTag.Data(),outputTag.Data()),"alpha2",-0.1,-1.,0.);
+    RooRealVar* alpha3 = new RooRealVar(dataTag+Form("_%s_%s_alpha3",FitTypeTag.Data(),outputTag.Data()),"alpha3",-0.1,-1.,0.);
+    RooRealVar* f1_bkg  = new RooRealVar(dataTag+Form("_%s_%s_f1",FitTypeTag.Data(),outputTag.Data()),"f1_bkg",0.1,0,1);
+    RooRealVar* f2_bkg  = new RooRealVar(dataTag+Form("_%s_%s_f2",FitTypeTag.Data(),outputTag.Data()),"f2_bkg",0.1,0,1);
+    RooExponential* exp1 = new RooExponential(dataTag+Form("_%s_%s_exp1",FitTypeTag.Data(),outputTag.Data()),"exp1",*mass,*alpha1);
+    RooExponential* exp2 = new RooExponential(dataTag+Form("_%s_%s_exp2",FitTypeTag.Data(),outputTag.Data()),"exp2",*mass,*alpha2);
+    RooExponential* exp3 = new RooExponential(dataTag+Form("_%s_%s_exp3",FitTypeTag.Data(),outputTag.Data()),"exp3",*mass,*alpha3);
+
+    BkgShape = new RooAddPdf(dataTag+Form("_%s_%s_bkgShape",FitTypeTag.Data(),outputTag.Data()),"Background Model",
+                             RooArgList(*exp1,*exp2,*exp3),RooArgList(*f1_bkg,*f2_bkg));
+    break;
+    }
+  case kModifiedExp:
+    { // pdf = e^(alpha1*m^alpha2)
+      RooRealVar *alpha1 = new RooRealVar(dataTag+Form("_%s_%s_alpha1",FitTypeTag.Data(),outputTag.Data()),"",-1.,-10.,0.);
+      RooRealVar *alpha2 = new RooRealVar(dataTag+Form("_%s_%s_alpha2",FitTypeTag.Data(),outputTag.Data()),"",0.5,0.,10.);
+      BkgShape = new RooGenericPdf(dataTag+Form("_%s_%s_bkgShape",FitTypeTag.Data(),outputTag.Data()),"","exp(@0*@1^@2)",RooArgList(*alpha1,*mass,*alpha2));
+      break;
     }
   case kPoly:
     {
@@ -843,7 +881,7 @@ void MakeSpinFits::MakeBackgroundOnlyFit(const TString& catTag, float cosTlow, f
     ds = (RooDataSet*)ds->reduce(  Form("cosT >= %0.3f && cosT < %0.3f",cosTlow,cosThigh) );
   }
 
-  RooAbsPdf* BkgShape = getBackgroundPdf(dataTag,"BKGFIT",outputTag);
+  RooAbsPdf* BkgShape = getBackgroundPdf(dataTag,"BKGFIT",outputTag,fitType,&mass);
   assert(BkgShape!=0);
 
   RooRealVar *Nbkg = new RooRealVar(dataTag+Form("_BKGFIT_%s_Nbkg",outputTag.Data()),"N background Events",ds->sumEntries(),0,1e9);
@@ -898,7 +936,7 @@ void MakeSpinFits::MakeConstrainedBackgroundOnlyFit(const TString& catTag, float
     ds = (RooDataSet*)ds->reduce(  Form("cosT >= %0.3f && cosT < %0.3f",cosTlow,cosThigh) );
   }
 
-  RooAbsPdf* BkgShape = getBackgroundPdf(dataTag,"CONSTBKGFIT",outputTag);
+  RooAbsPdf* BkgShape = getBackgroundPdf(dataTag,"CONSTBKGFIT",outputTag,fitType,&mass);
 
   RooRealVar *Nbkg = new RooRealVar(dataTag+Form("_CONSTBKGFIT_%s_Nbkg",outputTag.Data()),"N background Events",ds->sumEntries(),0,1e9);
   //extended fit model
