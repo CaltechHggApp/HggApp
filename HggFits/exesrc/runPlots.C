@@ -19,6 +19,8 @@ int main(int argc, char** argv){
   string ret;
   if(a.process(ret) != 0){
     a.printOptions(argv[0]);
+    std::cout << "runPlots" << std::endl;
+    std::cout << ret << std::endl;
     return 0;
   }
 
@@ -37,10 +39,13 @@ int main(int argc, char** argv){
   msp->setLumi(lumi);
   msp->setBasePath(bp);
 
-  if(a.longFlagPres("SMName")) msp->setSMName(a.getLongFlag("SMName"));
+  string smname = "Hgg125";
+  
+  if(a.longFlagPres("SMName")) smname = a.getLongFlag("SMName");
+  msp->setSMName(smname);
   if(!pOnly){
     if(all) msp->runAll();
-    else msp->runAll("Hgg125");
+    else msp->runAll(smname.c_str());
   }
 
   msp->printAll();

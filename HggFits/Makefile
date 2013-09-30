@@ -47,7 +47,7 @@ OUTLIB	         = ./lib/
 .PREFIXES: ./lib/
 
 .PHONY: all
-all: runWorkspaces runFits runPlots runToyWorkspaces runSimpleHypothesisTest
+all: runWorkspaces runFits runPlots runToyWorkspaces runSimpleHypothesisTest runBiasStudy
 
 .PHONY: clean
 clean: 
@@ -92,6 +92,13 @@ runToyWorkspaces:		$(EXESRCDIR)runToyWorkspaces.C \
 
 runSimpleHypothesisTest:		$(EXESRCDIR)runSimpleHypothesisTest.C \
 				$(OUTLIB)MakeSimpleHypothesisTest.o\
+				$(OUTLIB)MakeSpinFits.o\
+				$(OUTLIB)ArgParser.o \
+				$(HGGAPPINC)ReadConfig.hh
+	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(OUTLIB)/*.o  $(GLIBS) $ $<	
+
+runBiasStudy:		$(EXESRCDIR)runBiasStudy.C \
+				$(OUTLIB)MakeBiasStudy.o\
 				$(OUTLIB)MakeSpinFits.o\
 				$(OUTLIB)ArgParser.o \
 				$(HGGAPPINC)ReadConfig.hh
@@ -149,6 +156,10 @@ $(OUTLIB)MixSpinDatasets.o:	$(SRCDIR)MixSpinDatasets.C \
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)MixSpinDatasets.o $<
 
 $(OUTLIB)MakeSimpleHypothesisTest.o: $(SRCDIR)MakeSimpleHypothesisTest.cc \
+									$(OUTLIB)MakeSpinFits.o
+		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
+$(OUTLIB)MakeBiasStudy.o: $(SRCDIR)MakeBiasStudy.cc \
 									$(OUTLIB)MakeSpinFits.o
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
 

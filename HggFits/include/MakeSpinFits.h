@@ -195,7 +195,7 @@ public:
 
   bool addSWeight;
   bool useCB;
-  bool bkgOnly;
+  bool bkgOnly = false;
   TFile *inputFile;
   TFile *outputFile;
 
