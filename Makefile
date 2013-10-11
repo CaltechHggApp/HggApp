@@ -414,6 +414,9 @@ $(OUTLIB)Vecbos.o: $(SRCDIR)Vecbos.cc \
 		$(OUTLIB)MET.o 
 	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)Vecbos.o $<
 
+$(OUTLIB)RazorVariables.o: $(SRCDIR)RazorVariables.cc
+	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
 # GEN VECBOS STUSY#
 #$(OUTLIB)GenVecbos.o: $(SRCDIR)GenVecbos.C
 #	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)GenVecbos.o $<
