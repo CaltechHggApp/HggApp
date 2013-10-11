@@ -250,6 +250,11 @@ $(OUTLIB)HggPhotonID.o: $(SRCDIR)HggPhotonID.cc \
 			$(OUTLIB)HggDict.o
 	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)HggPhotonID.o $<
 
+$(OUTLIB)StandardPhotonID.o: $(SRCDIR)StandardPhotonID.cc \
+			$(OUTLIB)VecbosEGObject.o \
+			$(OUTLIB)HggDict.o
+	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
 $(OUTLIB)HggMuonID.o: $(SRCDIR)HggMuonID.cc \
 			$(OUTLIB)VecbosEGObject.o \
 			$(OUTLIB)HggDict.o
