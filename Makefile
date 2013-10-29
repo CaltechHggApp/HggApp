@@ -49,7 +49,7 @@ TMPDIR           = /wntmp/scratch/
 .SUFFIXES: .cc,.C, .hh
 .PREFIXES: ./lib/
 
-all:  lib HggApp HggSelectorApp ZeeSelectorApp HggMakeTrainingTreeApp MakePUDist SusyHggSelectorApp
+all:  lib HggApp HggSelectorApp ZeeSelectorApp HggMakeTrainingTreeApp MakePUDist
 tmp: $(TMPDIR)SusyHggSelectorApp $(TMPDIR)HggApp
 
 lib: 	$(OUTLIBCOMMON)Conditions.o \
