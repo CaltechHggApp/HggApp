@@ -581,7 +581,7 @@ void HggReducer::fillGeneratorInfo(){
       GenMuons.push_back(part); break;
     case 11: //Electrons
       GenElectrons.push_back(part); break;
-    Default:
+    default:
       GenOthers.push_back(part); break;
     }
     nGenHiggs = GenHiggs.size();
