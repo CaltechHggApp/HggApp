@@ -157,10 +157,10 @@ int main(int argc, char** argv){
   }
   
   //merge background samples if necessary
-  if(bkgSamples.size()>1){
-    msw.setMixDatasets();
-    msw.getMixer()->scheduleMerge(bkgSamples,"Background");
-  }
+  //if(bkgSamples.size()>1){
+  //  msw.setMixDatasets();
+  //  msw.getMixer()->scheduleMerge(bkgSamples,"Background");
+  //x}
 
   msw.setIsGlobe(isGlobe);
   if(a.longFlagPres("catFromTree")) msw.setTakeCatFromTree();

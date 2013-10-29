@@ -22,10 +22,10 @@ public:
   void setIsData(bool d){isData_=d;}
   void Loop();
   void setDoFill(bool b){doFill=b;}
-private:
+protected:
   bool doFill=true; // should the main event loop do the filling (true)
 
-protected:
+
   TChain* fChain;
   bool valid;
   bool isData_;

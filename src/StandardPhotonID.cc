@@ -45,21 +45,28 @@ StandardPhotonID::StandardPhotonID() {
 }
 
 bool StandardPhotonID::passID(const VecbosPho& pho,WP wp) {
-  Region reg = (fabs(pho.SC.eta) <1.48 ? kEB:kEE);
-
-  if(pho.HoverE > cut_HE[std::make_pair(wp,reg)]) return false;
-  if(pho.SC.sigmaIEtaIEta > cut_sieie[std::make_pair(wp,reg)]) return false;
-  
+  std::bitset<5> res = cutResults(pho,wp);
+  if(res[0] || res[1]) return false; // two least significant bits are ID
   return true;
 }
 
 bool StandardPhotonID::passIso(const VecbosPho& pho, WP wp) {
+  std::bitset<5> res = cutResults(pho,wp);
+  if(res[2] || res[3] || res[4]) return false; // three most significant bits are iso
+  return true;
+
+}
+
+std::bitset<5> StandardPhotonID::cutResults(const VecbosPho& pho, WP wp) {
   Region reg = (fabs(pho.SC.eta) <1.48 ? kEB:kEE);
   float pt = pho.energy/cosh(pho.eta);
 
-  if(pho.dr03ChargedHadronPFIso[0] > cut_pfcharged[std::make_pair(wp,reg)]) return false;
-  if(pho.dr03NeutralHadronPFIso > cut_pfneutral[std::make_pair(wp,reg)]+0.04*pt) return false;
-  if(pho.dr03PhotonPFIso > cut_pfphoton[std::make_pair(wp,reg)]+0.005*pt) return false;
-
-  return true;
+  std::bitset<5> res;
+  if(pho.HoverE > cut_HE[std::make_pair(wp,reg)]) res.set(0);
+  if(pho.SC.sigmaIEtaIEta > cut_sieie[std::make_pair(wp,reg)]) res.set(1);
+  if(pho.dr03ChargedHadronPFIso[0] > cut_pfcharged[std::make_pair(wp,reg)]) res.set(2);
+  if(pho.dr03NeutralHadronPFIso > cut_pfneutral[std::make_pair(wp,reg)]+0.04*pt) res.set(3);
+  if(pho.dr03PhotonPFIso > cut_pfphoton[std::make_pair(wp,reg)]+0.005*pt) res.set(4);
+  
+  return res;
 }

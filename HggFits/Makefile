@@ -64,6 +64,7 @@ threadTest: $(EXESRCDIR)threadTest.C
 
 runWorkspaces:		$(EXESRCDIR)runWorkspaces.C \
 			$(OUTLIB)MakeSpinWorkspace.o \
+			$(OUTLIB)MakeSusyHggWorkspace.o \
 			$(OUTLIB)MakeSpinFits.o \
 			$(OUTLIB)MakeSpinToy.o \
 			$(OUTLIB)ArgParser.o \
@@ -123,6 +124,10 @@ $(OUTLIB)MakeSpinWorkspace.o:	$(SRCDIR)MakeSpinWorkspace.C \
 				$(SRCDIR)selectionMaps.C \
 				$(OUTLIB)GlobeReader.o
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)MakeSpinWorkspace.o $<
+
+$(OUTLIB)MakeSusyHggWorkspace.o:	$(SRCDIR)MakeSusyHggWorkspace.C \
+				$(OUTLIB)MakeSpinWorkspace.o
+		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
 
 $(OUTLIB)MakeSpinFits.o:	$(SRCDIR)MakeSpinFits.C \
 				$(OUTLIB)HggOutputReader2.o \

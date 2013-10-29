@@ -51,6 +51,7 @@ void BaseSelector::loadChain(vector<string> fNames,string treeName){
   fChain = new TChain(treeName.c_str());
   vector<string>::const_iterator name;
   for(name = fNames.begin();name!=fNames.end();name++){
+    std::cout << "chaining: " << *name << std::endl;
     fChain->AddFile(name->c_str());
   }
   valid = true;

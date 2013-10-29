@@ -44,11 +44,13 @@ OUTLIB	         = ./lib/
 H2GLIB           = ./h2glib/
 OUTLIBCOMMON     = $(INCLUDEDIRCOMMON)/CommonTools/lib/
 OUTLIBEGAMMA	 = $(INCLUDEDIRCOMMON)/EgammaAnalysisTools/lib/
+TMPDIR           = /wntmp/scratch/
 
 .SUFFIXES: .cc,.C, .hh
 .PREFIXES: ./lib/
 
-all:  lib HggApp HggSelectorApp ZeeSelectorApp HggMakeTrainingTreeApp MakePUDist
+all:  lib HggApp HggSelectorApp ZeeSelectorApp HggMakeTrainingTreeApp MakePUDist SusyHggSelectorApp
+tmp: $(TMPDIR)SusyHggSelectorApp $(TMPDIR)HggApp
 
 lib: 	$(OUTLIBCOMMON)Conditions.o \
 	$(OUTLIBCOMMON)Selection.o \
@@ -103,6 +105,30 @@ HggApp: $(SRCDIR)HggApp.C \
 	$(OUTLIB)ArgParser.o
 	$(CXX) $(CXXFLAGS) -o HggApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
+$(TMPDIR)HggApp: $(SRCDIR)HggApp.C \
+	$(OUTLIBCOMMON)Conditions.o \
+	$(OUTLIBCOMMON)Selection.o \
+	$(OUTLIBCOMMON)Counters.o \
+	$(OUTLIBCOMMON)TriggerMask.o \
+	$(OUTLIBCOMMON)Utils.o \
+	$(OUTLIBCOMMON)Skimmer.o \
+	$(OUTLIBEGAMMA)ElectronTrackerIsolation.o \
+	$(OUTLIBEGAMMA)ElectronCaloIsolation.o \
+	$(OUTLIBEGAMMA)ElectronBestCandidateSelector.o \
+	$(OUTLIBEGAMMA)LikelihoodPdf.o \
+	$(OUTLIBEGAMMA)LikelihoodSpecies.o \
+	$(OUTLIBEGAMMA)LikelihoodPdfProduct.o \
+	$(OUTLIBEGAMMA)ElectronLikelihood.o \
+	$(OUTLIBCOMMON)EfficiencyEvaluator.o \
+	$(OUTLIB)VecbosEGObject.o \
+	$(OUTLIB)HggEnergyScale.o \
+	$(OUTLIB)HggReducer.o \
+#	$(OUTLIB)HggMakePhotonTree.o \
+	$(OUTLIB)GBRTree.o \
+	$(OUTLIB)GBRForest.o \
+	$(OUTLIB)ArgParser.o
+	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
+
 MakePUDist: $(SRCDIR)MakePUDist.C
 	$(CXX) $(CXXFLAGS) -o MakePUDist $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
@@ -127,6 +153,50 @@ HggSelectorApp: $(SRCDIR)HggSelectorApp.C \
 	$(OUTLIB)HggSelector.o \
 	$(OUTLIB)ArgParser.o
 	$(CXX) $(CXXFLAGS) -o HggSelectorApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
+
+SusyHggSelectorApp: $(SRCDIR)SusyHggSelectorApp.C \
+	$(OUTLIBCOMMON)Conditions.o \
+	$(OUTLIBCOMMON)Selection.o \
+	$(OUTLIBCOMMON)Counters.o \
+	$(OUTLIBCOMMON)TriggerMask.o \
+	$(OUTLIBCOMMON)Utils.o \
+	$(OUTLIBCOMMON)Skimmer.o \
+	$(OUTLIBEGAMMA)ElectronTrackerIsolation.o \
+	$(OUTLIBEGAMMA)ElectronCaloIsolation.o \
+	$(OUTLIBEGAMMA)ElectronBestCandidateSelector.o \
+	$(OUTLIBEGAMMA)LikelihoodPdf.o \
+	$(OUTLIBEGAMMA)LikelihoodSpecies.o \
+	$(OUTLIBEGAMMA)LikelihoodPdfProduct.o \
+	$(OUTLIBEGAMMA)ElectronLikelihood.o \
+	$(OUTLIBCOMMON)EfficiencyEvaluator.o \
+	$(OUTLIB)VecbosEGObject.o \
+	$(OUTLIB)HggMCWeight.o \
+	$(OUTLIB)BaseSelector.o \
+	$(OUTLIB)SusyHggSelector.o \
+	$(OUTLIB)ArgParser.o
+	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
+
+$(TMPDIR)SusyHggSelectorApp: $(SRCDIR)SusyHggSelectorApp.C \
+	$(OUTLIBCOMMON)Conditions.o \
+	$(OUTLIBCOMMON)Selection.o \
+	$(OUTLIBCOMMON)Counters.o \
+	$(OUTLIBCOMMON)TriggerMask.o \
+	$(OUTLIBCOMMON)Utils.o \
+	$(OUTLIBCOMMON)Skimmer.o \
+	$(OUTLIBEGAMMA)ElectronTrackerIsolation.o \
+	$(OUTLIBEGAMMA)ElectronCaloIsolation.o \
+	$(OUTLIBEGAMMA)ElectronBestCandidateSelector.o \
+	$(OUTLIBEGAMMA)LikelihoodPdf.o \
+	$(OUTLIBEGAMMA)LikelihoodSpecies.o \
+	$(OUTLIBEGAMMA)LikelihoodPdfProduct.o \
+	$(OUTLIBEGAMMA)ElectronLikelihood.o \
+	$(OUTLIBCOMMON)EfficiencyEvaluator.o \
+	$(OUTLIB)VecbosEGObject.o \
+	$(OUTLIB)HggMCWeight.o \
+	$(OUTLIB)BaseSelector.o \
+	$(OUTLIB)SusyHggSelector.o \
+	$(OUTLIB)ArgParser.o
+	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
 HggEfficiencyMapApp: $(SRCDIR)HggEfficiencyMapApp.C \
 	$(OUTLIBCOMMON)Conditions.o \
@@ -240,6 +310,14 @@ $(OUTLIB)MuMuGammaSelector.o: $(SRCDIR)MuMuGammaSelector.cc \
 			$(OUTLIB)MitDict.o
 	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)MuMuGammaSelector.o $<
 
+$(OUTLIB)SusyHggSelector.o: $(SRCDIR)SusyHggSelector.cc \
+			$(OUTLIB)RazorVariables.o \
+			$(OUTLIB)StandardPhotonID.o \
+			$(OUTLIB)StandardElectronID.o \
+			$(OUTLIB)VecbosJetID.o \
+			$(OUTLIB)BaseSelector.o
+	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
 $(OUTLIB)HggMakeTrainingTree.o: $(SRCDIR)HggMakeTrainingTree.cc \
 			$(OUTLIB)BaseSelector.o \
 			$(OUTLIB)VecbosEGObject.o
@@ -251,6 +329,16 @@ $(OUTLIB)HggPhotonID.o: $(SRCDIR)HggPhotonID.cc \
 	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)HggPhotonID.o $<
 
 $(OUTLIB)StandardPhotonID.o: $(SRCDIR)StandardPhotonID.cc \
+			$(OUTLIB)VecbosEGObject.o \
+			$(OUTLIB)HggDict.o
+	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
+$(OUTLIB)StandardElectronID.o: $(SRCDIR)StandardElectronID.cc \
+			$(OUTLIB)VecbosEGObject.o \
+			$(OUTLIB)HggDict.o
+	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
+$(OUTLIB)VecbosJetID.o: $(SRCDIR)VecbosJetID.cc \
 			$(OUTLIB)VecbosEGObject.o \
 			$(OUTLIB)HggDict.o
 	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
@@ -439,3 +527,10 @@ clean:
 	rm -f VecbosApp
 	rm -f HggApp
 	rm -f HggSelectorApp
+	rm -f SusyHggSelectorApp
+
+execlean:
+	rm -f VecbosApp
+	rm -f HggApp
+	rm -f HggSelectorApp	
+	rm -f SusyHggSelectorApp

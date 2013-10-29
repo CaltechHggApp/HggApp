@@ -1,5 +1,6 @@
 #include "ArgParser.hh"
 #include "MakeSpinWorkspace.h"
+#include "MakeSusyHggWorkspace.h"
 #include "ReadConfig.hh"
 
 #include <iostream>
@@ -31,6 +32,7 @@ int main(int argc, char** argv){
   a.addLongOption("optimization",ArgParser::noArg,"workspace is for optimization, saves more variables");
   a.addLongOption("TwoEBCats",ArgParser::noArg,"split the EB into two categories at eta=0.8");
   a.addLongOption("VetoInnerEE",ArgParser::noArg,"Veto the inner region of the EE");
+  a.addLongOption("SUSY",ArgParser::noArg,"Run the SUSY HGG workspace maker instead");
   string ret;
   if(a.process(ret) !=0){
     cout << "Invalid Options:  " << ret <<endl;
@@ -91,12 +93,17 @@ int main(int argc, char** argv){
   if(a.longFlagPres("MCEfficiencyMap")) effMap_mc = a.getLongFlag("MCEfficiencyMap").c_str();
 
 
-  MakeSpinWorkspace msw(wsFile);
+  MakeSpinWorkspace *msw=0;
+  if(a.longFlagPres("SUSY")) {
+    msw = new MakeSusyHggWorkspace(wsFile);
+  }else{
+    msw = new MakeSpinWorkspace(wsFile);
+  }
 
 
   //MIXER
   if(a.longFlagPres("mixMC") && a.longFlagPres("fractions")){
-    msw.setMixDatasets();
+    msw->setMixDatasets();
     std::vector<string> mc = ReadConfig::tokenizeString(a.getLongFlag("mixMC"),",");
     std::vector<string> fst = ReadConfig::tokenizeString(a.getLongFlag("fractions"),",");
     cout << mc.at(0) << endl << mc.at(1) <<endl;
@@ -112,27 +119,27 @@ int main(int argc, char** argv){
     }
 
     for(int i=0;i<fst.size();i++){
-      msw.getMixer()->scheduleMix(mc.at(0).c_str(),mc.at(1).c_str(),atof(fst.at(i).c_str()));
+      msw->getMixer()->scheduleMix(mc.at(0).c_str(),mc.at(1).c_str(),atof(fst.at(i).c_str()));
     }
   }
   
   //MERGER
   if(a.longFlagPres("mergeMC")){
-    msw.setMixDatasets();
+    msw->setMixDatasets();
     std::vector<string> mc = ReadConfig::tokenizeString(a.getLongFlag("mergeMC"),",");
     if(mc.size()<2){
       std::cout << "cannot merge fewer than two samples...." << std::endl;
       return -1;
     }
     const char* outputName = a.getLongFlag("mergeName").c_str();
-    msw.getMixer()->scheduleMerge(mc,outputName);
+    msw->getMixer()->scheduleMerge(mc,outputName);
   }
 
-  if(a.longFlagPres("useUncorrectedMass")) msw.setUseUncorrMass();
+  if(a.longFlagPres("useUncorrectedMass")) msw->setUseUncorrMass();
   cout << "Data:    " << data <<endl;
 
   //ADD DATA SAMPLES
-  if(!a.longFlagPres("noData"))   msw.addFile(data,"Data",dataSetInfo::kData,-1,isList);
+  if(!a.longFlagPres("noData"))   msw->addFile(data,"Data",dataSetInfo::kData,-1,isList);
 
   //ADD MC SAMPLES
   std::vector<string> bkgSamples;
@@ -152,35 +159,35 @@ int main(int argc, char** argv){
     if(isSignalString.compare("")!=0) isSignal  = atoi(isSignalString.c_str());
     
     cout << mcName << ":    " << filePath <<endl;
-    msw.addFile(filePath,mcName,(isSignal ? dataSetInfo::kSignal : dataSetInfo::kBackground),Ngen,isList,xsec);
+    msw->addFile(filePath,mcName,(isSignal ? dataSetInfo::kSignal : dataSetInfo::kBackground),Ngen,isList,xsec);
     if(!isSignal) bkgSamples.push_back(mcName);
   }
   
   //merge background samples if necessary
   //if(bkgSamples.size()>1){
-  //  msw.setMixDatasets();
-  //  msw.getMixer()->scheduleMerge(bkgSamples,"Background");
+  //  msw->setMixDatasets();
+  //  msw->getMixer()->scheduleMerge(bkgSamples,"Background");
   //x}
 
-  msw.setIsGlobe(isGlobe);
-  if(a.longFlagPres("catFromTree")) msw.setTakeCatFromTree();
-  if(a.longFlagPres("optimization")) msw.setOptimization();
-  if(a.longFlagPres("TwoEBCats")) msw.setTwoEBCats();
-  if(a.longFlagPres("VetoInnerEE")) msw.setVetoInnerEE();
+  msw->setIsGlobe(isGlobe);
+  if(a.longFlagPres("catFromTree")) msw->setTakeCatFromTree();
+  if(a.longFlagPres("optimization")) msw->setOptimization();
+  if(a.longFlagPres("TwoEBCats")) msw->setTwoEBCats();
+  if(a.longFlagPres("VetoInnerEE")) msw->setVetoInnerEE();
 
 
-  msw.setLumi(lumi);
+  msw->setLumi(lumi);
 
-  msw.setRequireCiC(requireCiC);
-  msw.setSelectionMap(selectionMap);
-  msw.setRunRange(runMin,runMax);
+  msw->setRequireCiC(requireCiC);
+  msw->setSelectionMap(selectionMap);
+  msw->setRunRange(runMin,runMax);
   std::cout << "Data Efficiency Correction: " << effMap_data << std::endl
 	    << "MC   Efficiency Correction: " << effMap_mc   << std::endl;
-  msw.setEfficiencyCorrectionFile(effMap_data,effMap_mc);
-  msw.setUseR9(useR9);
-  msw.setTightPt(tightPt);
-  msw.setKFactorFile(KFactorFile.c_str());
-  msw.setRescaleFile(RescaleFile.c_str());
+  msw->setEfficiencyCorrectionFile(effMap_data,effMap_mc);
+  msw->setUseR9(useR9);
+  msw->setTightPt(tightPt);
+  msw->setKFactorFile(KFactorFile.c_str());
+  msw->setRescaleFile(RescaleFile.c_str());
 
   if(a.longFlagPres("setMassRange")){
     std::vector<string> range = ReadConfig::tokenizeString(a.getLongFlag("setMassRange"),"-");
@@ -189,13 +196,13 @@ int main(int argc, char** argv){
       a.printOptions(argv[0]);
       return -1;      
     }
-    msw.setMassRange( atof(range.at(0).c_str()),atof(range.at(1).c_str()) );
+    msw->setMassRange( atof(range.at(0).c_str()),atof(range.at(1).c_str()) );
   }
 
-  msw.setUseHelicityFrame(a.longFlagPres("useHelicityFrame"));
-  msw.setUseAbsCosTheta(!a.longFlagPres("useAsymmCosTheta"));
+  msw->setUseHelicityFrame(a.longFlagPres("useHelicityFrame"));
+  msw->setUseAbsCosTheta(!a.longFlagPres("useAsymmCosTheta"));
 
-  msw.MakeWorkspace();
+  msw->MakeWorkspace();
 
   return 0;
 
