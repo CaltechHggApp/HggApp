@@ -312,13 +312,12 @@ void HggReducer::Loop(string outFileName, int start, int stop) {
     outTree->Fill();
   } // end of main loop
 
+  outputFile->cd();
   cout << "Writing Tree:" << endl;
-
-  TFile *file = new TFile(outFileName.c_str(),"RECREATE");
   outTree->Write();
 
   //write output
- file->Close();
+  outputFile->Close();
 }
 
 
@@ -410,6 +409,8 @@ void HggReducer::clearAll(){
 }
 
 void HggReducer::init(string outputFileName){
+  outputFile = new TFile(outputFileName.c_str(),"RECREATE");
+  outputFile->cd();
   //define the tree
   outTree = new TTree("HggReduce","HggReduce");
 

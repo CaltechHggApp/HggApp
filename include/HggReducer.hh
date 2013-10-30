@@ -91,6 +91,7 @@ private:
   HggEnergyScale *energySmear;
 
   HggScaling *scaler;
+  TFile * outputFile;
   TTree * outTree;
   // define variables for the output tree:
   vector<string> triggerNames; // list of all the triggers to consider
