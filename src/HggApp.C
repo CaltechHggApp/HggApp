@@ -46,6 +46,8 @@ int main(int argc, char** argv) {
   a.addLongOption("start",ArgParser::reqArg,"specify the start position in the tree");
   a.addLongOption("stop",ArgParser::reqArg,"specify the stop position in the tree");
 
+  a.addLongOption("XRootD",ArgParser::reqArg,"access input files with XRootD instead of the specified path [argument is the site]");
+
   string ret;
   if(a.process(ret) !=0){
     cout << "Invalid Options:  " << ret <<endl;
@@ -55,6 +57,7 @@ int main(int argc, char** argv) {
   
   TChain *theChain = new TChain("ntp1");
   char Buffer[2000];
+  TString RootFileName;
   char MyRootFile[2000];  
   ifstream *inputFile = new ifstream(a.getArgument("InputList").c_str());
   if(!inputFile){
@@ -64,21 +67,26 @@ int main(int argc, char** argv) {
   // get the tree with the conditions from the first file
   //  TTree *treeCond = new TTree();
   //  int nfiles=1;
+
+  bool useXRD = a.longFlagPres("XRootD");
+  TString xrdSite="";
+  if(useXRD) xrdSite = a.getLongFlag("XRootD");
+
   char tmpFileName[2000];
+
   while( !(inputFile->eof()) ){
     inputFile->getline(Buffer,2000);
-    if (!strstr(Buffer,"#") && !(strspn(Buffer," ") == strlen(Buffer)))
-      {
-	sscanf(Buffer,"%s",MyRootFile);
-	if(string(MyRootFile).find("eos") != std::string::npos) {
-	  theChain->Add(TString(MyRootFile));
-        } else if(string(MyRootFile).find("castor") != std::string::npos) {
-	  theChain->Add("rfio:"+TString(MyRootFile));
-	} else{
-	  theChain->Add(TString(MyRootFile));	 
-	}
-	std::cout << "chaining " << MyRootFile << std::endl;
-      }
+    RootFileName = TString(Buffer).Strip();
+    
+    if(RootFileName.First('#') != -1 || RootFileName.Length()==0) continue;
+    
+    if(useXRD) {
+      RootFileName.Replace(0,RootFileName.Index("/store"),
+			   Form("root://xrootd.unl.edu//store/test/xrootd/%s/",xrdSite.Data()));
+    }
+    theChain->Add(RootFileName);
+      
+    std::cout << "chaining " << RootFileName << std::endl;
   } 
   inputFile->close();
   //delete inputFile;
