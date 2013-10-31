@@ -130,10 +130,13 @@ protected:
   float pileupWeight;
   
   int nGenHiggs;
-  std::vector<VecbosGen> *GenHiggs;
+  std::vector<VecbosGen> *GenHiggs=0;
 
   int nGenPho;
-  std::vector<VecbosGen> *GenPhotons;
+  std::vector<VecbosGen> *GenPhotons=0;
+
+  int nGenOthers;
+  std::vector<VecbosGen> *GenOthers=0;
 
   float pfMet;
   float pfMetPhi;

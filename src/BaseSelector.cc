@@ -19,9 +19,7 @@ BaseSelector::BaseSelector():
   ggVerticesPerEvtMVA(0),
   Muons_(0),
   Electrons_(0),
-  Jets_(0),
-  GenHiggs(0),
-  GenPhotons(0)
+  Jets_(0)
 {
 }
 
@@ -37,9 +35,7 @@ BaseSelector::BaseSelector(vector<string> fNames, string treeName,string outFNam
   ggVerticesPerEvtMVA(0),
   Muons_(0),
   Electrons_(0),
-  Jets_(0),
-  GenHiggs(0),
-  GenPhotons(0)
+  Jets_(0)
 {
   std::cout << outFName << std::endl;
   outFile = new TFile(outFName.c_str(),"RECREATE");
@@ -189,6 +185,9 @@ void BaseSelector::setBranchAddresses(){
   
   fChain->SetBranchAddress("nGenPho",&nGenPho);
   fChain->SetBranchAddress("GenPhotons",&GenPhotons);
+  
+  fChain->SetBranchAddress("nGenOthers",&nGenOthers);
+  fChain->SetBranchAddress("GenOthers",&GenOthers);
   
   fChain->SetBranchAddress("nPU",&inPU);
   
