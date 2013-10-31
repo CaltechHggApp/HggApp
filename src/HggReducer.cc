@@ -405,7 +405,7 @@ void HggReducer::clearAll(){
   GenMuons.clear();
   GenElectrons.clear();
   GenHiggs.clear();
-
+  GenOthers.clear();
 }
 
 void HggReducer::init(string outputFileName){
