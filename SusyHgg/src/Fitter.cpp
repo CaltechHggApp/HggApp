@@ -188,6 +188,26 @@ TH2F* Fitter::getSignalRegionHistogram(const TH2F& hist,const char* name) {
       signalHist->Fill( hist.GetXaxis()->GetBinCenter(iX), hist.GetYaxis()->GetBinCenter(iY), hist.GetBinContent(iX,iY) );
     }
   }
+
+  RooRealVar sigregion("signal_region","",-0.5,nXbins*nYbins-0.5);
+  sigregion.setBins(nXbins*nYbins);
+
+  RooDataHist rdh( Form("%s_hist",name),"",sigregion);
+
+  for(int iX=0;iX<nXbins;iX++) {
+    for(int iY=0;iY<nYbins;iY++) {
+    
+      sigregion.setVal( iX*4+iY );
+      rdh.set(sigregion,signalHist->GetBinContent(iX+1,iY+1));
+    }
+  }
+
+  RooHistPdf rhp( Form("%s_pdf",name), "", sigregion, rdh);
+
+
+  ws->import(sigregion);
+  ws->import(rhp);
+
   return signalHist;
 
 }
@@ -238,9 +258,11 @@ TH2F* Fitter::build_histogram(TString name,int catIndex,region reg,float weight)
   hist->SetName(fullname);
   hist->Scale(weight);
 
-  RooDataHist roohist(fullname,"",RooArgSet(*MR,*R),*((RooDataSet*)ws->data(Form("%s_%s",name.Data(),cats.at(catIndex).Data()))->reduce(selectionString)),
+  RooDataHist roohist(Form("%s_hist",fullname.Data()),"",RooArgSet(*MR,*R),*((RooDataSet*)ws->data(Form("%s_%s",name.Data(),cats.at(catIndex).Data()))->reduce(selectionString)),
 		   weight);
-  RooHistPdf roopdf(fullname+"_pdf","",RooArgSet(*MR,*R),roohist);
+  RooHistPdf roopdf(Form("%s_pdf",fullname.Data()),"",RooArgSet(*MR,*R),roohist);
+
+  std::cout << roohist.GetName() << std::endl;
 
   ws->import(roohist);
   ws->import(roopdf);

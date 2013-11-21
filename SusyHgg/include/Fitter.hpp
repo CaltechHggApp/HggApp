@@ -51,7 +51,7 @@ public:
   virtual void computeScaleFactor(int catIndex);
   virtual void buildSubtractedHistograms(int catIndex);
 
-  static TH2F* getSignalRegionHistogram(const TH2F& hist,const char* name);
+  TH2F* getSignalRegionHistogram(const TH2F& hist,const char* name);
 
   void addMcName(TString name);
 
