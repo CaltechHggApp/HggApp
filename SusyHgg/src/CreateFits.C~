@@ -1,0 +1,46 @@
+
+#include <iostream>
+#include <string>
+#include "exception"
+#include <stdexcept>
+
+
+#include "RooWorkspace.h"
+
+#include "TFile.h"
+
+#include "../include/ArgParser.hh"
+
+#include "RunFits.C"
+#include "Fitter.hpp"
+
+int main(int argc,char** argv) {
+    ArgParser a(argc,argv);
+
+    a.addArgument("InputFileName", "Name of the Input File");
+    a.addArgument("OutputFileName","Name of the Output File");
+
+  std::string ret;
+  if(a.process(ret) !=0){
+    std::cout << "Invalid Options:  " << ret << std::endl;
+    a.printOptions(argv[0]);
+    return 0;
+  }
+
+  TFile inputFile(a.getArgument("InputFileName").c_str());
+  RooWorkspace *ws = (RooWorkspace*)inputFile.Get("susy_hgg_workspace");
+  
+  TObjArray *mc_names_array = (TObjArray*)inputFile.Get("mc_name_array");
+  std::vector<TString> mc_names;
+  for(int i=0;i<mc_names_array->GetEntries();i++) {
+    mc_names.push_back( ((TObjString*)mc_names_array->At(i))->String() );
+  }
+
+  TFile outputFile(a.getArgument("OutputFileName").c_str(),"RECREATE");
+  RunFits(ws,&outputFile,mc_names);
+
+  outputFile.cd();
+  ws->Write();
+  outputFile.Close();
+  inputFile.Close();
+}
