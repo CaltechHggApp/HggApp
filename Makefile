@@ -46,10 +46,19 @@ OUTLIBCOMMON     = $(INCLUDEDIRCOMMON)/CommonTools/lib/
 OUTLIBEGAMMA	 = $(INCLUDEDIRCOMMON)/EgammaAnalysisTools/lib/
 TMPDIR           = /wntmp/scratch/
 
+MAKETARGET=./
+
 .SUFFIXES: .cc,.C, .hh
 .PREFIXES: ./lib/
 
-all:  lib HggApp HggSelectorApp ZeeSelectorApp HggMakeTrainingTreeApp MakePUDist
+all: 	lib \
+	$(MAKETARGET)HggApp \
+	$(MAKETARGET)HggSelectorApp \
+	$(MAKETARGET)ZeeSelectorApp \
+	$(MAKETARGET)HggMakeTrainingTreeApp \
+	$(MAKETARGET)MakePUDist \
+	$(MAKETARGET)SusyHggSelectorApp
+
 tmp: $(TMPDIR)SusyHggSelectorApp $(TMPDIR)HggApp
 
 lib: 	$(OUTLIBCOMMON)Conditions.o \
@@ -81,7 +90,7 @@ lib: 	$(OUTLIBCOMMON)Conditions.o \
 
 
 # analysis functions
-HggApp: $(SRCDIR)HggApp.C \
+$(MAKETARGET)HggApp: $(SRCDIR)HggApp.C \
 	$(OUTLIBCOMMON)Conditions.o \
 	$(OUTLIBCOMMON)Selection.o \
 	$(OUTLIBCOMMON)Counters.o \
@@ -129,10 +138,10 @@ $(TMPDIR)HggApp: $(SRCDIR)HggApp.C \
 	$(OUTLIB)ArgParser.o
 	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
-MakePUDist: $(SRCDIR)MakePUDist.C
+$(MAKETARGET)MakePUDist: $(SRCDIR)MakePUDist.C
 	$(CXX) $(CXXFLAGS) -o MakePUDist $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
-HggSelectorApp: $(SRCDIR)HggSelectorApp.C \
+$(MAKETARGET)HggSelectorApp: $(SRCDIR)HggSelectorApp.C \
 	$(OUTLIBCOMMON)Conditions.o \
 	$(OUTLIBCOMMON)Selection.o \
 	$(OUTLIBCOMMON)Counters.o \
@@ -154,7 +163,7 @@ HggSelectorApp: $(SRCDIR)HggSelectorApp.C \
 	$(OUTLIB)ArgParser.o
 	$(CXX) $(CXXFLAGS) -o HggSelectorApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
-SusyHggSelectorApp: $(SRCDIR)SusyHggSelectorApp.C \
+$(MAKETARGET)SusyHggSelectorApp: $(SRCDIR)SusyHggSelectorApp.C \
 	$(OUTLIBCOMMON)Conditions.o \
 	$(OUTLIBCOMMON)Selection.o \
 	$(OUTLIBCOMMON)Counters.o \
@@ -198,7 +207,7 @@ $(TMPDIR)SusyHggSelectorApp: $(SRCDIR)SusyHggSelectorApp.C \
 	$(OUTLIB)ArgParser.o
 	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
-HggEfficiencyMapApp: $(SRCDIR)HggEfficiencyMapApp.C \
+$(MAKETARGET)HggEfficiencyMapApp: $(SRCDIR)HggEfficiencyMapApp.C \
 	$(OUTLIBCOMMON)Conditions.o \
 	$(OUTLIBCOMMON)Selection.o \
 	$(OUTLIBCOMMON)Counters.o \
@@ -218,7 +227,7 @@ HggEfficiencyMapApp: $(SRCDIR)HggEfficiencyMapApp.C \
 	$(OUTLIB)HggEfficiencyMap.o
 	$(CXX) $(CXXFLAGS) -o HggEfficiencyMapApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
-ZeeSelectorApp: $(SRCDIR)ZeeSelectorApp.C \
+$(MAKETARGET)ZeeSelectorApp: $(SRCDIR)ZeeSelectorApp.C \
 	$(OUTLIBCOMMON)Conditions.o \
 	$(OUTLIBCOMMON)Selection.o \
 	$(OUTLIBCOMMON)Counters.o \
@@ -239,7 +248,7 @@ ZeeSelectorApp: $(SRCDIR)ZeeSelectorApp.C \
 	$(OUTLIB)ZeeSelector.o
 	$(CXX) $(CXXFLAGS) -o ZeeSelectorApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
-MuMuGammaSelectorApp: $(SRCDIR)MuMuGammaSelectorApp.C \
+$(MAKETARGET)MuMuGammaSelectorApp: $(SRCDIR)MuMuGammaSelectorApp.C \
 	$(OUTLIBCOMMON)Conditions.o \
 	$(OUTLIBCOMMON)Selection.o \
 	$(OUTLIBCOMMON)Counters.o \
@@ -258,7 +267,7 @@ MuMuGammaSelectorApp: $(SRCDIR)MuMuGammaSelectorApp.C \
 	$(OUTLIB)MuMuGammaSelector.o
 	$(CXX) $(CXXFLAGS) -o MuMuGammaSelectorApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
-HggMakeTrainingTreeApp: $(SRCDIR)HggMakeTrainingTreeApp.C \
+$(MAKETARGET)HggMakeTrainingTreeApp: $(SRCDIR)HggMakeTrainingTreeApp.C \
 	$(OUTLIB)VecbosEGObject.o \
 	$(OUTLIB)HggMakeTrainingTree.o
 	$(CXX) $(CXXFLAGS) -o HggMakeTrainingTreeApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	

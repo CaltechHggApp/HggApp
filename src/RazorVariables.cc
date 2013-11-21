@@ -2,7 +2,11 @@
 
 
 void RazorVariables::CombineJets(const std::vector<TLorentzVector>& jets,TLorentzVector& hem1, TLorentzVector &hem2) throw(TooManyJets,TooFewJets){
-  if(jets.size() > 20) throw new TooManyJets;
+  hem1.SetPtEtaPhiM(0.,0.,0.,0.);
+  hem2.SetPtEtaPhiM(0.,0.,0.,0.);
+  if(jets.size() > 30) {
+    return; //throw new TooManyJets;
+  }
   if(jets.size() < 2 ) throw new TooFewJets;
 
   double M_min=9999999999999.;
