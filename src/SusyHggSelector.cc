@@ -59,12 +59,11 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
 
   //identify the two highest pT photons
   const int NPho=2;
-  float pho_pts[NPho];
+  float pho_sum_pt=0;
   float M_max=-1;
 
   int selected_photons[NPho];
   for(int i=0;i<NPho;i++) {
-    pho_pts[i]=0;
     selected_photons[i]=0;
   }
   for(int iPho=0; iPho < nPho_;iPho++) {
@@ -106,10 +105,10 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
       }
       TLorentzVector p4_pho2 = photon2.p4FromVtx(vtx,photon2.finalEnergy);
       float M = (p4_pho1+p4_pho2).M();
-      if(fabs(M-126) < fabs(M_max-126)) {
+      if( M > min_mgg && M < max_mgg && (p4_pho1.Pt() + p4_pho2.Pt()) > pho_sum_pt) {
 	selected_photons[0]=(pt1>pt2 ? iPho : jPho);
 	selected_photons[1]=(pt1>pt2 ? jPho : iPho);
-	M_max=M;
+	pho_sum_pt = (p4_pho1.Pt() + p4_pho2.Pt());
       }
     }
   }
