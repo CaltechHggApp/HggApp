@@ -290,7 +290,7 @@ void SusyHggSelector::setupOutputTree() {
   outTree->Branch("pho1_sigEoE",&pho1_seoe);
   outTree->Branch("pho1_genMatch",&pho1_genMatch,"pho1_genMatch/B");
 
-  if(optimize) {
+  //if(optimize) {
     outTree->Branch("pho1_sieie",&pho1_sieie);
     outTree->Branch("pho1_HE",&pho1_HE);
     outTree->Branch("pho1_charged",&pho1_charged);
@@ -300,7 +300,7 @@ void SusyHggSelector::setupOutputTree() {
     outTree->Branch("pho1_pass_id",&pho1_pass_id,"pho1_pass_id/B");
     outTree->Branch("pho1_pass_iso",&pho1_pass_iso,"pho1_pass_iso/B");
 
-  }
+    //}
 
   outTree->Branch("pho2_pt",&pho2_pt);
   outTree->Branch("pho2_eta",&pho2_eta);
@@ -309,7 +309,7 @@ void SusyHggSelector::setupOutputTree() {
   outTree->Branch("pho2_sigEoE",&pho2_seoe);
   outTree->Branch("pho2_genMatch",&pho2_genMatch,"pho2_genMatch/B");
 
-  if(optimize) {
+  //if(optimize) {
     outTree->Branch("pho2_sieie",&pho2_sieie);
     outTree->Branch("pho2_HE",&pho2_HE);
     outTree->Branch("pho2_charged",&pho2_charged);
@@ -319,7 +319,7 @@ void SusyHggSelector::setupOutputTree() {
     outTree->Branch("pho2_pass_id",&pho2_pass_id,"pho2_pass_id/B");
     outTree->Branch("pho2_pass_iso",&pho2_pass_iso,"pho2_pass_iso/B");
 
-  }
+    //  }
 
   outTree->Branch("ele1_pt",&ele1_pt);
   outTree->Branch("ele1_eta",&ele1_eta);
