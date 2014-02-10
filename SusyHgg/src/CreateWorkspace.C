@@ -113,7 +113,7 @@ void addToWorkspace(std::string name,int num_orig, std::string path, RooWorkspac
   
 
   RooArgSet vars;
-  vars.add(*(new RooRealVar("mgg","M_{#gamma#gamma}",100,180)));
+  vars.add(*(new RooRealVar("mgg","M_{#gamma#gamma}",110,150)));
   vars.add(*(new RooRealVar("ptgg","pT_{#gamma#gamma}",0,5000)));
 
   vars.add(*(new RooRealVar("pho1_pt","p_{T}^{#gamma-lead}"   ,0,5000)));
@@ -126,8 +126,11 @@ void addToWorkspace(std::string name,int num_orig, std::string path, RooWorkspac
   vars.add(*(new RooRealVar("pho1_r9","R_{9}^{#gamma-lead}",0,1.2)));
   vars.add(*(new RooRealVar("pho2_r9","R_{9}^{#gamma-sublead}",0,1.2)));
  
-  vars.add(*(new RooRealVar("pho1_sigE","#sigma_{E}/E^{#gamma-lead}",0,0.5)));
-  vars.add(*(new RooRealVar("pho2_sigE","#sigme_{E}/E^{#gamma-sublead}",0,0.5)));
+  vars.add(*(new RooRealVar("pho1_sigEoE","#sigma_{E}/E^{#gamma-lead}",0,0.5)));
+  vars.add(*(new RooRealVar("pho2_sigEoE","#sigma_{E}/E^{#gamma-sublead}",0,0.5)));
+
+  vars.add(*(new RooRealVar("pho1_pass_iso","WP95 Iso lead",-0.1,1.1)));
+  vars.add(*(new RooRealVar("pho2_pass_iso","WP95 Iso sublead",-0.1,1.1)));
   
   vars.add(*(new RooRealVar("ele1_pt","p_{T}^{e-lead}"  ,0,5000)));
   vars.add(*(new RooRealVar("mu1_pt" ,"p_{T}^{#mu-lead}",0,5000)));

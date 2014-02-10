@@ -17,8 +17,9 @@
 int main(int argc,char** argv) {
     ArgParser a(argc,argv);
 
-    a.addArgument("InputFileName", "Name of the Input File");
-    a.addArgument("OutputFileName","Name of the Output File");
+    a.addArgument("InputFileName",ArgParser::required, "Name of the Input File");
+    a.addArgument("OutputFileName",ArgParser::required,"Name of the Output File");
+    a.addLongOption("lumi",ArgParser::reqArg,"specify luminosity (overrides value in workspace)");
 
   std::string ret;
   if(a.process(ret) !=0){
@@ -28,6 +29,6 @@ int main(int argc,char** argv) {
   }
 
   Fitter fits(a.getArgument("InputFileName").c_str(),a.getArgument("OutputFileName").c_str());
-
+  if(a.longFlagPres("lumi")) fits.setLumi( atof(a.getLongFlag("lumi").c_str()) );
   fits.Run();
 }

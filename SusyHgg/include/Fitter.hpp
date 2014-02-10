@@ -13,6 +13,10 @@
 #include "RooCategory.h"
 #include "RooHistPdf.h"
 #include "RooDataHist.h"
+#include "RooSimultaneous.h"
+#include "RooBinning.h"
+#include "RooGaussian.h"
+#include "RooLognormal.h"
 
 #include "TString.h"
 #include "TH2F.h"
@@ -22,6 +26,8 @@
 #include <map>
 #include <exception>
 #include <stdexcept>
+
+#include "assert.h"
 
 struct fitInfo {
   float sideband_low_min;
@@ -51,17 +57,37 @@ public:
   virtual void computeScaleFactor(int catIndex);
   virtual void buildSubtractedHistograms(int catIndex);
 
+  virtual void SMFit();
+  virtual void SMFitSidebandSub();
+
+  virtual void buildRooHistograms(TString binning);
+
   TH2F* getSignalRegionHistogram(const TH2F& hist,const char* name);
 
   void addMcName(TString name);
 
-private:
+  void setLumi(float l) {lumi=l;}
+
+  static std::pair<float,float> getMeanAndSigEff(const RooAbsData& data,RooRealVar& var); // returns (mean,sigeff)
+  void SetupSignalRegions();
+
+protected:
   TFile *inputFile;
   TFile *outputFile;
-  RooWorkspace *ws;
+  RooWorkspace *inputWs;
+  RooWorkspace *outputWs;
 
+  float lumi;
+  bool processData = true;
+
+
+  RooCategory *roocat=0;
   std::vector<TString> cats;
   std::vector<fitInfo> per_cat_fit_ranges;
+  std::map<std::string,std::string> selectionMap;
+
+  TString baseSelection;
+
   std::vector<std::pair<float,float>> sideband_integrals;
   std::vector<std::pair<float,float>> signal_integrals;
   std::vector<std::pair<float,float>> sideband_to_signal_scale_factors;
@@ -71,15 +97,22 @@ private:
   TString data_name="data";
 
   enum region{kSignal,kSideband,kAll};
-  TH2F* build_histogram(TString name, int catIndex,region reg,float weight=1);
+  virtual TH2F* build_histogram(TString name, int catIndex,region reg,float weight=1);
 
   std::map<TString,TH2F*> save_histograms;
+  std::map<TString,TH2F*> save_SigRegion_histograms;
   void saveAll();
 
 
+  void setupCats();
   void defineCats();
+  virtual void setupCategory(TString name,std::vector<TString>* catNames=0);
 
-  virtual void setupCategory(TString name);
+  RooSimultaneous* buildSimultaneousPdf(TString name);
+
+  void MakeSMTot();
+  virtual void DefineBinning();
+
 };
 
 #endif
