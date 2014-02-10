@@ -36,6 +36,8 @@ void MakeBiasStudy::biasStudy(MakeSpinFits::BkgFitType truthType,const int N) {
 
 void MakeBiasStudy::biasStudy(MakeSpinFits::BkgFitType truthType, const int N, const TString& cat) {
     RooRealVar* mass = ws->var("mass");
+
+    //get real data and fit a pdf of type truthType to it
     RooAbsData* realData = ws->data("Data_Combined")->reduce( Form("evtcat==evtcat::%s",cat.Data()) );
     RooAbsPdf *truthPdf  = MakeSpinFits::getBackgroundPdf("Truth","BKGFIT",cat,truthType,mass);
     RooRealVar nBkgTruth("TruthNBkg","",0,1e9);
@@ -43,6 +45,7 @@ void MakeBiasStudy::biasStudy(MakeSpinFits::BkgFitType truthType, const int N, c
     truthExtendedPdf.fitTo(*realData,RooFit::Strategy(0),RooFit::NumCPU(NUM_CPU),RooFit::Minos(kFALSE),RooFit::Extended(kTRUE));
     truthExtendedPdf.fitTo(*realData,RooFit::Strategy(2),RooFit::NumCPU(NUM_CPU),RooFit::Minos(kFALSE),RooFit::Extended(kTRUE));
 
+    //get the signal model for this category and compute its sigma effective
     RooAbsPdf* truthSignal = ws->pdf(  Form("jhu0plus125_FIT_%s",cat.Data())  );
     assert(truthSignal!=0);
     double sigEff = MakeSpinFits::computeSigEff(truthSignal,mh,mass);
@@ -55,6 +58,8 @@ void MakeBiasStudy::biasStudy(MakeSpinFits::BkgFitType truthType, const int N, c
 
     std::cout << "TTTT" << BkgInRange << std::endl;
 
+
+    //store results for the signal and background error 
     std::vector<std::vector<double>> biasesSigErr(testFitTypes.size());
     std::vector<std::vector<double>> biasesBkgErr(testFitTypes.size());
 
@@ -64,8 +69,10 @@ void MakeBiasStudy::biasStudy(MakeSpinFits::BkgFitType truthType, const int N, c
         biasesBkgErr.push_back(new std::vector<double>));
     }
     */
+
+    //throw toys
     for(int i=0;i<N;i++) {
-    
+      //throw toy background + signal data
         RooDataSet * toyData = truthExtendedPdf.generate(RooArgSet(*mass),int(nBkgTruth.getVal()),RooFit::Extended(true));
         toyData->append(*truthSignal->generate(RooArgSet(*mass),
                                                int(ws->data("jhu0plus125_Combined")->reduce(Form("evtcat==evtcat::%s",cat.Data()))->sumEntries()),
@@ -75,6 +82,7 @@ void MakeBiasStudy::biasStudy(MakeSpinFits::BkgFitType truthType, const int N, c
         auto fitIt = testFitTypes.begin();
         auto biasSEIt = biasesSigErr.begin();
         auto biasBEIt = biasesBkgErr.begin();
+	//for each testFitType, compute that uncertainty on the background and signal yield
         for(; fitIt!=testFitTypes.end();fitIt++,biasSEIt++, biasBEIt++) {            
             std::tuple<double,double,double> results = getNFit(*toyData,*fitIt,sigEff,*truthSignal);
             biasSEIt->push_back( (std::get<0>(results)-BkgInRange)/std::get<2>(results) );
@@ -91,6 +99,7 @@ void MakeBiasStudy::biasStudy(MakeSpinFits::BkgFitType truthType, const int N, c
         std::sort( biasSEIt->begin(), biasSEIt->end() );
         std::sort( biasBEIt->begin(), biasBEIt->end() );       
 
+	//get the median error
         biasSigError[cat][truthType].push_back( biasSEIt->at( N/2 ));
         biasBkgError[cat][truthType].push_back( biasBEIt->at( N/2 ));
         std::cout << "QQQQQQQQQQQ BIAS SIG ERROR Truth: " << fitNameMap[truthType] << "   Fit: " << fitNameMap[*fitIt] << std::endl;
@@ -111,12 +120,15 @@ void MakeBiasStudy::biasStudy(MakeSpinFits::BkgFitType truthType, const int N, c
 std::tuple<double,double,double> MakeBiasStudy::getNFit(RooAbsData& toyData, MakeSpinFits::BkgFitType fitType, float sigma_eff,RooAbsPdf& signalModel) {
     RooRealVar* mass = ws->var("mass");
 
+
+    //build a pdf of type fitType and fit it to the toyData
     RooAbsPdf *fitPdf = MakeSpinFits::getBackgroundPdf("FIT","BKGFIT","f",fitType,mass);
     RooRealVar nBkgFit("FitNBkg","",0,1e9);
     RooExtendPdf fitExtendedPdf("fitExtendedPdf","",*fitPdf,nBkgFit);
     fitExtendedPdf.fitTo(toyData,RooFit::Strategy(0),RooFit::NumCPU(NUM_CPU),RooFit::Minos(kFALSE),RooFit::Extended(kTRUE));
     fitExtendedPdf.fitTo(toyData,RooFit::Strategy(2),RooFit::NumCPU(NUM_CPU),RooFit::Minos(kFALSE),RooFit::Extended(kTRUE));
 
+    //compute the amount of background in the +- 1 sigma_eff range
     RooRealVar range("range","",mh-sigma_eff,mh+sigma_eff);
     RooRealVar all("all","",ws->var("mass")->getMin(),ws->var("mass")->getMax());
 
@@ -125,6 +137,7 @@ std::tuple<double,double,double> MakeBiasStudy::getNFit(RooAbsData& toyData, Mak
 
     std::cout << "NNNN" << BkgInRange << std::endl;
     
+    //fix all the background parameters
     RooArgSet *bkg_pars = fitExtendedPdf.getVariables();
     RooFIter iter = bkg_pars->fwdIterator();
     RooAbsArg* a;
@@ -133,6 +146,7 @@ std::tuple<double,double,double> MakeBiasStudy::getNFit(RooAbsData& toyData, Mak
         static_cast<RooRealVar*>(a)->setConstant(kTRUE);
     }
 
+    //build a S+B pdf with the fixed background model just computed and the signalModel provided
     RooRealVar nBkgSB("NBkgSB","",0,1e9);
     RooRealVar nSigSB("NSigSB","",0,1e5);
     

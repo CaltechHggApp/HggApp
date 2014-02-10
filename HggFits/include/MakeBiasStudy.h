@@ -48,7 +48,9 @@ public:
     void print();
 
     void setNToys(int n){NToys=n;}
-    
+
+
+  
     typedef std::map<TString,std::map<MakeSpinFits::BkgFitType,std::vector<double> > > biasList;
 private:
     RooWorkspace *ws;
@@ -57,6 +59,8 @@ private:
     TFile* outputFile=0;
     std::vector<TString> catLabels;
 
+
+  //lists of test and truth types to evaluate
     std::vector<MakeSpinFits::BkgFitType> testFitTypes  = {MakeSpinFits::kPow,MakeSpinFits::kDoubleExp,MakeSpinFits::kModifiedExp,MakeSpinFits::kPoly};
     std::vector<MakeSpinFits::BkgFitType> truthFitTypes = {MakeSpinFits::kPow,MakeSpinFits::kDoubleExp,MakeSpinFits::kModifiedExp};
     //std::vector<MakeSpinFits::BkgFitType> testFitTypes  = {MakeSpinFits::kPow,MakeSpinFits::kDoubleExp};
@@ -67,6 +71,7 @@ private:
 
     int NToys = 100;
 
+  //map listing the type of allowed fits
     std::map<MakeSpinFits::BkgFitType,TString> fitNameMap = {
         {MakeSpinFits::kPow, "Single Power Law"}, {MakeSpinFits::kDoublePow, "Double Power Law"}, {MakeSpinFits::kSingleExp,"Single Exponential"},
         {MakeSpinFits::kDoubleExp, "Double Exponential"},{MakeSpinFits::kTripleExp,"Triple Exponential"},{MakeSpinFits::kModifiedExp,"Modified Exponential"},
