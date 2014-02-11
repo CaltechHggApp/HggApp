@@ -57,7 +57,8 @@ all: 	lib \
 	$(MAKETARGET)ZeeSelectorApp \
 	$(MAKETARGET)HggMakeTrainingTreeApp \
 	$(MAKETARGET)MakePUDist \
-	$(MAKETARGET)SusyHggSelectorApp
+	$(MAKETARGET)SusyHggSelectorApp \
+	$(MAKETARGET)MuMuGammaSelectorApp
 
 tmp: $(TMPDIR)SusyHggSelectorApp $(TMPDIR)HggApp
 
