@@ -113,7 +113,7 @@ $(MAKETARGET)HggApp: $(SRCDIR)HggApp.C \
 	$(OUTLIB)GBRTree.o \
 	$(OUTLIB)GBRForest.o \
 	$(OUTLIB)ArgParser.o
-	$(CXX) $(CXXFLAGS) -o HggApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
+	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
 $(TMPDIR)HggApp: $(SRCDIR)HggApp.C \
 	$(OUTLIBCOMMON)Conditions.o \
@@ -140,7 +140,7 @@ $(TMPDIR)HggApp: $(SRCDIR)HggApp.C \
 	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
 $(MAKETARGET)MakePUDist: $(SRCDIR)MakePUDist.C
-	$(CXX) $(CXXFLAGS) -o MakePUDist $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
+	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
 $(MAKETARGET)HggSelectorApp: $(SRCDIR)HggSelectorApp.C \
 	$(OUTLIBCOMMON)Conditions.o \
@@ -162,7 +162,7 @@ $(MAKETARGET)HggSelectorApp: $(SRCDIR)HggSelectorApp.C \
 	$(OUTLIB)BaseSelector.o \
 	$(OUTLIB)HggSelector.o \
 	$(OUTLIB)ArgParser.o
-	$(CXX) $(CXXFLAGS) -o HggSelectorApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
+	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
 $(MAKETARGET)SusyHggSelectorApp: $(SRCDIR)SusyHggSelectorApp.C \
 	$(OUTLIBCOMMON)Conditions.o \
@@ -226,7 +226,7 @@ $(MAKETARGET)HggEfficiencyMapApp: $(SRCDIR)HggEfficiencyMapApp.C \
 	$(OUTLIB)VecbosEGObject.o \
 	$(OUTLIB)HggMCWeight.o \
 	$(OUTLIB)HggEfficiencyMap.o
-	$(CXX) $(CXXFLAGS) -o HggEfficiencyMapApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
+	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
 $(MAKETARGET)ZeeSelectorApp: $(SRCDIR)ZeeSelectorApp.C \
 	$(OUTLIBCOMMON)Conditions.o \
@@ -247,7 +247,7 @@ $(MAKETARGET)ZeeSelectorApp: $(SRCDIR)ZeeSelectorApp.C \
 	$(OUTLIB)VecbosEGObject.o \
 	$(OUTLIB)HggEnergyScale.o \
 	$(OUTLIB)ZeeSelector.o
-	$(CXX) $(CXXFLAGS) -o ZeeSelectorApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
+	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
 $(MAKETARGET)MuMuGammaSelectorApp: $(SRCDIR)MuMuGammaSelectorApp.C \
 	$(OUTLIBCOMMON)Conditions.o \
@@ -266,7 +266,7 @@ $(MAKETARGET)MuMuGammaSelectorApp: $(SRCDIR)MuMuGammaSelectorApp.C \
 	$(OUTLIBCOMMON)EfficiencyEvaluator.o \
 	$(OUTLIB)VecbosEGObject.o \
 	$(OUTLIB)MuMuGammaSelector.o
-	$(CXX) $(CXXFLAGS) -o MuMuGammaSelectorApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
+	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
 $(MAKETARGET)HggMakeTrainingTreeApp: $(SRCDIR)HggMakeTrainingTreeApp.C \
 	$(OUTLIB)VecbosEGObject.o \
