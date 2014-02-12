@@ -45,6 +45,7 @@ protected:
   float max_jet_eta=3.;
 
   float min_mgg = 100;
+  float max_mgg = 180;
   float min_ptgg = 20;
 
   //output variables
