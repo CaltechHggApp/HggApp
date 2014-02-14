@@ -432,6 +432,9 @@ $(OUTLIB)MitDict.o: MitPhysicsDict.cc
 $(OUTLIB)JetCorrectorParameters.o: $(SRCDIR)JetCorrectorParameters.cc
 	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)JetCorrectorParameters.o $<
 
+$(OUTLIB)JECUReader.o: $(SRCDIR)JECUReader.cc
+	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
 $(OUTLIB)SimpleJetCorrectionUncertainty.o: $(SRCDIR)SimpleJetCorrectionUncertainty.cc \
 	$(OUTLIB)JetCorrectorParameters.o
 	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)SimpleJetCorrectionUncertainty.o $<
