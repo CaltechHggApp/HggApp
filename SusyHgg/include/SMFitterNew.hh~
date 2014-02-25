@@ -1,0 +1,12 @@
+#ifndef SMFitterNew_hh
+#define SMFitterNew_hh
+
+#include "FitterNew.hpp"
+
+class SMFitter : public Fitter {
+public:
+
+private:
+};
+
+#endif

@@ -6,6 +6,7 @@
 #include "StandardElectronID.hh"
 #include "VecbosJetID.hh"
 #include "RazorVariables.hh"
+#include "JECUReader.hh"
 
 #include "TVector3.h"
 #include "TLorentzVector.h"
@@ -15,7 +16,7 @@
 
 class SusyHggSelector : public BaseSelector {
 public:
-  SusyHggSelector(std::vector<std::string> fNames, std::string treeName,std::string outputFile):BaseSelector(fNames,treeName,outputFile){setDoFill(false);}
+  SusyHggSelector(std::vector<std::string> fNames, std::string treeName,std::string outputFile);
   void setOptimize(){optimize=true;}
   void setIsMC(){isMC=true;}
 protected:
@@ -23,6 +24,8 @@ protected:
   StandardPhotonID photonID;
   StandardElectronID electronID;
   VecbosJetID      jetID;
+
+  JECUReader       jecReader;
   //mandatory overrides
   virtual void processEntry(Long64_t iEntry);
   virtual int init();
@@ -30,6 +33,8 @@ protected:
   virtual void setupOutputTree();
 
   virtual void clear();
+
+  void selectJets(std::vector<TLorentzVector> *selectedJets,int correction); //+1 -> 1 sigma up JEC, -1 -> 1 sigma down JEC, 0 -> no JEC
 
   void fillGenTruth(); //fill the generator truth info in the output
 
@@ -49,6 +54,8 @@ protected:
   float min_ptgg = 20;
 
   //output variables
+  int runNum;
+
   float mgg;
   float ptgg;
   float etagg;
@@ -94,6 +101,8 @@ protected:
   bool pho2_eleveto;
 
   int nJ;
+  int nJ_up;
+  int nJ_down;
   
   float hem1_pt;
   float hem1_eta;
@@ -105,11 +114,40 @@ protected:
   float hem2_phi;
   float hem2_M;
 
+  //down 1 sigma JEC
+  float hem1_pt_down;
+  float hem1_eta_down;
+  float hem1_phi_down;
+  float hem1_M_down;
+
+  float hem2_pt_down;
+  float hem2_eta_down;
+  float hem2_phi_down;
+  float hem2_M_down;
+
+  //up 1 sigma JEC
+  float hem1_pt_up;
+  float hem1_eta_up;
+  float hem1_phi_up;
+  float hem1_M_up;
+
+  float hem2_pt_up;
+  float hem2_eta_up;
+  float hem2_phi_up;
+  float hem2_M_up;
+
+
   float MET;
   float METphi;
 
   float MR;
   float Rsq;
+  
+  float MR_down;
+  float Rsq_down;
+  
+  float MR_up;
+  float Rsq_up;
   
   float mu1_pt;
   float mu1_eta;
@@ -118,6 +156,21 @@ protected:
   float ele1_pt;
   float ele1_eta;
   float ele1_phi;
+
+  float highest_csv;
+  float highest_csv_pt;
+  float highest_csv_eta;
+  float highest_csv_phi;
+
+  float highest_csv_down;
+  float highest_csv_pt_down;
+  float highest_csv_eta_down;
+  float highest_csv_phi_down;
+
+  float highest_csv_up;
+  float highest_csv_pt_up;
+  float highest_csv_eta_up;
+  float highest_csv_phi_up;
 
   float puWeight;
 

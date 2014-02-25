@@ -1,0 +1,38 @@
+#include "SMFitterNew.hh"
+#include "TH1D.h"
+
+void SMFitter::Run() {
+  Long64_t iEntry=-1;
+
+  std::map<TString,TH1D*> mgg_dists;
+  for(auto cat: catNames) mgg_dists[cat] = new TH1D(cat+"_mgg_dist","",2000,115,135); //will use this to compute sigma effective
+
+  while(fChain->GetEntry(++iEntry)) {
+    weight = pileupWeight * target_xsec*lumi*HggBR/N_total;
+    processEntry();
+
+
+    TLorentzVector pho1;
+    TLorentzVector pho2;
+    
+    pho1.SetPtEtaPhiM(pho1_pt,pho1_eta,pho1_phi,0);
+    pho2.SetPtEtaPhiM(pho2_pt,pho2_eta,pho2_phi,0);
+    
+    float se1=pho1_sigEoE;
+    float se2=pho2_sigEoE;
+    
+    float btag = highest_csv;
+    
+    TString cat = getCategory(pho1,pho2,se1,se2,btag);
+
+  }
+
+
+  outputFile->cd();
+  for(auto hist: SignalRegionHistograms) hist.second->Write();
+  for(auto hist: SignalRegionHistogramsFineBin) hist.second->Write();
+  mgg_dist.Write();
+  outputFile->Close();
+}
+
+

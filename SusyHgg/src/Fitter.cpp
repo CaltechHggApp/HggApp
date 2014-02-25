@@ -51,6 +51,11 @@ void Fitter::Run() {
     
     runFits(catIndex);
     computeScaleFactor(catIndex);
+
+    save_histograms[Form("data_%s_Sideband",cats.at(catIndex).Data())]->Scale( signal_integrals.at(catIndex).first/save_histograms[Form("data_%s_Sideband",cats.at(catIndex).Data())]->Integral() );
+    
+
+
     buildSubtractedHistograms(catIndex);
     
   }
@@ -226,7 +231,7 @@ void Fitter::buildSubtractedHistograms(int catIndex) {
   TH2F* bkg_sub = (TH2F*)signal->Clone("data_"+cats.at(catIndex)+"_Signal_sidebandSub");
   //bkg_sub->Add(sideband,-1*sideband_to_signal_scale_factors.at(catIndex).first);
   std::cout << "Scaling: " << catIndex << "\t\t" << signal_integrals.at(catIndex).first << "\t" << sideband->Integral() << std::endl;
-  bkg_sub->Add(sideband,-1*signal_integrals.at(catIndex).first/sideband->Integral());
+  bkg_sub->Add(sideband,-1);
 
   for(int iX=1;iX < bkg_sub->GetNbinsX();iX++) {
     for(int iY=1;iY < bkg_sub->GetNbinsY();iY++) {
@@ -575,7 +580,17 @@ void Fitter::setupCategory(TString name,std::vector<TString>* catNames) {
     sets[it.first]=cat_data;
   }
 
-  RooArgSet set(*data->get(0));
+  //get the necessary variables
+  RooArgSet set;
+  set.add(*inputWs->var("mgg"));
+  set.add(*inputWs->var("MR"));
+  set.add(*inputWs->var("MR_up"));
+  set.add(*inputWs->var("MR_down"));
+  set.add(*inputWs->var("Rsq"));
+  set.add(*inputWs->var("Rsq_up"));
+  set.add(*inputWs->var("Rsq_down"));
+
+  //RooArgSet set(*data->get(0));
   //set.add( *inputWs->var("pileupWeight") );
   RooRealVar puWeight("pileupWeight","",1,0,40);
   set.add( puWeight );
@@ -695,4 +710,16 @@ void Fitter::DefineBinning() {
   R->setBinning(binning_R,"Regions");
   outputWs->import(*MR);
   outputWs->import(*R);
+}
+
+
+std::string Fitter::replaceAllInString(const std::string& s, const std::string& from, const std::string& to) {
+  size_t start_pos = 0;
+  
+  std::string sout = s;
+  while( (start_pos = sout.find(from,start_pos)) != std::string::npos ) {
+    sout.replace(start_pos,from.length(),to);
+    start_pos+=to.length();
+  }
+  return sout;
 }

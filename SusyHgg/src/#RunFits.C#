@@ -43,6 +43,8 @@ void RunFits(RooWorkspace * const ws,TFile *outputFile,const std::vector<TString
     {"gg_H_125",19.27},{"wz_H_125",0.7046},{"vbf_H_125",1.578},{"sms",0.3}
   };
 
+  float lumi = ws
+
   for(auto& cat : cats) {
     RunHggFits(ws,cat.Data());  
     TH2F* side = makeHistogram(ws,"data",cat.Data(),"Sideband");

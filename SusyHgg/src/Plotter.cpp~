@@ -109,19 +109,18 @@ void Plotter::plotFrenchFlag(TString catName) {
   for(int iX=1;iX<ff->GetNbinsX()+1;iX++) {
     for(int iY=1;iY<ff->GetNbinsY()+1;iY++) {
       float bkg_tot = sm->GetBinContent(iX,iY)+bkg->GetBinContent(iX,iY);
-      float bkg_err = sqrt( bkg->GetBinContent(iX,iY)*sig_int->getVal()/bkg->Integral() );
+      float bkg_err = sqrt( sm->GetBinContent(iX,iY) + 
+			    bkg->GetBinContent(iX,iY) );
 
-      //if(bkg->GetBinContent(iX,iY)==0) bkg_err = sqrt(sm->GetBinContent(iX,iY));
-      if(bkg_err<0.01)bkg_err = 0.01; //HACK!!
+      if(bkg->GetBinContent(iX,iY)==0) bkg_err = sqrt(sm->GetBinContent(iX,iY));
+      if(bkg_err<1)bkg_err = 1; //HACK!!
 
       ff->SetBinContent(iX,iY,(ff->GetBinContent(iX,iY)-bkg_tot)/sqrt(ff->GetBinContent(iX,iY)+pow(bkg_err,2)));
-      //ff->SetBinContent(iX,iY,(ff->GetBinContent(iX,iY)-bkg_tot)/sqrt(ff->GetBinContent(iX,iY)));
     }
   }
 
   TCanvas cv;
 
-  ff->SetAxisRange(-2,2,"Z");
   ff->Draw("COLZTEXT");
 
   cv.SaveAs( outputDir+"/FrenchFlag_"+catName+".png");

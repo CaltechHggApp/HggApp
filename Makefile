@@ -183,6 +183,7 @@ $(MAKETARGET)SusyHggSelectorApp: $(SRCDIR)SusyHggSelectorApp.C \
 	$(OUTLIB)HggMCWeight.o \
 	$(OUTLIB)BaseSelector.o \
 	$(OUTLIB)SusyHggSelector.o \
+	$(OUTLIB)JECUReader.o \
 	$(OUTLIB)ArgParser.o
 	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
@@ -271,7 +272,7 @@ $(MAKETARGET)MuMuGammaSelectorApp: $(SRCDIR)MuMuGammaSelectorApp.C \
 $(MAKETARGET)HggMakeTrainingTreeApp: $(SRCDIR)HggMakeTrainingTreeApp.C \
 	$(OUTLIB)VecbosEGObject.o \
 	$(OUTLIB)HggMakeTrainingTree.o
-	$(CXX) $(CXXFLAGS) -o HggMakeTrainingTreeApp $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
+	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
 $(OUTLIB)HggSelector.o: $(SRCDIR)HggSelector.cc \
 			$(OUTLIB)HggMassResolution.o \

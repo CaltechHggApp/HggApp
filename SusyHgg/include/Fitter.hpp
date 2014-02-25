@@ -71,6 +71,8 @@ public:
   static std::pair<float,float> getMeanAndSigEff(const RooAbsData& data,RooRealVar& var); // returns (mean,sigeff)
   void SetupSignalRegions();
 
+  static std::string replaceAllInString(const std::string & input, const std::string& from, const std::string& to);
+
 protected:
   TFile *inputFile;
   TFile *outputFile;

@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
     //if(sms_xsec*2.28E-3*lumi/inputSMSWs->var(Form("N_%s",a.getArgument("SMSName").c_str()))->getVal() >=0.6) {
     if( inputSMSWs->data(Form("sms_%s_Combined",a.getArgument("SMSName").c_str()))->sumEntries()*sms_xsec >=0.6 ){
       std::cout << "INCLUDING SMS" << std::endl;
-      toyData->append( *getToyDataSet(inputSMSWs->data(Form("sms_%s_Combined",a.getArgument("SMSName").c_str()))->reduce("evtcat==evtcat::"+catName),*mgg,false,0,sms_xsec*2.28E-3*lumi/inputSMSWs->var(Form("N_sms_%s",a.getArgument("SMSName").c_str()))->getVal()) );
+      toyData->append( *getToyDataSet(inputSMSWs->data(Form("sms_%s_Combined",a.getArgument("SMSName").c_str()))->reduce("evtcat==evtcat::"+catName),*mgg,false,0,sms_xsec*2.28E-3*lumi/inputSMSWs->var(Form("N_%s",a.getArgument("SMSName").c_str()))->getVal()) );
       //toyData->append( *getToyDataSet(inputSMSWs->data(Form("sms_%s_Combined",a.getArgument("SMSName").c_str()))->reduce("evtcat==evtcat::"+catName),*mgg,false,0,sms_xsec) );
     }else{
       std::cout << "EXCLUDING SMS (x-sec too small)!" << std::endl;

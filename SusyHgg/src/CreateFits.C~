@@ -19,6 +19,7 @@ int main(int argc,char** argv) {
 
     a.addArgument("InputFileName", "Name of the Input File");
     a.addArgument("OutputFileName","Name of the Output File");
+    a.addLongOption("lumi",ArgParser::reqArg,"specify luminosity (overrides value in workspace)");
 
   std::string ret;
   if(a.process(ret) !=0){
@@ -27,20 +28,7 @@ int main(int argc,char** argv) {
     return 0;
   }
 
-  TFile inputFile(a.getArgument("InputFileName").c_str());
-  RooWorkspace *ws = (RooWorkspace*)inputFile.Get("susy_hgg_workspace");
-  
-  TObjArray *mc_names_array = (TObjArray*)inputFile.Get("mc_name_array");
-  std::vector<TString> mc_names;
-  for(int i=0;i<mc_names_array->GetEntries();i++) {
-    mc_names.push_back( ((TObjString*)mc_names_array->At(i))->String() );
-  }
-
-  TFile outputFile(a.getArgument("OutputFileName").c_str(),"RECREATE");
-  RunFits(ws,&outputFile,mc_names);
-
-  outputFile.cd();
-  ws->Write();
-  outputFile.Close();
-  inputFile.Close();
+  Fitter fits(a.getArgument("InputFileName").c_str(),a.getArgument("OutputFileName").c_str());
+  if(a.longFlagPres("lumi")) fits.setLumi( atof(a.getLongFlag("lumi").c_str()) );
+  fits.Run();
 }

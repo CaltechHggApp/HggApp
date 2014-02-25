@@ -1,0 +1,10 @@
+#ifndef SimpleFitter_hpp
+#define SimpleFitter_hpp
+
+#include "Fitter.hpp"
+
+class SimpleFitter : public Fitter {
+
+}
+
+#endif

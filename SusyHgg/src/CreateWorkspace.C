@@ -131,12 +131,24 @@ void addToWorkspace(std::string name,int num_orig, std::string path, RooWorkspac
 
   vars.add(*(new RooRealVar("pho1_pass_iso","WP95 Iso lead",-0.1,1.1)));
   vars.add(*(new RooRealVar("pho2_pass_iso","WP95 Iso sublead",-0.1,1.1)));
+
+  vars.add(*(new RooRealVar("highest_csv","CSV score of highest csv jet",-0.1,1.1)));
+  vars.add(*(new RooRealVar("highest_csv_up","CSV score of highest csv jet",-0.1,1.1)));
+  vars.add(*(new RooRealVar("highest_csv_down","CSV score of highest csv jet",-0.1,1.1)));
+  vars.add(*(new RooRealVar("highest_csv_pt","pt of highest csv jet",-0.1,1.1)));
+  vars.add(*(new RooRealVar("highest_csv_eta","eta of highest csv jet",-0.1,1.1)));
   
   vars.add(*(new RooRealVar("ele1_pt","p_{T}^{e-lead}"  ,0,5000)));
   vars.add(*(new RooRealVar("mu1_pt" ,"p_{T}^{#mu-lead}",0,5000)));
 
   vars.add(*(new RooRealVar("MR","M_{R}",0,3000)));
   vars.add(*(new RooRealVar("Rsq","R^{2}",0,1)));
+
+  vars.add(*(new RooRealVar("MR_up","M_{R}",0,3000)));
+  vars.add(*(new RooRealVar("Rsq_up","R^{2}",0,1)));
+
+  vars.add(*(new RooRealVar("MR_down","M_{R}",0,3000)));
+  vars.add(*(new RooRealVar("Rsq_down","R^{2}",0,1)));
 
   vars.add(*(new RooRealVar("pileupWeight","",0,20)));
 

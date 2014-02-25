@@ -47,7 +47,7 @@ OUTLIB	         = ./lib/
 .PREFIXES: ./lib/
 
 .PHONY: all
-all: CreateWorkspace CreateFits CountEntries
+all: CreateWorkspace CreateFits CreatePlots CountEntries MakeSignalInjection runSusyHgg
 
 .PHONY: clean
 clean: 
@@ -64,11 +64,49 @@ CreateFits:		$(SRCDIR)CreateFits.C \
 			$(HGGAPPLIB)ArgParser.o
 	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $(OUTLIB)*.o $<	
 
+CreatePlots:		$(SRCDIR)CreatePlots.C \
+			$(OUTLIB)Plotter.o \
+			$(HGGAPPLIB)ArgParser.o
+	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $(OUTLIB)*.o $<	
+
 CountEntries:		$(SRCDIR)CountEntries.C \
 			$(HGGAPPLIB)ArgParser.o
 	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $<	
 
+MakeSignalInjection:	$(SRCDIR)MakeSignalInjection.cpp \
+			$(HGGAPPLIB)ArgParser.o
+	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $<	
+
+runSusyHgg:		$(SRCDIR)runSusyHgg.cpp\
+			$(OUTLIB)DataFitterNew.o \
+			$(OUTLIB)SMSFitterNew.o \
+			$(OUTLIB)FitterNew.o \
+			$(OUTLIB)CombinePrep.o \
+			$(OUTLIB)SusyHggTree.o
+	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $^	
 
 
 $(OUTLIB)Fitter.o:		$(SRCDIR)Fitter.cpp
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
+$(OUTLIB)Plotter.o:		$(SRCDIR)Plotter.cpp
+		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
+$(OUTLIB)SusyHggTree.o:		$(SRCDIR)SusyHggTree.cpp
+		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
+$(OUTLIB)FitterNew.o:		$(SRCDIR)FitterNew.cpp \
+				$(OUTLIB)SusyHggTree.o
+		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
+$(OUTLIB)DataFitterNew.o:	$(SRCDIR)DataFitterNew.cpp \
+				$(OUTLIB)FitterNew.o
+		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
+$(OUTLIB)SMSFitterNew.o:	$(SRCDIR)SMSFitterNew.cpp \
+				$(OUTLIB)FitterNew.o
+		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
+$(OUTLIB)CombinePrep.o:		$(SRCDIR)CombinePrep.cpp
+		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+

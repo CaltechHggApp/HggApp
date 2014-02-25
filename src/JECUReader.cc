@@ -11,26 +11,32 @@ JECUReader::~JECUReader() {
 
 bool JECUReader::setCorrections(const char* fileName) {
   std::fstream inFileStream(fileName);
+  std::cout << fileName << std::endl;
 
-  if(!inFileStream.is_open()) return false;
-
+  if(!inFileStream.is_open()) {
+    std::cout << "JECUReader ERROR: Cannot open correction file " << fileName << std::endl;
+    return false;
+  }
   inFileStream.ignore(1e6,'\n'); //ignore the first line (header)
   
   float e1,e2,e3; //the file is a formatted set of floats.
   //etaMin etaMax 132 ptMin up down ptMin up down ptMin up down ...
 
-  bool fillPt=true;  //only fill the pt vector on the first row
+  int nRows=0;  //only fill the pt vector on the first row
+  
+  while( inFileStream >> e1 >> e2 >> e3 ) {
 
-  while(!inFileStream.eof()) {
-    inFileStream >> e1 >> e2 >> e3;
-    
+
     if(e3==132.) { //e1 and e2 refer to eta points
       correctionsArray.push_back( std::make_pair(e1, new corrVector) ); //build a new entry in the correctionsArray
+      nRows++;
     }else{
-      if(fillPt) ptThresholds.push_back(e1);
+      if(nRows==1) {
+	ptThresholds.push_back(e1);
+	//std::cout << e1 << "  " << e2 << std::endl;
+      }
       correctionsArray.back().second->push_back( std::make_pair(e2,e3) ); //put the corrections into the vector
     }
-    fillPt = false;
   }
   correctionsArray.push_back( std::make_pair(e2,new corrVector) ); //for the last line, push back an empty vector and the upper eta threshold
   //so that we can identify out-of-range jets on the positive side
@@ -46,7 +52,11 @@ bool JECUReader::setCorrections(const char* fileName) {
     }
     last_eta = correctionsArray.at(i).first;
     if( correctionsArray.at(i).second->size() != nPtEntries ) {
-      std::cout << "JECUReader ERROR: invalid correction (line "<<i<<").  number of corrections does not match number of pt bins" << std::endl;
+      std::cout << "JECUReader ERROR: invalid correction (line "<<i<<").  number of corrections (" << correctionsArray.at(i).second->size() 
+		<<") does not match number of pt bins (" <<  nPtEntries << ")" << std::endl;
+      for(int j=0;j<correctionsArray.at(i).second->size();j++) {
+	std::cout <<  correctionsArray.at(i).second->at(j).first << std::endl;
+      }
       return false;
     }
   }
