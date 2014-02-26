@@ -117,9 +117,13 @@ void SMSFitter::processEntry() {
 	if(dir=="Up") {
 	  pho1.SetPtEtaPhiM( pho1.Pt()*(1+err1), pho1.Eta(),pho1.Phi(),0);
 	  pho2.SetPtEtaPhiM( pho2.Pt()*(1+err2), pho2.Eta(),pho2.Phi(),0);
+	  se1*=1/(1+err1);
+	  se2*=1/(1+err2);
 	}else{
 	  pho1.SetPtEtaPhiM( pho1.Pt()*(1-err1), pho1.Eta(),pho1.Phi(),0);
 	  pho2.SetPtEtaPhiM( pho2.Pt()*(1-err2), pho2.Eta(),pho2.Phi(),0);	  
+	  se1*=1/(1-err1);
+	  se2*=1/(1-err2);
 	}
      
 	mass = (pho1+pho2).M();
