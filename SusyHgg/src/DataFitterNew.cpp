@@ -67,9 +67,9 @@ void DataFitter::buildSidebandHistograms() {
 
     SidebandRegionHistograms[cat+"_fit_Down"] = new TH2F("data_"+cat+"_SidebandRegion_fitDown","",nXbins-1,xBins,nYbins-1,yBins);
 
-    SidebandRegionHistograms[cat+"_phoScale_Up"] = new TH2F("data_"+cat+"_SidebandRegion_phoScaleUp","",nXbins-1,xBins,nYbins-1,yBins);
+    SidebandRegionHistograms[cat+"_bkgShape_Up"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeUp","",nXbins-1,xBins,nYbins-1,yBins);
 
-    SidebandRegionHistograms[cat+"_phoScale_Down"] = new TH2F("data_"+cat+"_SidebandRegion_phoScaleDown","",nXbins-1,xBins,nYbins-1,yBins);
+    SidebandRegionHistograms[cat+"_bkgShape_Down"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeDown","",nXbins-1,xBins,nYbins-1,yBins);
 
 
     TTree massTree("massTree","");
@@ -109,6 +109,10 @@ void DataFitter::Run() {
     processEntrySidebands();
   }
 
+  for(auto cat: catNames) {
+    SidebandRegionHistograms[cat+"_bkgShape_Up"]->Scale( SidebandRegionHistograms[cat]->Integral()/SidebandRegionHistograms[cat+"_bkgShape_Up"]->Integral() );
+    SidebandRegionHistograms[cat+"_bkgShape_Down"]->Scale( SidebandRegionHistograms[cat]->Integral()/SidebandRegionHistograms[cat+"_bkgShape_Down"]->Integral() );
+  }
   outputFile->cd();
   for(auto hist: SignalRegionHistograms) hist.second->Write();
   for(auto hist: SignalRegionHistogramsFineBin) hist.second->Write();
@@ -143,7 +147,12 @@ void DataFitter::processEntrySidebands() {
       SidebandRegionHistograms[cat+"_fit_Down"]->Fill(MR,Rsq,scales[cat].val-scales[cat].error);
       SidebandRegionHistogramsFineBin[cat]->Fill(MR,Rsq,scales[cat].val);
     }
-
+    if(mgg > 130 && mgg < 140) {
+      SidebandRegionHistograms[cat+"_bkgShape_Up"]->Fill(MR,Rsq,scales[cat].val);
+    }
+    if(mgg > 110 && mgg < 120) {
+      SidebandRegionHistograms[cat+"_bkgShape_Down"]->Fill(MR,Rsq,scales[cat].val);
+    }
 }
 
 float DataFitter::getSysErrPho(float eta, float r9) {

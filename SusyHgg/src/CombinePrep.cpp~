@@ -21,7 +21,12 @@ void CombinePrep::openFiles() {
 
 void CombinePrep::Make(){
   makeRootFile();
-  makeOnePoint("sms_ChiWH","0_125");
+  std::vector<TString> sms_points;
+  SMSFitter::getSMSPoints(&sms_points);
+  for(auto pt: sms_points) {
+    makeOnePoint("sms_ChiWH",pt);
+    makeOnePoint("sms_ChiZH",pt);
+  }
 }
 
 void CombinePrep::makeOnePoint(TString smsName, TString smsPoint) {
@@ -59,6 +64,56 @@ void CombinePrep::makeOnePoint(TString smsName, TString smsPoint) {
   dataCardFile << "-------------------------------------\n";
 
   //systematics!!
+
+  //lumi
+  dataCardFile << "lumi\tlnN\t\t\t1.025\t\t-";
+  for(int i=0;i<smHiggsFiles.size();i++) dataCardFile << "\t\t1.025";
+  dataCardFile << "\n";
+
+  //Higgs scales
+  
+  dataCardFile << "QCDScale_VH\tlnN\t\t\t-\t\t-";
+  for(auto sm = smHiggsFiles.begin(); sm!= smHiggsFiles.end(); sm++) {
+    if( sm->first == "wzH") dataCardFile << "\t\t0.982/1.021";
+    else dataCardFile << "\t\t-";
+  }
+  dataCardFile << "\n";
+
+  dataCardFile << "QCDScale_qqH\tlnN\t\t\t-\t\t-";
+  for(auto sm = smHiggsFiles.begin(); sm!= smHiggsFiles.end(); sm++) {
+    if( sm->first == "vbfH") dataCardFile << "\t\t0.992/1.003";
+    else dataCardFile << "\t\t-";
+  }
+  dataCardFile << "\n";
+
+  dataCardFile << "QCDScale_ggH\tlnN\t\t\t-\t\t-";
+  for(auto sm = smHiggsFiles.begin(); sm!= smHiggsFiles.end(); sm++) {
+    if( sm->first == "ggH") dataCardFile << "\t\t0.918/1.076";
+    else dataCardFile << "\t\t-";
+  }
+  dataCardFile << "\n";
+
+  dataCardFile << "pdf_VH\tlnN\t\t\t-\t\t-";
+  for(auto sm = smHiggsFiles.begin(); sm!= smHiggsFiles.end(); sm++) {
+    if( sm->first == "wzH") dataCardFile << "\t\t0.958/1.042";
+    else dataCardFile << "\t\t-";
+  }
+  dataCardFile << "\n";
+
+  dataCardFile << "pdf_qqH\tlnN\t\t\t-\t\t-";
+  for(auto sm = smHiggsFiles.begin(); sm!= smHiggsFiles.end(); sm++) {
+    if( sm->first == "vbfH") dataCardFile << "\t\t0.972/1.026";
+    else dataCardFile << "\t\t-";
+  }
+  dataCardFile << "\n";
+
+  dataCardFile << "pdf_ggH\tlnN\t\t\t-\t\t-";
+  for(auto sm = smHiggsFiles.begin(); sm!= smHiggsFiles.end(); sm++) {
+    if( sm->first == "ggH") dataCardFile << "\t\t0.930/1.076";
+    else dataCardFile << "\t\t-";
+  }
+  dataCardFile << "\n";
+
 
   //fit systematic
   dataCardFile << "fit\tshape\t\t\t-\t\t1";

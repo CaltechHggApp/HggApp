@@ -37,6 +37,8 @@ RealVar DataFitter::doFitGetScale(TTree* data,float sigEff,RooWorkspace* ws) {
   mgg.setRange("sig",125-2*sigEff,125+2*sigEff);
 
   RooAbsReal *sig_int = pdf.createIntegral(mgg,RooFit::NormSet(mgg),RooFit::Range("sig"));
+  sig_int->SetName("signal_integral");
+
 
   float N_sideband = rdata.sumEntries("(mgg>110 && mgg <120) || (mgg>130 && mgg<140)");
 
@@ -64,6 +66,10 @@ void DataFitter::buildSidebandHistograms() {
     SidebandRegionHistograms[cat+"_fit_Up"] = new TH2F("data_"+cat+"_SidebandRegion_fitUp","",nXbins-1,xBins,nYbins-1,yBins);
 
     SidebandRegionHistograms[cat+"_fit_Down"] = new TH2F("data_"+cat+"_SidebandRegion_fitDown","",nXbins-1,xBins,nYbins-1,yBins);
+
+    SidebandRegionHistograms[cat+"_phoScale_Up"] = new TH2F("data_"+cat+"_SidebandRegion_phoScaleUp","",nXbins-1,xBins,nYbins-1,yBins);
+
+    SidebandRegionHistograms[cat+"_phoScale_Down"] = new TH2F("data_"+cat+"_SidebandRegion_phoScaleDown","",nXbins-1,xBins,nYbins-1,yBins);
 
 
     TTree massTree("massTree","");
@@ -95,6 +101,7 @@ void DataFitter::buildSidebandHistograms() {
 }
 
 void DataFitter::Run() {
+  buildSidebandHistograms();
   Long64_t iEntry=-1;
   while(fChain->GetEntry(++iEntry)) {
     weight=1; //for data
