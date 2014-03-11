@@ -64,6 +64,9 @@ public:
   void suppressElectronVeto(){doElectronVeto=false;}
   void setForceVertexZero(){forceVtxZero=true;}
 
+  static void smearPhoton(VecbosPho* pho,int smearShift);
+
+
 protected:
   //methods we need/want to override
   virtual int init() final;
@@ -83,7 +86,6 @@ protected:
   void setNSigma(int ns){nSigma=ns;}
 
   bool preSelectPhotons(VecbosPho*,VecbosPho*,TVector3); // kinematic photons selections
-  void smearPhoton(VecbosPho*,int);
 
   std::pair<int,int> getBestPair(float*,int,int);
   std::pair<int,int> getBestPairCiC(int,int,bool);
