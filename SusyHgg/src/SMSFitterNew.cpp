@@ -173,10 +173,10 @@ void SMSFitter::processEntry() {
 }
 
 
-TString SMSFitter::getSMSPoint() {
+TString SMSFitter::getSMSPoint(float M22,float M23) {
 
-  int m_lsp = round(m22/25.)*25;
-  int m_half = round(m23/25.)*25;
+  int m_lsp = round(M22/25.)*25;
+  int m_half = round(M23/25.)*25;
   
   return Form("%d_%d",m_lsp,m_half);
 }

@@ -16,11 +16,13 @@ public:
 
   static void getSMSPoints(std::vector<TString>* pts);
 
+  static TString getSMSPoint(float M22,float M23);
+
+
 private:
   virtual void buildHistograms() override;
   virtual void processEntry() override;
 
-  TString getSMSPoint();
 
   TFile* nEntriesFile=0;
   TH2F* nEntriesHist=0;
