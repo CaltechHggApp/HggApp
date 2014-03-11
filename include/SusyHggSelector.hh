@@ -21,6 +21,8 @@ public:
   SusyHggSelector(std::vector<std::string> fNames, std::string treeName,std::string outputFile);
   void setOptimize(){optimize=true;}
   void setIsMC(){isMC=true;}
+
+  void setSmearingCFG(std::string smearCFG);
 protected:
 
   StandardPhotonID photonID;

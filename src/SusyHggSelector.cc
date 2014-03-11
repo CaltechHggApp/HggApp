@@ -11,6 +11,11 @@ SusyHggSelector::SusyHggSelector(std::vector<std::string> fNames, std::string tr
 void SusyHggSelector::processConfig(ReadConfig& cfg) {
 }
 
+void SusyHggSelector::setSmearingCFG(std::string smearCFG) {
+  if(smearer!=0) delete smearer;
+  smearer = new HggEnergyScale(smearCFG);
+}
+
 int SusyHggSelector::init() {
   if(optimize) {
     min_pho1_pt=0;
