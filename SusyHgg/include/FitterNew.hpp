@@ -50,7 +50,7 @@ public:
   bool passBasicSelection(); //!< event passes the basic event selection
 
 
-  TString getCategory(const TLorentzVector& pho1, const TLorentzVector&pho2,float se1, float se2,float btag); //!< get the category for this event
+  static TString getCategory(const TLorentzVector& pho1, const TLorentzVector&pho2,float se1, float se2,float btag); //!< get the category for this event
 
   
   void setSigEff(TString cat, float se) { sigmaEffectives[cat] = se; }
@@ -70,6 +70,8 @@ protected:
   TFile *outputFile;
 
   bool isSMS=true;
+
+  float hggSigStrength = 1.11;
 
   float lumi = 1;
   //bool processData = true;
