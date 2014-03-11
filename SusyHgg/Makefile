@@ -47,7 +47,7 @@ OUTLIB	         = ./lib/
 .PREFIXES: ./lib/
 
 .PHONY: all
-all: CreateWorkspace CreateFits CreatePlots CountEntries MakeSignalInjection runSusyHgg
+all: CreateWorkspace CreateFits CreatePlots CountEntries MakeSignalInjection runSusyHgg runSignalInjectionNew
 
 .PHONY: clean
 clean: 
@@ -85,6 +85,11 @@ runSusyHgg:		$(SRCDIR)runSusyHgg.cpp\
 			$(OUTLIB)SusyHggTree.o
 	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $^	
 
+runSignalInjectionNew:	$(SRCDIR)runSignalInjectionNew.cpp \
+			$(OUTLIB)SignalInjectionNew.o \
+			$(OUTLIB)FitterNew.o \
+			$(OUTLIB)SusyHggTree.o
+	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $^	
 
 $(OUTLIB)Fitter.o:		$(SRCDIR)Fitter.cpp
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
@@ -110,3 +115,10 @@ $(OUTLIB)SMSFitterNew.o:	$(SRCDIR)SMSFitterNew.cpp \
 $(OUTLIB)CombinePrep.o:		$(SRCDIR)CombinePrep.cpp
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
 
+$(OUTLIB)SignalInjectionNew.o:	$(SRCDIR)SignalInjectionNew.cpp \
+				$(OUTLIB)FitterNew.o
+		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
+$(OUTLIB)SMSValidation.o:	$(SRCDIR)SMSValidation.cpp \
+				$(OUTLIB)FitterNew.o
+		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
