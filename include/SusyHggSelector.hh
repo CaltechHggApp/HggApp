@@ -7,6 +7,8 @@
 #include "VecbosJetID.hh"
 #include "RazorVariables.hh"
 #include "JECUReader.hh"
+#include "HggEnergyScale.hh"
+
 
 #include "TVector3.h"
 #include "TLorentzVector.h"
@@ -26,6 +28,8 @@ protected:
   VecbosJetID      jetID;
 
   JECUReader       jecReader;
+
+  HggEnergyScale  *smearer=0;
   //mandatory overrides
   virtual void processEntry(Long64_t iEntry);
   virtual int init();
@@ -171,6 +175,35 @@ protected:
   float highest_csv_pt_up;
   float highest_csv_eta_up;
   float highest_csv_phi_up;
+
+  float second_csv;
+  float second_csv_pt;
+  float second_csv_eta;
+  float second_csv_phi;
+
+  float second_csv_down;
+  float second_csv_pt_down;
+  float second_csv_eta_down;
+  float second_csv_phi_down;
+
+  float second_csv_up;
+  float second_csv_pt_up;
+  float second_csv_eta_up;
+  float second_csv_phi_up;
+
+  float mbb;
+  float mbb_up;
+  float mbb_down;
+
+  float mbb_NearH;
+  float mbb_NearH_up;
+  float mbb_NearH_down;
+
+  float mbb_NearZ;
+  float mbb_NearZ_up;
+  float mbb_NearZ_down;
+
+
 
   float puWeight;
 

@@ -1,5 +1,6 @@
 #include "SusyHggSelector.hh"
 
+#include "HggSelector.hh"
 
 SusyHggSelector::SusyHggSelector(std::vector<std::string> fNames, std::string treeName,std::string outputFile):
   BaseSelector(fNames,treeName,outputFile) 
@@ -69,6 +70,17 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
 
   puWeight=pileupWeight;
   runNum  = runNumber;
+
+  if(isMC && smearer) { //smear the photons
+    for(int i=0;i<nPho_;i++) {
+      auto photon = Photons_->at(i);
+      std::pair<float,float> dE = smearer->getDEoE(photon,0);
+      photon.dEoE = dE.first;
+      photon.dEoEErr = dE.second;
+
+      HggSelector::smearPhoton(&photon,0);
+    }
+  }
 
   //identify the two highest pT photons
   const int NPho=2;
@@ -149,8 +161,8 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
   pho1_eta = pho1_p4.Eta();
   pho1_phi = pho1_p4.Phi();
   pho1_r9 = Photons_->at(selected_photons[0]).SC.r9;
-  if(isMC)pho1_seoe = Photons_->at(selected_photons[0]).correctedEnergyError/Photons_->at(selected_photons[0]).correctedEnergy;
-  else pho1_seoe = Photons_->at(selected_photons[0]).finalEnergyError/Photons_->at(selected_photons[0]).finalEnergy;
+  //if(isMC)pho1_seoe = Photons_->at(selected_photons[0]).correctedEnergyError/Photons_->at(selected_photons[0]).correctedEnergy;
+   pho1_seoe = Photons_->at(selected_photons[0]).finalEnergyError/Photons_->at(selected_photons[0]).finalEnergy;
 
   std::bitset<5> id_res_pho1 = photonID.cutResults(Photons_->at(selected_photons[0]),StandardPhotonID::kLoose);
 
@@ -171,8 +183,8 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
   pho2_eta = pho2_p4.Eta();
   pho2_phi = pho2_p4.Phi();
   pho2_r9 = Photons_->at(selected_photons[1]).SC.r9;
-  if(isMC) pho2_seoe = Photons_->at(selected_photons[1]).correctedEnergyError/Photons_->at(selected_photons[1]).correctedEnergy;
-  else pho2_seoe = Photons_->at(selected_photons[1]).finalEnergyError/Photons_->at(selected_photons[1]).finalEnergy;
+  //if(isMC) pho2_seoe = Photons_->at(selected_photons[1]).correctedEnergyError/Photons_->at(selected_photons[1]).correctedEnergy;
+  pho2_seoe = Photons_->at(selected_photons[1]).finalEnergyError/Photons_->at(selected_photons[1]).finalEnergy;
 
   std::bitset<5> id_res_pho2 = photonID.cutResults(Photons_->at(selected_photons[1]),StandardPhotonID::kLoose);
 
@@ -203,6 +215,22 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
   highest_csv_eta_down=0;
   highest_csv_phi_down=0;
 
+  //clear the highest_csv info
+  second_csv = -1000;
+  second_csv_pt=0;
+  second_csv_eta=0;
+  second_csv_phi=0;
+
+  second_csv_up = -1000;
+  second_csv_pt_up=0;
+  second_csv_eta_up=0;
+  second_csv_phi_up=0;
+
+  second_csv_down = -1000;
+  second_csv_pt_down=0;
+  second_csv_eta_down=0;
+  second_csv_phi_down=0;
+
   //loop over the jets
   std::vector<TLorentzVector> selectedJets;
   std::vector<TLorentzVector> selectedJets_up;
@@ -227,7 +255,10 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
   nJ = selectedJets.size();
   nJ_up = selectedJets_up.size();
   nJ_down = selectedJets_down.size();
-  
+
+  TLorentzVector top_b;
+  TLorentzVector second_b;
+
   if(selectedJets.size()>=2) {
     TLorentzVector h1(0,0,0,0),h2(0,0,0,0);
     try{
@@ -446,6 +477,33 @@ void SusyHggSelector::setupOutputTree() {
   outTree->Branch("highest_csv_eta_down",&highest_csv_eta_down);
   outTree->Branch("highest_csv_phi_down",&highest_csv_phi_down);
 
+  outTree->Branch("second_csv",&second_csv);
+  outTree->Branch("second_csv_pt",&second_csv_pt);
+  outTree->Branch("second_csv_eta",&second_csv_eta);
+  outTree->Branch("second_csv_phi",&second_csv_phi);
+
+  outTree->Branch("second_csv_up",&second_csv_up);
+  outTree->Branch("second_csv_pt_up",&second_csv_pt_up);
+  outTree->Branch("second_csv_eta_up",&second_csv_eta_up);
+  outTree->Branch("second_csv_phi_up",&second_csv_phi_up);
+
+  outTree->Branch("second_csv_down",&second_csv_down);
+  outTree->Branch("second_csv_pt_down",&second_csv_pt_down);
+  outTree->Branch("second_csv_eta_down",&second_csv_eta_down);
+  outTree->Branch("second_csv_phi_down",&second_csv_phi_down);
+
+  outTree->Branch("mbb",&mbb);
+  outTree->Branch("mbb_up",&mbb_up);
+  outTree->Branch("mbb_down",&mbb_down);
+
+  outTree->Branch("mbb_NearH",&mbb_NearH);
+  outTree->Branch("mbb_NearH_up",&mbb_NearH_up);
+  outTree->Branch("mbb_NearH_down",&mbb_NearH_down);
+
+  outTree->Branch("mbb_NearZ",&mbb_NearZ);
+  outTree->Branch("mbb_NearZ_up",&mbb_NearZ_up);
+  outTree->Branch("mbb_NearZ_down",&mbb_NearZ_down);
+
   outTree->Branch("hem1_pt",&hem1_pt);
   outTree->Branch("hem1_eta",&hem1_eta);
   outTree->Branch("hem1_phi",&hem1_phi);
@@ -539,9 +597,71 @@ void SusyHggSelector::fillGenTruth() {
 }
 
 void SusyHggSelector::selectJets(std::vector<TLorentzVector>* selectedJets, int correction) {
+  std::vector<float> btags;
+
+
   TLorentzVector pho1_p4,pho2_p4;
   pho1_p4.SetPtEtaPhiM( pho1_pt,pho1_eta,pho1_phi,0);
   pho2_p4.SetPtEtaPhiM( pho2_pt,pho2_eta,pho2_phi,0);
+
+
+    float *csv_highest_ptr=0,*pt_highest_ptr=0,*eta_highest_ptr=0,*phi_highest_ptr=0;
+    float *csv_second_ptr=0,*pt_second_ptr=0,*eta_second_ptr=0,*phi_second_ptr=0;
+    float *mbb_ptr;
+
+    float *mbb_NearZ_ptr,*mbb_NearH_ptr;
+
+    switch(correction){
+    case 0:
+      csv_highest_ptr=&highest_csv;
+      pt_highest_ptr =&highest_csv_pt;
+      eta_highest_ptr=&highest_csv_eta;
+      phi_highest_ptr=&highest_csv_phi;
+
+      csv_second_ptr=&second_csv;
+      pt_second_ptr =&second_csv_pt;
+      eta_second_ptr=&second_csv_eta;
+      phi_second_ptr=&second_csv_phi;
+
+      mbb_ptr = &mbb;
+      mbb_NearZ_ptr = &mbb_NearZ;
+      mbb_NearH_ptr = &mbb_NearH;
+      break;
+    case 1:
+      csv_highest_ptr=&highest_csv_up;
+      pt_highest_ptr =&highest_csv_pt_up;
+      eta_highest_ptr=&highest_csv_eta_up;
+      phi_highest_ptr=&highest_csv_phi_up;
+
+      csv_second_ptr=&second_csv_up;
+      pt_second_ptr =&second_csv_pt_up;
+      eta_second_ptr=&second_csv_eta_up;
+      phi_second_ptr=&second_csv_phi_up;
+
+      mbb_ptr = &mbb_up;
+      mbb_NearZ_ptr = &mbb_NearZ_up;
+      mbb_NearH_ptr = &mbb_NearH_up;
+      break;
+    case -1:
+      csv_highest_ptr=&highest_csv_down;
+      pt_highest_ptr =&highest_csv_pt_down;
+      eta_highest_ptr=&highest_csv_eta_down;
+      phi_highest_ptr=&highest_csv_phi_down;
+
+      csv_second_ptr=&second_csv_down;
+      pt_second_ptr =&second_csv_pt_down;
+      eta_second_ptr=&second_csv_eta_down;
+      phi_second_ptr=&second_csv_phi_down;
+
+      mbb_ptr = &mbb_down;
+      mbb_NearZ_ptr = &mbb_NearZ_down;
+      mbb_NearH_ptr = &mbb_NearH_down;
+      break;
+    default:
+      assert(false);
+    }
+
+    
 
   for(int iJet=0;iJet<nJet_;iJet++) {
     auto jet = Jets_->at(iJet);
@@ -562,27 +682,54 @@ void SusyHggSelector::selectJets(std::vector<TLorentzVector>* selectedJets, int 
     //simple jet quality cuts
     //if(! jetID.passID(jet,VecbosJetID::kLoose) ) continue; //ignore jet ID
     selectedJets->push_back(jet_p4);
+    btags.push_back(jet.combinedSecondaryVertex);
 
-    if(correction==0 && jet.combinedSecondaryVertex > highest_csv) { //store the highest csv btag jet
-      highest_csv = jet.combinedSecondaryVertex;
-      highest_csv_pt = jet_p4.Pt();
-      highest_csv_eta = jet_p4.Eta();
-      highest_csv_phi = jet_p4.Phi();
+    float thisCSV =jet.combinedSecondaryVertex;
+    float thisPt  = jet_p4.Pt();
+    float thisEta = jet_p4.Eta();
+    float thisPhi = jet_p4.Phi();
+
+    if(thisCSV > *csv_highest_ptr) {
+      std::swap(thisCSV,*csv_highest_ptr);
+      std::swap(thisPt,*pt_highest_ptr);
+      std::swap(thisEta,*eta_highest_ptr);
+      std::swap(thisPhi,*phi_highest_ptr);
     }
 
-    if(correction==1 && jet.combinedSecondaryVertex > highest_csv_up) { //store the highest csv btag jet
-      highest_csv_up = jet.combinedSecondaryVertex;
-      highest_csv_pt_up = jet_p4.Pt();
-      highest_csv_eta_up = jet_p4.Eta();
-      highest_csv_phi_up = jet_p4.Phi();
-    }
-
-    if(correction==-1 && jet.combinedSecondaryVertex > highest_csv_down) { //store the highest csv btag jet
-      highest_csv_down = jet.combinedSecondaryVertex;
-      highest_csv_pt_down = jet_p4.Pt();
-      highest_csv_eta_down = jet_p4.Eta();
-      highest_csv_phi_down = jet_p4.Phi();
+    if(thisCSV > *csv_second_ptr) {
+      std::swap(thisCSV,*csv_second_ptr);
+      std::swap(thisPt,*pt_second_ptr);
+      std::swap(thisEta,*eta_second_ptr);
+      std::swap(thisPhi,*phi_second_ptr);
     }
   }
 
+  *mbb_NearH_ptr=-1;
+  *mbb_NearZ_ptr=-1;
+  
+
+  for(int ij1=0;ij1<selectedJets->size();ij1++) {
+    TLorentzVector j1 = selectedJets->at(ij1);
+    if(btags.at(ij1) <0.244) continue;
+    for(int ij2=ij1+1;ij2<selectedJets->size();ij2++) {
+      TLorentzVector j2 = selectedJets->at(ij2); 
+      if(btags.at(ij2) <0.244) continue;
+      if(btags.at(ij1) <0.679 && btags.at(ij2)<0.679) continue;
+      j1.SetE(sqrt(j1.E()*j1.E()+4.2*4.2));
+      j2.SetE(sqrt(j2.E()*j2.E()+4.2*4.2));
+      float m = (j1+j2).M();
+
+      if( fabs(*mbb_NearH_ptr-125.) > fabs(m-125.) ) *mbb_NearH_ptr = m;
+      if( fabs(*mbb_NearZ_ptr-92.) > fabs(m-92.) ) *mbb_NearZ_ptr = m;
+   }
+  }
+
+  if(*csv_second_ptr <0) *mbb_ptr=-1;
+  else {
+    TLorentzVector b1,b2;
+    b1.SetPtEtaPhiM(*pt_highest_ptr,*eta_highest_ptr,*phi_highest_ptr,4.2);
+    b2.SetPtEtaPhiM(*pt_second_ptr,*eta_second_ptr,*phi_second_ptr,4.2);
+  
+    *mbb_ptr = (b1+b2).M();
+  }
 }
