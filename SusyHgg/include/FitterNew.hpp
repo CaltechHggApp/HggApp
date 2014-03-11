@@ -47,7 +47,7 @@ public:
 
   void Run();
 
-  static bool passBasicSelection(); //!< event passes the basic event selection
+  bool passBasicSelection(); //!< event passes the basic event selection
 
 
   static TString getCategory(const TLorentzVector& pho1, const TLorentzVector&pho2,float se1, float se2,float btag); //!< get the category for this event
