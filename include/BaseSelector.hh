@@ -1,3 +1,7 @@
+
+#ifndef BaseSelector_hh
+#define BaseSelector_hh
+
 #include <VecbosEGObject.hh>
 #include <vector>
 #include <iostream>
@@ -8,6 +12,7 @@
 
 #include "ReadConfig.hh"
 using namespace std;
+
 
 
 class BaseSelector{
@@ -163,3 +168,6 @@ protected:
   bool drBoundary;
   bool ECALTPFilterFlag;
 };
+
+
+#endif
