@@ -20,17 +20,23 @@ void CombinePrep::openFiles() {
 }
 
 void CombinePrep::Make(){
+  TString outputSubDir = dataFilePath;
+  outputSubDir.Remove(0,outputSubDir.Last('/')+1);
+  outputSubDir.Remove(outputSubDir.Last('.'));
+  outputFolder = outputFolder +"/"+outputSubDir+"/";
+
   makeRootFile();
   std::vector<TString> sms_points;
   SMSFitter::getSMSPoints(&sms_points);
   for(auto pt: sms_points) {
     makeOnePoint("sms_ChiWH",pt);
     makeOnePoint("sms_ChiZH",pt);
+    makeOnePoint("sms_ChiHH",pt);
   }
 }
 
 void CombinePrep::makeOnePoint(TString smsName, TString smsPoint) {
-  std::fstream dataCardFile( Form("%s/combine/%s_%s.txt",outputFolder.Data(),smsName.Data(),smsPoint.Data()), std::fstream::out);
+  std::fstream dataCardFile( Form("%s/%s_%s.txt",outputFolder.Data(),smsName.Data(),smsPoint.Data()), std::fstream::out);
 
   dataCardFile << "imax\t1\njmax\t*\nkmax\t*\n";
   dataCardFile << "-------------------------------------\n";
@@ -70,8 +76,14 @@ void CombinePrep::makeOnePoint(TString smsName, TString smsPoint) {
   for(int i=0;i<smHiggsFiles.size();i++) dataCardFile << "\t\t1.025";
   dataCardFile << "\n";
 
-  //Higgs scales
-  
+  //Higgs Norm Uncertainty
+  dataCardFile << "HiggsScale\tlnN\t\t\t-\t\t-";
+  for(auto sm = smHiggsFiles.begin(); sm!= smHiggsFiles.end(); sm++) {
+    dataCardFile << "\t\t0.74/1.28";
+  }
+  dataCardFile << "\n";
+
+  //Higgs scales  
   dataCardFile << "QCDScale_VH\tlnN\t\t\t-\t\t-";
   for(auto sm = smHiggsFiles.begin(); sm!= smHiggsFiles.end(); sm++) {
     if( sm->first == "wzH") dataCardFile << "\t\t0.982/1.021";
@@ -138,11 +150,24 @@ void CombinePrep::makeOnePoint(TString smsName, TString smsPoint) {
 }
 
 void CombinePrep::makeRootFile() {
-  int dir = mkdir( Form("%s/combine/",outputFolder.Data()), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  int dir = mkdir( Form("%s/",outputFolder.Data()), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
   assert((dir==0 || errno == EEXIST) && Form("could not create combine directory %s/combine/",outputFolder.Data()));
   if(dataFile == nullptr) openFiles();
 
-  TString outputFileStub = outputFolder+"/combine/data"; // <folder>/combine/<name>_<pt>  .txt and .root will be added as appropriate
+  if(useVarBinning) {
+    for(auto cat: *catNames) {
+      std::cout << "--------------------------------\n" << cat << "\n--------------------------------\n" << std::endl;
+      binningMap.insert( std::pair<TString,std::vector<int>>(cat,{}) ); //setup the binning map
+      TH2F* totalBkg = (TH2F*)dataFile->Get("data_"+cat+"_SidebandRegion")->Clone("tmp");
+      for(auto h = smHiggsFiles.begin(); h!=smHiggsFiles.end(); h++) {
+	totalBkg->Add( (TH2F*)h->second->Get("data_"+cat+"_SignalRegion") );
+      }
+      defineBinning(*totalBkg, binningMap[cat],1,1,1.);
+      delete totalBkg;
+    }
+  }
+
+  TString outputFileStub = outputFolder+"/data"; // <folder>/<name>_<pt>  .txt and .root will be added as appropriate
 
   TFile outputRootFile(outputFileStub+".root","RECREATE");
 
@@ -199,18 +224,43 @@ void CombinePrep::makeRootFile() {
   outputRootFile.Close();
 }
 
-std::unique_ptr<TH1F> CombinePrep::compressHistogram(const TH2F& input) {
+std::unique_ptr<TH1F> CombinePrep::compressHistogram(const TH2F& input,bool varBinning,int minWidth,int minBin,std::vector<int> *xBinEdges) {
+  assert( !(varBinning && xBinEdges==0) );
+
   int nX = input.GetNbinsX();
   int nY = input.GetNbinsY();
   TString name = input.GetName();
 
-  std::unique_ptr<TH1F> compressed(new TH1F(name,"",nX*nY,-0.5,nX*nY-0.5));
-  
-  for(int iX=1;iX<=nX;iX++) {
-    for(int iY=1;iY<=nY;iY++) {
-      compressed->SetBinContent((iX-1)*(nY+1)+iY,input.GetBinContent(iX,iY));
+  int nBins = nX*nY;
+  if(varBinning) nBins = (xBinEdges->size()-1)*xBinEdges->size()/2;
+
+  std::unique_ptr<TH1F> compressed(new TH1F(name,"",nBins,-0.5,nX*nY-0.5));
+
+  if(varBinning) {    
+    int nXBins = xBinEdges->size()-1;
+    int index=1;
+    for(int iX=0;iX<nXBins;iX++) {
+      for(int iY=1;iY< iX+1;iY++) {
+// 	std::cout << xBinEdges->at(iX) << "--" << xBinEdges->at(iX+1) << std::endl;
+// 	std::cout << iY << std::endl;
+// 	std::cout << input.Integral(xBinEdges->at(iX),xBinEdges->at(iX+1),iY,iY) << std::endl;
+	compressed->SetBinContent( index++, input.Integral(xBinEdges->at(iX+1),xBinEdges->at(iX),iY,iY) );
+      }
+      compressed->SetBinContent( index++, input.Integral(xBinEdges->at(iX+1),xBinEdges->at(iX),iX+1,nY+1) );
+    }    
+
+    if(index != nBins+1) {
+      std::cout << index << "  " << nBins+1 << std::endl;
+      assert(false);
+    }
+  }else{
+    for(int iX=minBin;iX<=nX;iX++) {
+      for(int iY=1;iY<=nY;iY++) {
+	compressed->SetBinContent((iX-1)*(nY+1)+iY,input.GetBinContent(iX,iY));
+      }
     }
   }
+  //std::cout << "bin 1:   " << compressed->GetBinContent(1) << std::endl;
   return compressed;
 }
 
@@ -228,15 +278,67 @@ TH1F* CombinePrep::makeCategoryHistogram(TFile *file,TString histName,TString po
   int nX=dummy->GetNbinsX();
   int nY=dummy->GetNbinsY();
 
-  TH1F* catHist = new TH1F(histName,"",nX*nY*catNames->size(),-0.5,nX*nY*catNames->size()-0.5);
-
-  for(int iCat=0;iCat<catNames->size();iCat++) {
-    TH2F* hist = (TH2F*)file->Get( "data_"+sms_pt+catNames->at(iCat)+"_"+postfix );
-    std::unique_ptr<TH1F> compHist = compressHistogram(*hist);
-    //std::cout << histName << " " << postfix << " " << sms_pt << " " << iCat << "    " << dummy->Integral() << " --- " <<  compHist->Integral() << std::endl;
-    for(int iBin=1;iBin<=nX*nY;iBin++) {
-      catHist->SetBinContent(iBin+nX*nY*iCat,compHist->GetBinContent(iBin));
-    }
+  int nBins = nX*nY*catNames->size();
+  if(useVarBinning) {
+    nBins=0;
+    for(auto binning = binningMap.begin(); binning != binningMap.end();binning++) nBins+= (binning->second.size()-1)*binning->second.size()/2;
   }
+
+  TH1F* catHist = new TH1F(histName,"",nBins,-0.5,nX*nY*catNames->size()-0.5);
+
+  int offset=0;
+  for(int iCat=0;iCat<catNames->size();iCat++) {
+    //std::cout << iCat << "   " << offset << std::endl;
+    TH2F* hist = (TH2F*)file->Get( "data_"+sms_pt+catNames->at(iCat)+"_"+postfix );
+    std::unique_ptr<TH1F> compHist = compressHistogram(*hist,useVarBinning,1,1,&binningMap[catNames->at(iCat)]);
+    //std::cout << histName << " " << postfix << " " << sms_pt << " " << iCat << "    " << dummy->Integral() << " --- " <<  compHist->Integral() << std::endl;
+    int nBinsThisCat=nX*nY;
+    if(useVarBinning) {      
+      int nXBins = binningMap[ catNames->at(iCat) ].size();
+      nBinsThisCat=nXBins*(nXBins-1)/2;
+    }
+    for(int iBin=1;iBin<=nBinsThisCat;iBin++) {
+      catHist->SetBinContent(iBin+offset,compHist->GetBinContent(iBin));
+    }
+    offset+=nBinsThisCat;
+  }
+  //std::cout << ">>>>>bin 1:   " << catHist->GetBinContent(1) << std::endl;
   return catHist;
+}
+
+//a map between the bin of the input histogram and the bin of the output histogram
+void CombinePrep::defineBinning(const TH2F& hist,std::vector<int>& xBinEdges, int minWidth,int minBin,float targetYield) {
+  
+  int maxBinX = hist.GetNbinsX();
+  int maxBinY = hist.GetNbinsY();
+  //std::cout << maxBinX << " " << maxBinY << std::endl;
+
+  xBinEdges.push_back(maxBinX+1);
+
+  int binLowX=maxBinX;
+  int binLowY=1;
+  
+  TAxis *x = hist.GetXaxis();
+  TAxis *y = hist.GetYaxis();
+
+  while(binLowX>minBin) {
+    while( hist.Integral(binLowX,maxBinX,binLowY,maxBinY) < targetYield  || maxBinX-binLowX<minWidth) {
+      binLowX--;
+      //std::cout << binLowX << "  " << hist.Integral(binLowX,maxBinX,binLowY,maxBinY) << "  " << maxBinX-binLowX << std::endl;
+      if(binLowX==1 || binLowX==minBin) break;
+    }
+    //std::cout << binLowX << ":  " << hist.Integral(binLowX,maxBinX,binLowY,maxBinY) << std::endl;
+
+    binLowY++;
+    maxBinX=binLowX;
+    xBinEdges.push_back(binLowX);    
+  }
+
+  std::cout << xBinEdges.size() << std::endl;
+   for(int i=0;i<xBinEdges.size()-1;i++) {
+     for(int j=1;j<i+1;j++) {
+       std::cout << x->GetBinLowEdge(xBinEdges.at(i+1)) << "--" <<x->GetBinLowEdge(xBinEdges.at(i)) << "   " << y->GetBinLowEdge(j) << "--"<<y->GetBinLowEdge(j+1) <<":    " << hist.Integral(xBinEdges.at(i+1),xBinEdges.at(i),j,j+1) << std::endl;
+     }
+     std::cout << x->GetBinLowEdge(xBinEdges.at(i+1)) << "--" <<x->GetBinLowEdge(xBinEdges.at(i)) << "   " << y->GetBinLowEdge(i+1) << "--"<<y->GetBinLowEdge(maxBinY+1) <<":    " << hist.Integral(xBinEdges.at(i+1),xBinEdges.at(i),i+1,maxBinY+1) << std::endl;
+   }
 }

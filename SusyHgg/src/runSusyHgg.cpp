@@ -19,6 +19,7 @@ runs the whole susy hgg analysis
 
 #include "CombinePrep.hh"
 
+
 #include "TH1D.h"
 #include "TFile.h"
 
@@ -35,6 +36,9 @@ int main(int argc,char** argv) {
   a.addArgument("OutputFolder",ArgParser::required,"folder to save the output root files");
   
   a.addLongOption("CombineOnly",ArgParser::noArg,"run combine maker only");
+  a.addLongOption("SigInjName",ArgParser::reqArg,"if CombineOnly is set, use a custom signal injection file specified as the 'data'.");
+  a.addLongOption("BigSignalRegion",ArgParser::noArg,"Use a large signal region [121,129] in each category");
+  a.addLongOption("UseVariableBinning",ArgParser::noArg,"use different binning in each box depending on statistics");
 
   string ret;
   if(a.process(ret) !=0){
@@ -47,6 +51,11 @@ int main(int argc,char** argv) {
   string outputFolder = a.getArgument("OutputFolder");
 
   bool combineOnly = a.longFlagPres("CombineOnly");
+
+  string sigInjName="";
+  if(combineOnly && a.longFlagPres("SigInjName")) sigInjName = a.getLongFlag("SigInjName");
+
+  bool bigSigReg = a.longFlagPres("BigSignalRegion");
 
   cout << "Trying to make folder: " << outputFolder << "  " << mkdir(outputFolder.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) << std::endl;
 
@@ -64,6 +73,12 @@ int main(int argc,char** argv) {
   combine.setOutputFolder(outputFolder);
 
   std::vector<TString> catNames;
+  const std::vector<TString>* cats = Fitter::getCatNames();
+  catNames.resize(cats->size());
+  std::copy(cats->begin(),cats->end(),catNames.begin());
+
+  for(auto cat: catNames) std::cout << cat << std::endl;
+
 
   for(auto sm_name: sm_list) {
     string inputFileName = cfg.getParameter(sm_name+"_path");
@@ -78,35 +93,42 @@ int main(int argc,char** argv) {
       
       fitter.Run();
     }
-    const std::vector<TString>* cats = Fitter::getCatNames();
-    catNames.resize(cats->size());
-    std::copy(cats->begin(),cats->end(),catNames.begin());
 
     combine.addSMHiggsFilePath(sm_name,outputFolder+"/"+sm_name+".root");
   }
 
   std::map<TString,float> sigEffs; 
-  if(!combineOnly) {
+  //if(!combineOnly) {
+  TFile SMTotFile( (outputFolder+"/SMTot.root").c_str(),"RECREATE");
     for(auto cat: catNames) {
-      TH1D SMTot("SMTot_mgg_hist","",3000,110,140);
+      TH1D SMTot("SMTot_"+cat+"_mgg_hist","",3000,110,140);
       for(auto sm_name: sm_list) {
 	TFile f((outputFolder+"/"+sm_name+".root").c_str());
 	SMTot.Add( (TH1D*)f.Get(cat+"_mgg_dist") );      
       }
       sigEffs[cat] = getSigEff(SMTot,125.);
-      cout << cat << "  " << sigEffs[cat] << std::endl;    
+      SMTot.Rebin(10);
+      std::pair<float,float> width = getFWHM(SMTot);
+      cout << cat << "  " << sigEffs[cat] << "  " << width.second-width.first << std::endl;    
+      SMTotFile.cd();
+      SMTot.Write();
     }
-  }
+    SMTotFile.Close();
+    //}
 
   std::string dataFileName = cfg.getParameter("data_path"); 
   if(!combineOnly) {
     DataFitter datafitter(dataFileName,outputFolder+"/data.root");
-    for(auto cat:catNames) datafitter.setSigEff(cat, sigEffs[cat]);
-
+    for(auto cat:catNames) {
+      if(bigSigReg) datafitter.setSigEff(cat, 2.0);
+      else datafitter.setSigEff(cat, sigEffs[cat]);
+    }
     datafitter.Run();
 
   }
-  combine.addDataFilePath(outputFolder+"/data.root");
+  if(sigInjName != "")   combine.addDataFilePath(outputFolder+"/"+sigInjName);
+  else combine.addDataFilePath(outputFolder+"/data.root");
+
   for(auto sms_name: sms_list) {
     std::string fileName = cfg.getParameter(sms_name+"_path");
     std::string normPath = cfg.getParameter("norm_"+sms_name);
@@ -125,6 +147,8 @@ int main(int argc,char** argv) {
 
   combine.setCatNames(&catNames);
   combine.setSysNames(Fitter::getSysNames());
+
+  combine.setUseVarBinning( a.longFlagPres("UseVariableBinning") );
 
   combine.Make();
   

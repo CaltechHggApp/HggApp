@@ -47,7 +47,7 @@ OUTLIB	         = ./lib/
 .PREFIXES: ./lib/
 
 .PHONY: all
-all: CreateWorkspace CreateFits CreatePlots CountEntries MakeSignalInjection runSusyHgg runSignalInjectionNew
+all: CreateWorkspace CreateFits CreatePlots CountEntries MakeSignalInjection runSusyHgg runSignalInjectionNew runSMSValidation
 
 .PHONY: clean
 clean: 
@@ -82,13 +82,20 @@ runSusyHgg:		$(SRCDIR)runSusyHgg.cpp\
 			$(OUTLIB)SMSFitterNew.o \
 			$(OUTLIB)FitterNew.o \
 			$(OUTLIB)CombinePrep.o \
-			$(OUTLIB)SusyHggTree.o
+			$(OUTLIB)SusyHggTreeBase.o
 	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $^	
 
 runSignalInjectionNew:	$(SRCDIR)runSignalInjectionNew.cpp \
 			$(OUTLIB)SignalInjectionNew.o \
 			$(OUTLIB)FitterNew.o \
-			$(OUTLIB)SusyHggTree.o
+			$(OUTLIB)SusyHggTreeBase.o
+	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $^	
+
+runSMSValidation:	$(SRCDIR)runSMSValidation.cpp \
+			$(OUTLIB)SMSValidation.o \
+			$(OUTLIB)SMSFitterNew.o \
+			$(OUTLIB)FitterNew.o \
+			$(OUTLIB)SusyHggTreeBase.o
 	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $^	
 
 $(OUTLIB)Fitter.o:		$(SRCDIR)Fitter.cpp
@@ -97,11 +104,11 @@ $(OUTLIB)Fitter.o:		$(SRCDIR)Fitter.cpp
 $(OUTLIB)Plotter.o:		$(SRCDIR)Plotter.cpp
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
 
-$(OUTLIB)SusyHggTree.o:		$(SRCDIR)SusyHggTree.cpp
+$(OUTLIB)SusyHggTreeBase.o:		$(SRCDIR)SusyHggTreeBase.cpp
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
 
 $(OUTLIB)FitterNew.o:		$(SRCDIR)FitterNew.cpp \
-				$(OUTLIB)SusyHggTree.o
+				$(OUTLIB)SusyHggTreeBase.o
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
 
 $(OUTLIB)DataFitterNew.o:	$(SRCDIR)DataFitterNew.cpp \

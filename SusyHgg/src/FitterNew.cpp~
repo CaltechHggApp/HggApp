@@ -5,8 +5,10 @@
 
 #define NUM_CPU 1
 
-const std::vector<TString> Fitter::catNames = { "HighPt","BTag","HighRes","LowRes"};
-const std::vector<TString> Fitter::systematicNames = {"jec","phoE","btag","sigE"}; 
+//const std::vector<TString> Fitter::catNames = { "HighPt","Hbb","Zbb","HighRes","LowRes"};
+//const std::vector<TString> Fitter::systematicNames = {"jec","phoE","btag","sigE"}; 
+const std::vector<TString> Fitter::catNames = { "Hbb"};
+const std::vector<TString> Fitter::systematicNames = {}; 
 
 
 Fitter::Fitter(TString inputFileName,TString outputFileName):SusyHggTree(inputFileName) {
@@ -14,10 +16,7 @@ Fitter::Fitter(TString inputFileName,TString outputFileName):SusyHggTree(inputFi
 
   buildHistograms();  
 
-  setSigEff("HighPt",3);
-  setSigEff("BTag",3);
-  setSigEff("HighRes",3);
-  setSigEff("LowRes",3);
+  for(auto cat: catNames)   setSigEff(cat,3);
 }
 
 Fitter::~Fitter() {
@@ -42,17 +41,22 @@ bool Fitter::passBasicSelection() {
   return true;
 }
 
-TString Fitter::getCategory(const TLorentzVector& pho1, const TLorentzVector&pho2,float se1, float se2,float btag) {
+TString Fitter::getCategory(const TLorentzVector& pho1, const TLorentzVector&pho2,float se1, float se2,float btag,float mbbH,float mbbZ) {
   float ptgg = (pho1+pho2).Pt();
+
+  return catNames[0];
 
   if(ptgg > 110) return catNames[0];
 
-  if(btag > 0.244) return catNames[1];
+  if( fabs(mbbH-125.) <15. ) return catNames[1];
+  if( fabs(mbbZ-91.) <15. ) return catNames[2];
+
+  //if(btag > 0.244) return catNames[1];
   
-  if(  se1 > ( fabs(pho1.Eta())>1.48 ? 0.024 : 0.015 ) ) return catNames[3]; //pho1 fails se/e cut
-  if(  se2 > ( fabs(pho2.Eta())>1.48 ? 0.024 : 0.015 ) ) return catNames[3]; //pho1 fails se/e cut
+  if(  se1 > ( fabs(pho1.Eta())>1.48 ? 0.024 : 0.015 ) ) return catNames[4]; //pho1 fails se/e cut
+  if(  se2 > ( fabs(pho2.Eta())>1.48 ? 0.024 : 0.015 ) ) return catNames[4]; //pho1 fails se/e cut
   
-  return catNames[2]; //high res category
+  return catNames[3]; //high res category
 }
 
 void Fitter::processEntry() {
@@ -67,7 +71,9 @@ void Fitter::processEntry() {
     float se2=pho2_sigEoE;
     
     float btag = highest_csv;
-    TString cat = getCategory(pho1,pho2,se1,se2,btag);
+    float mbbH = mbb_NearH;
+    float mbbZ = mbb_NearZ;
+    TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);    
     float sigRegWidth = 2*sigmaEffectives[cat];
 
     if(mgg > 125+isSMS- sigRegWidth && mgg < 125+isSMS + sigRegWidth) {
@@ -91,6 +97,8 @@ void Fitter::processEntry() {
       float se2=pho2_sigEoE;
       
       float btag = highest_csv;
+      float mbbH = mbb_NearH;
+      float mbbZ = mbb_NearZ;
  
       float thisMR = MR;
       float thisRsq = Rsq;
@@ -105,10 +113,15 @@ void Fitter::processEntry() {
 	if(dir=="Up") {
 	  pho1.SetPtEtaPhiM( pho1.Pt()*(1+err1), pho1.Eta(),pho1.Phi(),0);
 	  pho2.SetPtEtaPhiM( pho2.Pt()*(1+err2), pho2.Eta(),pho2.Phi(),0);
+	  se1*=1/(1+err1);
+	  se2*=1/(1+err2);
 	}else{
 	  pho1.SetPtEtaPhiM( pho1.Pt()*(1-err1), pho1.Eta(),pho1.Phi(),0);
 	  pho2.SetPtEtaPhiM( pho2.Pt()*(1-err2), pho2.Eta(),pho2.Phi(),0);	  
+	  se1*=1/(1-err1);
+	  se2*=1/(1-err2);
 	}
+
      
 	mass = (pho1+pho2).M();
       }
@@ -118,10 +131,14 @@ void Fitter::processEntry() {
 	  thisMR = MR_up;
 	  thisRsq = Rsq_up;
 	  btag = highest_csv_up; //on the off chance this changes the jet 
+	  mbbH = mbb_NearH_up;
+	  mbbZ = mbb_NearZ_up;
 	}else{
 	  thisMR = MR_down;
 	  thisRsq = Rsq_down;
 	  btag = highest_csv_down; //on the off chance this changes the jet 
+	  mbbH = mbb_NearH_down;
+	  mbbZ = mbb_NearZ_down;
 	}
       }
 
@@ -146,7 +163,7 @@ void Fitter::processEntry() {
       }
 
 
-      TString cat = getCategory(pho1,pho2,se1,se2,btag);
+      TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);
       float sigRegWidth = 2*sigmaEffectives[cat];
 
       if(mass > 125+isSMS- sigRegWidth && mass < 125+isSMS + sigRegWidth) {
@@ -171,7 +188,7 @@ float Fitter::getSysErrPho(float eta,float r9) {
 void Fitter::Run() {
   Long64_t iEntry=-1;
   while(fChain->GetEntry(++iEntry)) {
-    weight = pileupWeight * target_xsec*lumi*HggBR/N_total;
+    weight = pileupWeight * hggSigStrength*target_xsec*lumi*HggBR/N_total;
     processEntry();
   }
 

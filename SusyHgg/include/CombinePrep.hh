@@ -29,13 +29,16 @@ public:
   void addSMHiggsFilePath(TString name, TString path) { smHiggsFilePaths[name] = path; }
   void addSMSFilePath(TString name, TString path) { smsFilePaths[name] = path; }
   
-  void setOutputFolder(TString s){outputFolder=s;} //file make <outputFolder>/combine/ for txt files and root files
+  void setOutputFolder(TString s){outputFolder=s;} //file make <outputFolder>/<name of data file>/ for txt files and root files
 
-  static std::unique_ptr<TH1F> compressHistogram(const TH2F& input);
+  void setUseVarBinning(bool b=true){useVarBinning=b;}
+
+  static std::unique_ptr<TH1F> compressHistogram(const TH2F& input, bool varBinning=false,int minWidth=2,int minBin=2,std::vector<int> *xBinEdges=0);
 
   void setCatNames(const std::vector<TString>* names) { catNames = names; }
   void setSysNames(const std::vector<TString>* names) { sysNames = names; } 
 
+  static void defineBinning(const TH2F& hist, std::vector<int>& xBinEdges,int minWidth=2,int minBin=2,float targetYield=4.);
 
   void Make();
 
@@ -46,6 +49,9 @@ protected:
 
   TString outputFolder;
   
+  //if we do variable binning, use these parameters
+  bool useVarBinning=false;
+  std::map<TString,std::vector<int>> binningMap;
 
 
   std::unique_ptr<TFile> dataFile;
@@ -62,7 +68,6 @@ protected:
   std::map<TString,float> yields;
 
   TH1F* makeCategoryHistogram(TFile* file,TString histName, TString postfix,TString sms_pt="");
-
 };
 
 #endif

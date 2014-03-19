@@ -86,6 +86,8 @@ protected:
   float pho1_neutral;
   float pho1_photon;
   bool pho1_eleveto;
+
+  float pho1_energyGen;
   
   float pho2_pt;
   float pho2_eta;
@@ -105,6 +107,8 @@ protected:
   float pho2_neutral;
   float pho2_photon;
   bool pho2_eleveto;
+
+  float pho2_energyGen;
 
   int nJ;
   int nJ_up;

@@ -18,6 +18,8 @@ sets up the files and datacards for combine.  Works with the FitterNew classes.
 #include <memory>
 
 #include <iostream>
+#include <fstream>
+
 
 class CombinePrep {
 public:
@@ -27,13 +29,14 @@ public:
   void addSMHiggsFilePath(TString name, TString path) { smHiggsFilePaths[name] = path; }
   void addSMSFilePath(TString name, TString path) { smsFilePaths[name] = path; }
   
-  void setOutputFolder(TString s){outputFolder=s;} //file make <outputFolder>/combine/ for txt files and root files
+  void setOutputFolder(TString s){outputFolder=s;} //file make <outputFolder>/<name of data file>/ for txt files and root files
 
-  static std::unique_ptr<TH1F> compressHistogram(const TH2F& input);
+  static std::unique_ptr<TH1F> compressHistogram(const TH2F& input, bool varBinning=false,int minWidth=2,int minBin=2);
 
   void setCatNames(const std::vector<TString>* names) { catNames = names; }
   void setSysNames(const std::vector<TString>* names) { sysNames = names; } 
 
+  static void defineBinning(const TH2F& hist, std::vector<int>& xBinEdges,float targetYield=4.,int minWidth=2,int minBin=2);
 
   void Make();
 
@@ -43,6 +46,10 @@ protected:
   std::map<TString,TString> smsFilePaths; //map of SMS name --> filePath
 
   TString outputFolder;
+  
+  //if we do variable binning, use these parameters
+
+
 
   std::unique_ptr<TFile> dataFile;
   std::map<TString,std::unique_ptr<TFile>> smHiggsFiles;
@@ -53,9 +60,11 @@ protected:
 
   void openFiles(); //opens all the files set in the file paths
   void makeOnePoint(TString smsName,TString smsPoint); // make a single combine point for the given sms
+  void makeRootFile();
+
+  std::map<TString,float> yields;
 
   TH1F* makeCategoryHistogram(TFile* file,TString histName, TString postfix,TString sms_pt="");
-
 };
 
 #endif

@@ -1,14 +1,14 @@
-#define SusyHggTree_cxx
-#include "SusyHggTree.h"
+#define SusyHggTreeBase_cxx
+#include "SusyHggTreeBase.h"
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>
 
-void SusyHggTree::Loop()
+void SusyHggTreeBase::Loop()
 {
 //   In a ROOT session, you can do:
-//      Root > .L SusyHggTree.C
-//      Root > SusyHggTree t
+//      Root > .L SusyHggTreeBase.C
+//      Root > SusyHggTreeBase t
 //      Root > t.GetEntry(12); // Fill t data members with entry number 12
 //      Root > t.Show();       // Show values of entry 12
 //      Root > t.Show(16);     // Read and show values of entry 16

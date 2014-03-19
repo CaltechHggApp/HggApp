@@ -76,15 +76,22 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
   puWeight=pileupWeight;
   runNum  = runNumber;
 
-  if(isMC && smearer) { //smear the photons
     for(int i=0;i<nPho_;i++) {
-      auto photon = Photons_->at(i);
-      std::pair<float,float> dE = smearer->getDEoE(photon,0);
-      photon.dEoE = dE.first;
-      photon.dEoEErr = dE.second;
+      auto photon = &(Photons_->at(i));
+      if(isMC && smearer) { //smear the photons
+	photon->scaledEnergy = photon->correctedEnergy;
+	photon->scaledEnergyError = photon->correctedEnergyError;
+	std::pair<float,float> dE = smearer->getDEoE(*photon,0);
+	photon->dEoE = dE.first;
+	photon->dEoEErr = dE.second;
 
-      HggSelector::smearPhoton(&photon,0);
-    }
+	assert(photon!=0);
+	HggSelector::smearPhoton(photon,0);
+	//std::cout <<">>>> "<< photon->correctedEnergy << "  " << photon->finalEnergy << "  " << photon->correctedEnergyError << "  " << photon->finalEnergyError  << "  " << photon->dEoE << std::endl;
+      }else{
+	photon->finalEnergy = photon->correctedEnergy;
+	photon->finalEnergyError = photon->correctedEnergyError;
+      }
   }
 
   //identify the two highest pT photons
@@ -97,43 +104,44 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
     selected_photons[i]=0;
   }
   for(int iPho=0; iPho < nPho_;iPho++) {
-    auto photon1 = Photons_->at(iPho);
+    auto photon1 =&(Photons_->at(iPho));
+    //std::cout << photon1->correctedEnergy << "  " << photon1->finalEnergy << "  " << photon1->correctedEnergyError << "  " << photon1->finalEnergyError  << "  " << photon1->dEoE << std::endl;
     //veto photons outside acceptance
-    if(fabs(photon1.SC.eta) > max_pho_eta) continue;
-    if(fabs(photon1.SC.eta) > 1.4442 && fabs(photon1.SC.eta) < 1.566) continue; //gap photons
+    if(fabs(photon1->SC.eta) > max_pho_eta) continue;
+    if(fabs(photon1->SC.eta) > 1.4442 && fabs(photon1->SC.eta) < 1.566) continue; //gap photons
 
-    float pt1 = photon1.energy/cosh(photon1.eta);
+    float pt1 = photon1->energy/cosh(photon1->eta);
     if(!optimize) {
       if(pt1 < min_pho2_pt) continue; //not hard enough
-      if( !photonID.passID(photon1,StandardPhotonID::kLoose) ) continue; //no photon ID
+      if( !photonID.passID(*photon1,StandardPhotonID::kLoose) ) continue; //no photon ID
 
-      std::bitset<5> id_res = photonID.cutResults(photon1,StandardPhotonID::kLoose);
+      std::bitset<5> id_res = photonID.cutResults(*photon1,StandardPhotonID::kLoose);
       //if(id_res[3] || id_res[2]) continue; //fails the charged hadron or neutral hadron ID
       
       if(photonMatchedElectron[iPho]) continue; //conversion-safe electron veto
     }
     
-    TLorentzVector p4_pho1 = photon1.p4FromVtx(vtx,photon1.finalEnergy);
+    TLorentzVector p4_pho1 = photon1->p4FromVtx(vtx,photon1->finalEnergy);
 
     for(int jPho=iPho+1;jPho<nPho_;jPho++) {//second photon
-      auto photon2 = Photons_->at(jPho);
+      auto photon2 = &(Photons_->at(jPho));
       //veto photons outside acceptance
-      if(fabs(photon2.SC.eta) > max_pho_eta) continue;
-      if(fabs(photon2.SC.eta) > 1.4442 && fabs(photon1.SC.eta) < 1.566) continue; //gap photons
+      if(fabs(photon2->SC.eta) > max_pho_eta) continue;
+      if(fabs(photon2->SC.eta) > 1.4442 && fabs(photon1->SC.eta) < 1.566) continue; //gap photons
       
-      float pt2 = photon2.energy/cosh(photon2.eta);
+      float pt2 = photon2->energy/cosh(photon2->eta);
       if(!optimize) {
 	if(pt2 < min_pho2_pt) continue; //not hard enough
 	if(pt1 <min_pho1_pt && pt2 < min_pho1_pt) continue; //neither is hard enough
 
-	if( !photonID.passID(photon2,StandardPhotonID::kLoose) ) continue; //no photon ID	
+	if( !photonID.passID(*photon2,StandardPhotonID::kLoose) ) continue; //no photon ID	
 
-	std::bitset<5> id_res = photonID.cutResults(photon2,StandardPhotonID::kLoose);
+	std::bitset<5> id_res = photonID.cutResults(*photon2,StandardPhotonID::kLoose);
 	//if(id_res[3] || id_res[2]) continue; //fails the charged hadron or neutral hadron ID
 	
 	if(photonMatchedElectron[jPho]) continue; //conversion-safe electron veto
       }
-      TLorentzVector p4_pho2 = photon2.p4FromVtx(vtx,photon2.finalEnergy);
+      TLorentzVector p4_pho2 = photon2->p4FromVtx(vtx,photon2->finalEnergy);
       float M = (p4_pho1+p4_pho2).M();
       if( M > min_mgg && M < max_mgg && (p4_pho1.Pt() + p4_pho2.Pt()) > pho_sum_pt) {
 	selected_photons[0]=(pt1>pt2 ? iPho : jPho);
@@ -167,7 +175,7 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
   pho1_phi = pho1_p4.Phi();
   pho1_r9 = Photons_->at(selected_photons[0]).SC.r9;
   //if(isMC)pho1_seoe = Photons_->at(selected_photons[0]).correctedEnergyError/Photons_->at(selected_photons[0]).correctedEnergy;
-   pho1_seoe = Photons_->at(selected_photons[0]).finalEnergyError/Photons_->at(selected_photons[0]).finalEnergy;
+  pho1_seoe = Photons_->at(selected_photons[0]).finalEnergyError/Photons_->at(selected_photons[0]).finalEnergy;
 
   std::bitset<5> id_res_pho1 = photonID.cutResults(Photons_->at(selected_photons[0]),StandardPhotonID::kLoose);
 
@@ -183,6 +191,7 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
   pho1_eleveto = photonMatchedElectron[selected_photons[0]];
   pho1_genMatch = (Photons_->at(selected_photons[0]).genMatch.index!=-1);
 
+  pho1_energyGen = (pho1_genMatch ? Photons_->at(selected_photons[0]).genMatch.energy : -1);
 
   pho2_pt = pho2_p4.Pt();
   pho2_eta = pho2_p4.Eta();
@@ -203,6 +212,8 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
   pho2_photon  = Photons_->at(selected_photons[1]).dr03PhotonPFIso;
   pho2_eleveto = photonMatchedElectron[selected_photons[1]];
   pho2_genMatch = (Photons_->at(selected_photons[1]).genMatch.index!=-1);
+
+  pho2_energyGen = (pho2_genMatch ? Photons_->at(selected_photons[1]).genMatch.energy : -1);
 
   //clear the highest_csv info
   highest_csv = -1000;
@@ -431,6 +442,7 @@ void SusyHggSelector::setupOutputTree() {
   outTree->Branch("pho1_phi",&pho1_phi);
   outTree->Branch("pho1_r9",&pho1_r9);
   outTree->Branch("pho1_sigEoE",&pho1_seoe);
+  outTree->Branch("pho1_energyGen",&pho1_energyGen);
   outTree->Branch("pho1_genMatch",&pho1_genMatch,"pho1_genMatch/B");
 
   outTree->Branch("pho1_sieie",&pho1_sieie);
@@ -448,6 +460,7 @@ void SusyHggSelector::setupOutputTree() {
   outTree->Branch("pho2_phi",&pho2_phi);
   outTree->Branch("pho2_r9",&pho2_r9);
   outTree->Branch("pho2_sigEoE",&pho2_seoe);
+  outTree->Branch("pho2_energyGen",&pho2_energyGen);
   outTree->Branch("pho2_genMatch",&pho2_genMatch,"pho2_genMatch/B");
 
   outTree->Branch("pho2_sieie",&pho2_sieie);

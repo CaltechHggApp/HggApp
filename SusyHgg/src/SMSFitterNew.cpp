@@ -68,7 +68,7 @@ void SMSFitter::buildHistograms() {
 }
 
 void SMSFitter::processEntry() {
-  TString sms_pt = getSMSPoint();
+  TString sms_pt = getSMSPoint(m22,m23);
     { //nominal 
     TLorentzVector pho1;
     TLorentzVector pho2;
@@ -80,7 +80,10 @@ void SMSFitter::processEntry() {
     float se2=pho2_sigEoE;
     
     float btag = highest_csv;
-    TString cat = getCategory(pho1,pho2,se1,se2,btag);
+    float mbbH = mbb_NearH;
+    float mbbZ = mbb_NearZ;
+
+    TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);
     float sigRegWidth = 2*sigmaEffectives[cat];
 
     if(mgg > 125+isSMS- sigRegWidth && mgg < 125+isSMS + sigRegWidth) {
@@ -105,6 +108,8 @@ void SMSFitter::processEntry() {
       float se2=pho2_sigEoE;
       
       float btag = highest_csv;
+      float mbbH = mbb_NearH;
+      float mbbZ = mbb_NearZ;
  
       float thisMR = MR;
       float thisRsq = Rsq;
@@ -134,10 +139,14 @@ void SMSFitter::processEntry() {
 	  thisMR = MR_up;
 	  thisRsq = Rsq_up;
 	  btag = highest_csv_up; //on the off chance this changes the jet 
+	  mbbH = mbb_NearH_up;
+	  mbbZ = mbb_NearZ_up;
 	}else{
 	  thisMR = MR_down;
 	  thisRsq = Rsq_down;
 	  btag = highest_csv_down; //on the off chance this changes the jet 
+	  mbbH = mbb_NearH_down;
+	  mbbZ = mbb_NearZ_down;
 	}
       }
 
@@ -162,7 +171,7 @@ void SMSFitter::processEntry() {
       }
 
 
-      TString cat = getCategory(pho1,pho2,se1,se2,btag);
+      TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);
       float sigRegWidth = 2*sigmaEffectives[cat];
 
       if(mass > 125+isSMS- sigRegWidth && mass < 125+isSMS + sigRegWidth) {

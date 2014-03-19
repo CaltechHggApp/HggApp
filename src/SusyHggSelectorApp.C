@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
   if(a.longFlagPres("isMC")) sel.setIsMC();
   if(a.longFlagPres("SetSmearingCFG")) sel.setSmearingCFG(a.getLongFlag("SetSmearingCFG"));
 
-  //sel.addTrigger("HLT_Photon26_R9Id85_OR_CaloId10_Iso50_Photon18_R9Id85_OR_CaloId10_Iso50_Mass60_v4");
+  //sel.addTrigger("HLT_Photon26_CaloId10_Iso50_Photon18_CaloId10_Iso50_Mass60_v4");
   sel.Loop();
   
   cout << "DONE" <<endl;

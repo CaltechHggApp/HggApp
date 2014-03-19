@@ -60,8 +60,6 @@ all: 	lib \
 	$(MAKETARGET)SusyHggSelectorApp \
 	$(MAKETARGET)MuMuGammaSelectorApp
 
-tmp: $(TMPDIR)SusyHggSelectorApp $(TMPDIR)HggApp
-
 lib: 	$(OUTLIBCOMMON)Conditions.o \
 	$(OUTLIBCOMMON)Selection.o \
 	$(OUTLIBCOMMON)Counters.o \
@@ -92,30 +90,6 @@ lib: 	$(OUTLIBCOMMON)Conditions.o \
 
 # analysis functions
 $(MAKETARGET)HggApp: $(SRCDIR)HggApp.C \
-	$(OUTLIBCOMMON)Conditions.o \
-	$(OUTLIBCOMMON)Selection.o \
-	$(OUTLIBCOMMON)Counters.o \
-	$(OUTLIBCOMMON)TriggerMask.o \
-	$(OUTLIBCOMMON)Utils.o \
-	$(OUTLIBCOMMON)Skimmer.o \
-	$(OUTLIBEGAMMA)ElectronTrackerIsolation.o \
-	$(OUTLIBEGAMMA)ElectronCaloIsolation.o \
-	$(OUTLIBEGAMMA)ElectronBestCandidateSelector.o \
-	$(OUTLIBEGAMMA)LikelihoodPdf.o \
-	$(OUTLIBEGAMMA)LikelihoodSpecies.o \
-	$(OUTLIBEGAMMA)LikelihoodPdfProduct.o \
-	$(OUTLIBEGAMMA)ElectronLikelihood.o \
-	$(OUTLIBCOMMON)EfficiencyEvaluator.o \
-	$(OUTLIB)VecbosEGObject.o \
-	$(OUTLIB)HggEnergyScale.o \
-	$(OUTLIB)HggReducer.o \
-#	$(OUTLIB)HggMakePhotonTree.o \
-	$(OUTLIB)GBRTree.o \
-	$(OUTLIB)GBRForest.o \
-	$(OUTLIB)ArgParser.o
-	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
-
-$(TMPDIR)HggApp: $(SRCDIR)HggApp.C \
 	$(OUTLIBCOMMON)Conditions.o \
 	$(OUTLIBCOMMON)Selection.o \
 	$(OUTLIBCOMMON)Counters.o \
@@ -184,28 +158,6 @@ $(MAKETARGET)SusyHggSelectorApp: $(SRCDIR)SusyHggSelectorApp.C \
 	$(OUTLIB)BaseSelector.o \
 	$(OUTLIB)SusyHggSelector.o \
 	$(OUTLIB)JECUReader.o \
-	$(OUTLIB)ArgParser.o
-	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
-
-$(TMPDIR)SusyHggSelectorApp: $(SRCDIR)SusyHggSelectorApp.C \
-	$(OUTLIBCOMMON)Conditions.o \
-	$(OUTLIBCOMMON)Selection.o \
-	$(OUTLIBCOMMON)Counters.o \
-	$(OUTLIBCOMMON)TriggerMask.o \
-	$(OUTLIBCOMMON)Utils.o \
-	$(OUTLIBCOMMON)Skimmer.o \
-	$(OUTLIBEGAMMA)ElectronTrackerIsolation.o \
-	$(OUTLIBEGAMMA)ElectronCaloIsolation.o \
-	$(OUTLIBEGAMMA)ElectronBestCandidateSelector.o \
-	$(OUTLIBEGAMMA)LikelihoodPdf.o \
-	$(OUTLIBEGAMMA)LikelihoodSpecies.o \
-	$(OUTLIBEGAMMA)LikelihoodPdfProduct.o \
-	$(OUTLIBEGAMMA)ElectronLikelihood.o \
-	$(OUTLIBCOMMON)EfficiencyEvaluator.o \
-	$(OUTLIB)VecbosEGObject.o \
-	$(OUTLIB)HggMCWeight.o \
-	$(OUTLIB)BaseSelector.o \
-	$(OUTLIB)SusyHggSelector.o \
 	$(OUTLIB)ArgParser.o
 	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
@@ -543,8 +495,8 @@ clean:
 	rm -f HggSelectorApp
 	rm -f SusyHggSelectorApp
 
-execlean:
-	rm -f VecbosApp
-	rm -f HggApp
-	rm -f HggSelectorApp	
-	rm -f SusyHggSelectorApp
+#execlean:
+#	rm -f $(MAKETARGET)VecbosApp
+#	rm -f $(MAKETARGET)HggApp
+#	rm -f $(MAKETARGET)HggSelectorApp	
+#	rm -f $(MAKETARGET)SusyHggSelectorApp

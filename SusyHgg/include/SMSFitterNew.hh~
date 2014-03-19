@@ -14,7 +14,7 @@ public:
   
   virtual void Run();
 
-
+  static void getSMSPoints(std::vector<TString>* pts);
 
 private:
   virtual void buildHistograms() override;

@@ -1,9 +1,11 @@
 
 #include "TH1D.h"
 
-float getSigEff(const TH1D& hist, float mean) { //compute the sigma effective about the mean
+float getSigEff(const TH1D& hist, float mean=-999) { //compute the sigma effective about the mean
 
   float integral = hist.Integral();
+
+  if(mean==-999) mean = hist.GetMean();
 
   int center_bin = hist.FindFixBin(mean);
 
@@ -14,6 +16,36 @@ float getSigEff(const TH1D& hist, float mean) { //compute the sigma effective ab
   while(hist.Integral(center_bin-N_bin,center_bin+N_bin)/integral < target) N_bin++;
 
   return (N_bin-1)*hist.GetBinWidth(center_bin);
+}
+
+std::pair<float,float> getFWHM(const TH1D& hist, float mean=-999) {
+  if(mean==-999) mean = hist.GetMean();
+
+  int maxBin = hist.GetMaximumBin();
+  float center = hist.GetBinCenter(maxBin);
+  float maxVal = hist.GetBinContent(maxBin);
+  std::pair<float,float> results;
+  
+  //get the low side half max
+  for(int iBin=maxBin-1; iBin>1;iBin--) {
+    float av = (hist.GetBinContent(iBin+1)+hist.GetBinContent(iBin)+hist.GetBinContent(iBin-1))/3.;
+    if(av < maxVal/2.) {
+      results.first = hist.GetBinCenter(iBin);
+      break;
+    }            
+  }
+
+  //get the high side half max
+  for(int iBin=maxBin+1; iBin<hist.GetNbinsX();iBin++) {
+    float av = (hist.GetBinContent(iBin+1)+hist.GetBinContent(iBin)+hist.GetBinContent(iBin-1))/3.;
+
+    if(av < maxVal/2.) {
+      results.second = hist.GetBinCenter(iBin);
+      break;
+    }            
+  }
+
+  return results;
 }
 
 

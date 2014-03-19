@@ -9,6 +9,7 @@ perform a set of validation exercises on the SMSs for FastSIM versus FullSIM
 
 #include "TString.h"
 #include "FitterNew.hpp"
+#include "SMSFitterNew.hh"
 #include "TH1.h"
 #include "SusyHggTree.h"
 
@@ -30,7 +31,7 @@ protected:
   virtual void processEntry();
 
   const std::vector<TString>* catNames = Fitter::getCatNames();
-  
+  std::vector<TString> smsPoints;
 };
 
 #endif

@@ -68,7 +68,7 @@ void SMSFitter::buildHistograms() {
 }
 
 void SMSFitter::processEntry() {
-  TString sms_pt = getSMSPoint();
+  TString sms_pt = getSMSPoint(m22,m23);
     { //nominal 
     TLorentzVector pho1;
     TLorentzVector pho2;
@@ -80,7 +80,10 @@ void SMSFitter::processEntry() {
     float se2=pho2_sigEoE;
     
     float btag = highest_csv;
-    TString cat = getCategory(pho1,pho2,se1,se2,btag);
+    float mbbH = mbb_NearH;
+    float mbbZ = mbb_NearZ;
+
+    TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);
     float sigRegWidth = 2*sigmaEffectives[cat];
 
     if(mgg > 125+isSMS- sigRegWidth && mgg < 125+isSMS + sigRegWidth) {
@@ -117,9 +120,13 @@ void SMSFitter::processEntry() {
 	if(dir=="Up") {
 	  pho1.SetPtEtaPhiM( pho1.Pt()*(1+err1), pho1.Eta(),pho1.Phi(),0);
 	  pho2.SetPtEtaPhiM( pho2.Pt()*(1+err2), pho2.Eta(),pho2.Phi(),0);
+	  se1*=1/(1+err1);
+	  se2*=1/(1+err2);
 	}else{
 	  pho1.SetPtEtaPhiM( pho1.Pt()*(1-err1), pho1.Eta(),pho1.Phi(),0);
 	  pho2.SetPtEtaPhiM( pho2.Pt()*(1-err2), pho2.Eta(),pho2.Phi(),0);	  
+	  se1*=1/(1-err1);
+	  se2*=1/(1-err2);
 	}
      
 	mass = (pho1+pho2).M();
@@ -130,10 +137,14 @@ void SMSFitter::processEntry() {
 	  thisMR = MR_up;
 	  thisRsq = Rsq_up;
 	  btag = highest_csv_up; //on the off chance this changes the jet 
+	  mbbH = mbb_NearH_up;
+	  mbbZ = mbb_NearZ_up;
 	}else{
 	  thisMR = MR_down;
 	  thisRsq = Rsq_down;
 	  btag = highest_csv_down; //on the off chance this changes the jet 
+	  mbbH = mbb_NearH_down;
+	  mbbZ = mbb_NearZ_down;
 	}
       }
 
@@ -158,7 +169,7 @@ void SMSFitter::processEntry() {
       }
 
 
-      TString cat = getCategory(pho1,pho2,se1,se2,btag);
+      TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);
       float sigRegWidth = 2*sigmaEffectives[cat];
 
       if(mass > 125+isSMS- sigRegWidth && mass < 125+isSMS + sigRegWidth) {
@@ -169,10 +180,10 @@ void SMSFitter::processEntry() {
 }
 
 
-TString SMSFitter::getSMSPoint() {
+TString SMSFitter::getSMSPoint(float M22,float M23) {
 
-  int m_lsp = round(m22/25.)*25;
-  int m_half = round(m23/25.)*25;
+  int m_lsp = round(M22/25.)*25;
+  int m_half = round(M23/25.)*25;
   
   return Form("%d_%d",m_lsp,m_half);
 }

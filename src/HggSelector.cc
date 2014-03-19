@@ -452,6 +452,7 @@ std::pair<int,int> HggSelector::getBestPair(float* mvaOut, int smearShift,int sc
 
 void HggSelector::smearPhoton(VecbosPho* pho,int smearShift){
   TRandom3 rng(0);
+  assert(pho!=0);
   float smear = pho->dEoE + smearShift*pho->dEoEErr;
   if(smear < 0) smear = 0;
   if(smearShift<-100) smear = 0;

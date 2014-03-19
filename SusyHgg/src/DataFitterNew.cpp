@@ -88,12 +88,13 @@ void DataFitter::buildSidebandHistograms() {
       
       float btag = highest_csv;
 
-      if( getCategory(pho1,pho2,se1,se2,btag) == cat ) {
+      if( getCategory(pho1,pho2,se1,se2,btag,mbb_NearH,mbb_NearZ) == cat ) {
 	m=mgg;
 	massTree.Fill();
       }
     }
     
+    std::cout << cat << std::endl;
     RooWorkspace *ws = new RooWorkspace(cat+"_mgg_workspace","");
     scales[cat] = doFitGetScale(&massTree,sigmaEffectives[cat],ws);
     mggFitWorkspaces.push_back(ws);
@@ -138,7 +139,7 @@ void DataFitter::processEntrySidebands() {
     float se2=pho2_sigEoE;
     
     float btag = highest_csv;
-    TString cat = getCategory(pho1,pho2,se1,se2,btag);
+    TString cat = getCategory(pho1,pho2,se1,se2,btag,mbb_NearH,mbb_NearZ);
     float sigRegWidth = 2*sigmaEffectives[cat];
 
     if((mgg>110 && mgg<120) || (mgg>130 && mgg<140)){
