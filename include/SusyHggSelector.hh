@@ -23,6 +23,8 @@ public:
   void setIsMC(){isMC=true;}
 
   void setSmearingCFG(std::string smearCFG);
+
+  void setIsDY(bool b = true){ isDY=b;}
 protected:
 
   StandardPhotonID photonID;
@@ -46,6 +48,7 @@ protected:
 
   bool optimize=false; //setting this flag will reduce selection cuts and output more info
   bool isMC=false;
+  bool isDY=false; // is a Z->ll sample
 
   //selection cuts
   float min_pho1_pt=32.;

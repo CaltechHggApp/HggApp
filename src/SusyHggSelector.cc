@@ -28,7 +28,11 @@ int SusyHggSelector::init() {
     jecReader.setCorrections("/home/amott/HggApp/JEC/Summer13_V5_Uncertainties/Summer13_V5_DATA_Uncertainty_AK5PFchs.txt");
   }
   assert(jecReader.isValid());
-return 0;
+
+  if(isDY) {
+    min_mgg = 70;
+  }
+  return 0;
 }
 
 void SusyHggSelector::clear() {
@@ -118,7 +122,7 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
       std::bitset<5> id_res = photonID.cutResults(*photon1,StandardPhotonID::kLoose);
       //if(id_res[3] || id_res[2]) continue; //fails the charged hadron or neutral hadron ID
       
-      if(photonMatchedElectron[iPho]) continue; //conversion-safe electron veto
+      if(!isDY && photonMatchedElectron[iPho]) continue; //conversion-safe electron veto
     }
     
     TLorentzVector p4_pho1 = photon1->p4FromVtx(vtx,photon1->finalEnergy);
