@@ -583,8 +583,8 @@ void VecbosEle::doGenMatch(VecbosBase* o){
   float dEoEBest = 9999;
   int indexGen = -1;
   for(int i=0;i<o->nMc;i++){  
-    if(!o->statusMc[i]==1) continue; //require status 1 particles
-    if(!abs(o->idMc[i]) == eleID) continue; //gen photon
+    if(!(o->statusMc[i]==1)) continue; //require status 1 particles
+    if(!(abs(o->idMc[i]) == eleID)) continue; //gen photon
     if(o->energyMc[i] < 1.) continue;
     if(DeltaR(SC.eta,o->etaMc[i],SC.phi,o->phiMc[i]) > maxDR) continue;
     float dEoE = fabs(energy-o->energyMc[i])/o->energyMc[i];
