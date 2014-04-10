@@ -108,7 +108,7 @@ void MakeRegressionInputTree::processEntry(Long64_t iEntry) {
 void MakeRegressionInputTree::clear() {}
 
 void MakeRegressionInputTree::setupOutputTree() {
-  outTree = new TTree("RegressionIputTree","");
+  outTree = new TTree("RegressionInputTree","");
 
   outTree->Branch("se",&se);
   outTree->Branch("etaSC",&etaSC);
