@@ -16,11 +16,18 @@ public:
 
   static void getSMSPoints(std::vector<TString>* pts);
 
+  static TString getSMSPoint(float M22,float M23);
+
+  vood setIsFulLSIM(bool b=true){isFullSIM=b;}
+  
 private:
   virtual void buildHistograms() override;
   virtual void processEntry() override;
 
-  TString getSMSPoint();
+  void scalePhotons();
+  float getPhotonScale(float eta,float r9);
+
+  bool isFullSIM=false; //using FullSIM SMS point
 
   TFile* nEntriesFile=0;
   TH2F* nEntriesHist=0;

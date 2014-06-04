@@ -32,6 +32,7 @@ void CombinePrep::Make(){
     makeOnePoint("sms_ChiWH",pt);
     makeOnePoint("sms_ChiZH",pt);
     makeOnePoint("sms_ChiHH",pt);
+    makeOnePoint("sms_ChiHH_FSIMSmear",pt);
   }
 }
 
@@ -75,6 +76,12 @@ void CombinePrep::makeOnePoint(TString smsName, TString smsPoint) {
   dataCardFile << "lumi\tlnN\t\t\t1.025\t\t-";
   for(int i=0;i<smHiggsFiles.size();i++) dataCardFile << "\t\t1.025";
   dataCardFile << "\n";
+
+  //trigger
+  dataCardFile << "lumi\tlnN\t\t\t"<< triggerEffErr+1 <<"\t\t-";
+  for(int i=0;i<smHiggsFiles.size();i++) dataCardFile << "\t\t" << triggerEffErr+1;
+  dataCardFile << "\n";
+  
 
   //Higgs Norm Uncertainty
   dataCardFile << "HiggsScale\tlnN\t\t\t-\t\t-";
@@ -160,7 +167,7 @@ void CombinePrep::makeRootFile() {
       binningMap.insert( std::pair<TString,std::vector<int>>(cat,{}) ); //setup the binning map
       TH2F* totalBkg = (TH2F*)dataFile->Get("data_"+cat+"_SidebandRegion")->Clone("tmp");
       for(auto h = smHiggsFiles.begin(); h!=smHiggsFiles.end(); h++) {
-	//totalBkg->Add( (TH2F*)h->second->Get("data_"+cat+"_SignalRegion") );
+	totalBkg->Add( (TH2F*)h->second->Get("data_"+cat+"_SignalRegion") );
       }
       defineBinning(*totalBkg, binningMap[cat],1,1,1.);
       delete totalBkg;
@@ -187,6 +194,9 @@ void CombinePrep::makeRootFile() {
   std::cout << "Adding SM Higgs" << std::endl;
   for(auto sm = smHiggsFiles.begin(); sm !=smHiggsFiles.end(); sm++) {
     TH1F* h = makeCategoryHistogram(sm->second.get(),sm->first,"SignalRegion");
+    // trigger efficiency
+    h->Scale(triggerEff);
+
     yields[sm->first] = h->Integral();
     h->Write();
     std::cout << sm->first << std::endl;
@@ -203,6 +213,8 @@ void CombinePrep::makeRootFile() {
   for(auto sms = smsFiles.begin(); sms !=smsFiles.end(); sms++) {
     for(auto pt : sms_points) {
       TH1F* h = makeCategoryHistogram(sms->second.get(),sms->first+"_"+pt,"SignalRegion",pt);
+      // trigger efficiency
+      h->Scale(triggerEff);
       yields[sms->first+"_"+pt] = h->Integral();
       h->Write();
       for(auto sys: *sysNames) {

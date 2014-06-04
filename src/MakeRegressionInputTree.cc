@@ -42,6 +42,8 @@ int MakeRegressionInputTree::init() {
 
 void MakeRegressionInputTree::processEntry(Long64_t iEntry) {
   pu=inPU;
+  numVtx = nVtx;
+  jetRho = rho;
 
   float pass_pt[2]={-1,-1}; //store the pts of the passing photons
   int   pass_index[2]={-1,-1};
@@ -155,4 +157,7 @@ void MakeRegressionInputTree::setupOutputTree() {
   
   outTree->Branch("electronMatch",&electronMatch);
   outTree->Branch("nPU",&pu,"nPU/I");
+  outTree->Branch("nVtx",&numVtx,"nVtx/I");
+  outTree->Branch("rho",&jetRho,"rho/F");
+
 }

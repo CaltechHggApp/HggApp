@@ -38,6 +38,7 @@ void Fitter::buildHistograms() {
 
 bool Fitter::passBasicSelection() {
   if(!pho1_pass_iso || !pho2_pass_iso) return false;
+  //if( fabs(pho1_eta)>1.442 || fabs(pho2_eta)>1.442) return false;
   return true;
 }
 
@@ -52,11 +53,13 @@ TString Fitter::getCategory(const TLorentzVector& pho1, const TLorentzVector&pho
   if( fabs(mbbZ-91.) <15. ) return catNames[2];
 
   //if(btag > 0.244) return catNames[1];
-  
+
   if(  se1 > ( fabs(pho1.Eta())>1.48 ? 0.024 : 0.015 ) ) return catNames[4]; //pho1 fails se/e cut
   if(  se2 > ( fabs(pho2.Eta())>1.48 ? 0.024 : 0.015 ) ) return catNames[4]; //pho1 fails se/e cut
-  
+
   return catNames[3]; //high res category
+
+
 }
 
 void Fitter::processEntry() {
@@ -74,9 +77,9 @@ void Fitter::processEntry() {
     float mbbH = mbb_NearH;
     float mbbZ = mbb_NearZ;
     TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);    
-    float sigRegWidth = 2*sigmaEffectives[cat];
+    float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
 
-    if(mgg > 125+isSMS- sigRegWidth && mgg < 125+isSMS + sigRegWidth) {
+    if(mgg > 125- sigRegWidth && mgg < 126 + sigRegWidth) {
       SignalRegionHistograms[cat]->Fill(MR,Rsq,weight);
       SignalRegionHistogramsFineBin[cat]->Fill(MR,Rsq,weight);
     }
@@ -164,9 +167,9 @@ void Fitter::processEntry() {
 
 
       TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);
-      float sigRegWidth = 2*sigmaEffectives[cat];
+      float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
 
-      if(mass > 125+isSMS- sigRegWidth && mass < 125+isSMS + sigRegWidth) {
+      if(mass > 125- sigRegWidth && mass < 126 + sigRegWidth) {
 	SignalRegionHistograms[ cat+"_"+sys+"_"+dir ]->Fill(thisMR,thisRsq,weight);	
       }
     }
@@ -189,6 +192,7 @@ void Fitter::Run() {
   Long64_t iEntry=-1;
   while(fChain->GetEntry(++iEntry)) {
     weight = pileupWeight * hggSigStrength*target_xsec*lumi*HggBR/N_total;
+    if(!passBasicSelection()) continue;
     processEntry();
   }
 

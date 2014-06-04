@@ -6,6 +6,7 @@
 #include "TFile.h"
 #include "TChain.h"
 #include "TH2F.h"
+#include "TTreeFormula.h"
 
 #include "../include/ArgParser.hh"
 
@@ -22,7 +23,8 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  TChain c("ntp1","ntp1");
+  std::string name = "ntp1";
+  TChain c(name.c_str(),name.c_str());
 
   std::string input = a.getArgument("InputList");
   std::string output = a.getArgument("OutputFileName");
@@ -37,15 +39,14 @@ int main(int argc, char** argv) {
   int nMc;
   float eMc[200],pMc[200];
   int idMc[200],statusMc[200];
+    c.SetBranchAddress("nMc",&nMc);
+    c.SetBranchAddress("energyMc",eMc);
+    c.SetBranchAddress("pMc",pMc);
+    c.SetBranchAddress("idMc",idMc);
+    c.SetBranchAddress("statusMc",statusMc);
 
-  c.SetBranchAddress("nMc",&nMc);
-  c.SetBranchAddress("energyMc",eMc);
-  c.SetBranchAddress("pMc",pMc);
-  c.SetBranchAddress("idMc",idMc);
-  c.SetBranchAddress("statusMc",statusMc);
-
-  c.SetBranchStatus("*",0);
-  c.SetBranchStatus("*Mc",1);
+    c.SetBranchStatus("*",0);
+    c.SetBranchStatus("*Mc",1);
 
 
   TFile outputFile(output.c_str(),"RECREATE");

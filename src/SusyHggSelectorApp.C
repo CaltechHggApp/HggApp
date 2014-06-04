@@ -39,6 +39,7 @@ int main(int argc, char* argv[]) {
   a.addArgument("OutputFile",ArgParser::required, "the name of the file to write the output to");
   a.addLongOption("Optimize",ArgParser::noArg,"make optimization trees");
   a.addLongOption("isMC",ArgParser::noArg,"set is MC");
+  a.addLongOption("isDY",ArgParser::noArg,"set is DY");
   a.addLongOption("SetSmearingCFG",ArgParser::reqArg,"smear the photons from this smearing CFG");
 
   string ret;
@@ -82,6 +83,7 @@ int main(int argc, char* argv[]) {
   sel.setConfig("hgg2013/dummy.cfg");
   if(a.longFlagPres("Optimize")) sel.setOptimize();
   if(a.longFlagPres("isMC")) sel.setIsMC();
+  if(a.longFlagPres("isDY")) sel.setIsDY();
   if(a.longFlagPres("SetSmearingCFG")) sel.setSmearingCFG(a.getLongFlag("SetSmearingCFG"));
 
   //sel.addTrigger("HLT_Photon26_CaloId10_Iso50_Photon18_CaloId10_Iso50_Mass60_v4");

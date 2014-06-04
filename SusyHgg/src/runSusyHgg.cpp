@@ -38,6 +38,7 @@ int main(int argc,char** argv) {
   a.addLongOption("CombineOnly",ArgParser::noArg,"run combine maker only");
   a.addLongOption("SigInjName",ArgParser::reqArg,"if CombineOnly is set, use a custom signal injection file specified as the 'data'.");
   a.addLongOption("BigSignalRegion",ArgParser::noArg,"Use a large signal region [121,129] in each category");
+  a.addLongOption("nSigEffs",ArgParser::reqArg,"# of signma effectives for the signal region in each box");
   a.addLongOption("UseVariableBinning",ArgParser::noArg,"use different binning in each box depending on statistics");
 
   string ret;
@@ -56,6 +57,9 @@ int main(int argc,char** argv) {
   if(combineOnly && a.longFlagPres("SigInjName")) sigInjName = a.getLongFlag("SigInjName");
 
   bool bigSigReg = a.longFlagPres("BigSignalRegion");
+
+  float nSigEffs=2;
+  if(a.longFlagPres("nSigEffs")) nSigEffs = atof( a.getLongFlag("nSigEffs").c_str() );
 
   cout << "Trying to make folder: " << outputFolder << "  " << mkdir(outputFolder.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) << std::endl;
 
@@ -90,7 +94,8 @@ int main(int argc,char** argv) {
       fitter.setXSec( atof(strXSec.c_str()) );
       fitter.setNTotal( atoi(strN.c_str()) );
       fitter.setLumi( lumi );
-      
+      fitter.setNSigEffs(nSigEffs);
+
       fitter.Run();
     }
 
@@ -116,13 +121,20 @@ int main(int argc,char** argv) {
     SMTotFile.Close();
     //}
 
+    //override widths for Hbb and Zbb categories
+    sigEffs["Hbb"] = 2.;
+    sigEffs["Zbb"] = 2.;
+    
+      
+
   std::string dataFileName = cfg.getParameter("data_path"); 
   if(!combineOnly) {
     DataFitter datafitter(dataFileName,outputFolder+"/data.root");
     for(auto cat:catNames) {
-      if(bigSigReg) datafitter.setSigEff(cat, 2.0);
+      if(bigSigReg) datafitter.setSigEff(cat, 2.5);
       else datafitter.setSigEff(cat, sigEffs[cat]);
     }
+    datafitter.setNSigEffs(nSigEffs);
     datafitter.Run();
 
   }
@@ -138,7 +150,8 @@ int main(int argc,char** argv) {
       smsFitter.setXSec( 1 );
       smsFitter.setLumi( lumi );
       smsFitter.setNEntriesFile( normPath );
-      
+      smsFitter.setNSigEffs(nSigEffs);
+
       smsFitter.Run();
     }
     combine.addSMSFilePath(sms_name,outputFolder+"/"+sms_name+".root");

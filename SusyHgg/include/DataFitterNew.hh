@@ -11,7 +11,7 @@ public:
     isSMS=false;
   }
 
-  static RealVar doFitGetScale(TTree *data,float sigEff,RooWorkspace* ws=0); //!< for real data, do the background fit and use that to compute the sideband->signal scale factor
+  static RealVar doFitGetScale(TTree *data,float width,RooWorkspace* ws=0,bool dExp=true); //!< for real data, do the background fit and use that to compute the sideband->signal scale factor
 
   virtual void Run();
 

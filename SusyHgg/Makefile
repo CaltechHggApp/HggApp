@@ -3,7 +3,7 @@ ROOTLIBS      = $(shell $(ROOTSYS)/bin/root-config --libs) -lMLP -lXMLIO -lTMVA
 #ROOTGLIBS     = $(shell $(ROOTSYS)/bin/root-config --glibs) -L TMVA/lib
 ROOTGLIBS     = $(shell $(ROOTSYS)/bin/root-config --glibs) -lTMVA -lMLP -lXMLIO
 
-ROOFITLIBS    = -L$(ROOFITSYS)/lib -lRooFitCore -lRooFit -lRooStats -lMinuit -lFoam
+ROOFITLIBS    = -L$(ROOFITSYS)/lib -lRooFitCore -lRooFit -lRooStats
 
 CXX           = g++ -m64
 CXXFLAGS      = -g -fPIC -Wno-deprecated -O -ansi -D_GNU_SOURCE -g -O2 -Xlinker -zmuldefs -Wall -Wno-error=unused-variable -Wno-error=sign-compare -Wno-error=unused-value -Wno-error=unused-but-set-variable -fopenmp -std=gnu++0x
@@ -129,3 +129,16 @@ $(OUTLIB)SignalInjectionNew.o:	$(SRCDIR)SignalInjectionNew.cpp \
 $(OUTLIB)SMSValidation.o:	$(SRCDIR)SMSValidation.cpp \
 				$(OUTLIB)FitterNew.o
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
+MyDict.cxx: LinkDef.h
+	rootcint -f $@ -c -I$(INCLUDEDIR) -I$(INCLUDEDIRROOFIT) -p $(INCLUDEDIR)RooParameterizedPdf.hh LinkDef.h
+
+#$(OUTLIB)libRooParameterizedPdf.so:	MyDict.cxx
+#	g++ -shared -o$@ `root-config --ldflags` $(CXXFLAGS) -I$(ROOTSYS)/include $^
+
+$(OUTLIB)MyDict.o: MyDict.cxx
+	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
+$(OUTLIB)RooParameterizedPdf.so:	$(SRCDIR)RooParameterizedPdf.cc \
+				$(OUTLIB)MyDict.o
+	$(CXX) $(ROOFITLIBS) -shared $(CXXFLAGS) -I$(INCLUDEDIR) -o $@ $(GLIBS) $^

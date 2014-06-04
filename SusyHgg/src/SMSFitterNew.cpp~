@@ -17,6 +17,8 @@ void SMSFitter::Run() {
     int N_pt = nEntriesHist->GetBinContent( nEntriesHist->FindFixBin(m23,m22) );
     assert(N_pt!=0);
     weight = pileupWeight * target_xsec*lumi*HggBR/N_pt;
+    if(!passBasicSelection()) continue;
+    if(!isFullSIM) scalePhotons();
     processEntry();
   }
 
@@ -27,11 +29,19 @@ void SMSFitter::Run() {
 }
 
 void SMSFitter::getSMSPoints(std::vector<TString>* pts) {
+#if 0
     for(int m_h=125;m_h<501;m_h+=25) {
       for(int m_l=0;m_l<m_h-124;m_l+=25){
 	pts->push_back(Form("%d_%d",m_l,m_h));
       }         
     }
+#endif
+    for(int m_h=125;m_h<276;m_h+=25) {
+      for(int m_l=0;m_l<1;m_l+=25){
+	pts->push_back(Form("%d_%d",m_l,m_h));
+      }         
+    }
+
 }
 
 
@@ -86,7 +96,7 @@ void SMSFitter::processEntry() {
     TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);
     float sigRegWidth = 2*sigmaEffectives[cat];
 
-    if(mgg > 125+isSMS- sigRegWidth && mgg < 125+isSMS + sigRegWidth) {
+    if(mgg > 125 - sigRegWidth && mgg < 126 + sigRegWidth) {
       //std::cout << sms_pt << std::endl;
       SignalRegionHistograms[sms_pt+"_"+cat]->Fill(MR,Rsq,weight);
       SignalRegionHistogramsFineBin[sms_pt+"_"+cat]->Fill(MR,Rsq,weight);
@@ -108,6 +118,8 @@ void SMSFitter::processEntry() {
       float se2=pho2_sigEoE;
       
       float btag = highest_csv;
+      float mbbH = mbb_NearH;
+      float mbbZ = mbb_NearZ;
  
       float thisMR = MR;
       float thisRsq = Rsq;
@@ -172,11 +184,32 @@ void SMSFitter::processEntry() {
       TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);
       float sigRegWidth = 2*sigmaEffectives[cat];
 
-      if(mass > 125+isSMS- sigRegWidth && mass < 125+isSMS + sigRegWidth) {
+      if(mass > 125- sigRegWidth && mass < 126 + sigRegWidth) {
 	SignalRegionHistograms[ sms_pt+"_"+cat+"_"+sys+"_"+dir ]->Fill(thisMR,thisRsq,weight);	
       }
     }
   }
+}
+
+void SMSFitter::scalePhotons() { //observe an energy shift in the endcap photons -->rescale them
+  float p1_scale = getPhotonScale(pho1_eta,pho1_r9);
+  pho1_pt*=p1_scale;
+  pho1_sigEoE/=p1_scale;
+
+  float p2_scale = getPhotonScale(pho2_eta,pho2_r9);
+  pho2_pt*=p2_scale;
+  pho2_sigEoE/=p2_scale;
+}
+float SMSFitter::getPhotonScale(float eta,float r9) {
+  if(fabs(eta)< 1.56) return 1;
+  if(fabs(eta)< 2.) { //low EE
+    if(r9>0.94) return 1.0276;
+    else return 1.0216;
+  }
+  //high EE
+  if(r9>0.94) return 1.0287;
+  return 1.0351;
+
 }
 
 

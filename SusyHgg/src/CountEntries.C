@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     c.Add(buffer);
   }
 
-  TH2F N("Ntotal","",20,12.5,512.5,20,12.5,512.5);
+  TH2F N("Ntotal","",20,12.5,512.5,21,-12.5,512.5);
   int nMc;
   float eMc[200],pMc[200];
   int idMc[200],statusMc[200];

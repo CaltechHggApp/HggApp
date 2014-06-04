@@ -31,7 +31,10 @@ private:
   int passPre;
   int pos;
   int pu;
-  
+
+  int numVtx;
+  float jetRho;
+
   float pfChargedGood;
   float pfChargedWorst;
   float pfPhoton;

@@ -58,7 +58,8 @@ all: 	lib \
 	$(MAKETARGET)HggMakeTrainingTreeApp \
 	$(MAKETARGET)MakePUDist \
 	$(MAKETARGET)SusyHggSelectorApp \
-	$(MAKETARGET)MuMuGammaSelectorApp
+	$(MAKETARGET)MuMuGammaSelectorApp \
+	$(MAKETARGET)MakeRegressionInputTreeApp	
 
 lib: 	$(OUTLIBCOMMON)Conditions.o \
 	$(OUTLIBCOMMON)Selection.o \
@@ -157,6 +158,29 @@ $(MAKETARGET)SusyHggSelectorApp: $(SRCDIR)SusyHggSelectorApp.C \
 	$(OUTLIB)HggMCWeight.o \
 	$(OUTLIB)BaseSelector.o \
 	$(OUTLIB)SusyHggSelector.o \
+	$(OUTLIB)JECUReader.o \
+	$(OUTLIB)ArgParser.o
+	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
+
+$(MAKETARGET)MakeRegressionInputTreeApp: $(SRCDIR)MakeRegressionInputTreeApp.C \
+	$(OUTLIBCOMMON)Conditions.o \
+	$(OUTLIBCOMMON)Selection.o \
+	$(OUTLIBCOMMON)Counters.o \
+	$(OUTLIBCOMMON)TriggerMask.o \
+	$(OUTLIBCOMMON)Utils.o \
+	$(OUTLIBCOMMON)Skimmer.o \
+	$(OUTLIBEGAMMA)ElectronTrackerIsolation.o \
+	$(OUTLIBEGAMMA)ElectronCaloIsolation.o \
+	$(OUTLIBEGAMMA)ElectronBestCandidateSelector.o \
+	$(OUTLIBEGAMMA)LikelihoodPdf.o \
+	$(OUTLIBEGAMMA)LikelihoodSpecies.o \
+	$(OUTLIBEGAMMA)LikelihoodPdfProduct.o \
+	$(OUTLIBEGAMMA)ElectronLikelihood.o \
+	$(OUTLIBCOMMON)EfficiencyEvaluator.o \
+	$(OUTLIB)VecbosEGObject.o \
+	$(OUTLIB)HggMCWeight.o \
+	$(OUTLIB)BaseSelector.o \
+	$(OUTLIB)MakeRegressionInputTree.o \
 	$(OUTLIB)JECUReader.o \
 	$(OUTLIB)ArgParser.o
 	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
@@ -274,6 +298,14 @@ $(OUTLIB)MuMuGammaSelector.o: $(SRCDIR)MuMuGammaSelector.cc \
 	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)MuMuGammaSelector.o $<
 
 $(OUTLIB)SusyHggSelector.o: $(SRCDIR)SusyHggSelector.cc \
+			$(OUTLIB)RazorVariables.o \
+			$(OUTLIB)StandardPhotonID.o \
+			$(OUTLIB)StandardElectronID.o \
+			$(OUTLIB)VecbosJetID.o \
+			$(OUTLIB)BaseSelector.o
+	$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
+$(OUTLIB)MakeRegressionInputTree.o: $(SRCDIR)MakeRegressionInputTree.cc \
 			$(OUTLIB)RazorVariables.o \
 			$(OUTLIB)StandardPhotonID.o \
 			$(OUTLIB)StandardElectronID.o \
