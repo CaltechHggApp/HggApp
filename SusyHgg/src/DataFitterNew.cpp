@@ -8,12 +8,13 @@
 #include "RooFitResult.h"
 #include "RooAbsReal.h"
 #include "RooFormulaVar.h"
+#include "RooWorkspace.h"
 
 RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool dExp) {
 
   assert(data->GetEntries() != 0);
 
-  RooRealVar mgg("mgg","",110,140);
+  RooRealVar mgg("mgg","",minMgg,maxMgg);
 
   RooRealVar a1("a1","",-0.3,-2.,0.);
   RooRealVar a2("a2","",-0.1,-2.,0.);
@@ -42,7 +43,7 @@ RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool 
   sig_int->SetName("signal_integral");
 
 
-  float N_sideband = rdata.sumEntries("(mgg>110 && mgg <120) || (mgg>131 && mgg<140)");
+  float N_sideband = rdata.sumEntries(Form("(mgg>%0.2f && mgg <120) || (mgg>131 && mgg<%0.2f)",minMgg,maxMgg));
 
   RealVar scale;
   scale.val = NBkg.getVal()*sig_int->getVal()/N_sideband;
@@ -145,16 +146,16 @@ void DataFitter::processEntrySidebands() {
     TString cat = getCategory(pho1,pho2,se1,se2,btag,mbb_NearH,mbb_NearZ);
     float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
 
-    if((mgg>110 && mgg<120) || (mgg>131 && mgg<140)){
+    if((mgg>minMgg && mgg<120) || (mgg>131 && mgg<maxMgg)){
       SidebandRegionHistograms[cat]->Fill(MR,Rsq,scales[cat].val);
       SidebandRegionHistograms[cat+"_fit_Up"]->Fill(MR,Rsq,scales[cat].val+scales[cat].error);
       SidebandRegionHistograms[cat+"_fit_Down"]->Fill(MR,Rsq,scales[cat].val-scales[cat].error);
       SidebandRegionHistogramsFineBin[cat]->Fill(MR,Rsq,scales[cat].val);
     }
-    if(mgg > 131 && mgg < 140) {
+    if(mgg > 131 && mgg < maxMgg) {
       SidebandRegionHistograms[cat+"_bkgShape_Up"]->Fill(MR,Rsq,scales[cat].val);
     }
-    if(mgg > 110 && mgg < 120) {
+    if(mgg > minMgg && mgg < 120) {
       SidebandRegionHistograms[cat+"_bkgShape_Down"]->Fill(MR,Rsq,scales[cat].val);
     }
 }
