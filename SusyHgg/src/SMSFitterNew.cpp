@@ -72,7 +72,7 @@ void SMSFitter::buildHistograms() {
 	  SignalRegionHistograms[sms_pt+"_"+cat+"_"+sys+"_"+dir] = new TH2F("data_"+sms_pt+"_"+cat+"_SignalRegion_"+sys+"_"+dir,"",nXbins-1,xBins,nYbins-1,yBins);
 	}
       }
-      mgg_dists[sms_pt+"_"+cat] = new TH1D(sms_pt+"_"+cat+"_mgg_dist","",3000,110,140);
+      mgg_dists[sms_pt+"_"+cat] = new TH1D(sms_pt+"_"+cat+"_mgg_dist","",3000,minMgg,maxMgg);
     }
   }
 }

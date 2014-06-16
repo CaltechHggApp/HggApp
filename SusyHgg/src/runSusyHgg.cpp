@@ -106,7 +106,7 @@ int main(int argc,char** argv) {
   //if(!combineOnly) {
   TFile SMTotFile( (outputFolder+"/SMTot.root").c_str(),"RECREATE");
     for(auto cat: catNames) {
-      TH1D SMTot("SMTot_"+cat+"_mgg_hist","",3000,110,140);
+      TH1D SMTot("SMTot_"+cat+"_mgg_hist","",3000,Fitter::minMgg,Fitter::maxMgg);
       for(auto sm_name: sm_list) {
 	TFile f((outputFolder+"/"+sm_name+".root").c_str());
 	SMTot.Add( (TH1D*)f.Get(cat+"_mgg_dist") );      

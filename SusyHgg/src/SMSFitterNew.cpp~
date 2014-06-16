@@ -94,7 +94,7 @@ void SMSFitter::processEntry() {
     float mbbZ = mbb_NearZ;
 
     TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);
-    float sigRegWidth = 2*sigmaEffectives[cat];
+    float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
 
     if(mgg > 125 - sigRegWidth && mgg < 126 + sigRegWidth) {
       //std::cout << sms_pt << std::endl;
@@ -182,7 +182,7 @@ void SMSFitter::processEntry() {
 
 
       TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);
-      float sigRegWidth = 2*sigmaEffectives[cat];
+      float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
 
       if(mass > 125- sigRegWidth && mass < 126 + sigRegWidth) {
 	SignalRegionHistograms[ sms_pt+"_"+cat+"_"+sys+"_"+dir ]->Fill(thisMR,thisRsq,weight);	

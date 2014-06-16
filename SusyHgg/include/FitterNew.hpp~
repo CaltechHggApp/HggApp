@@ -65,6 +65,7 @@ public:
   const static std::vector<TString>* getCatNames() {return &catNames;}
   const static std::vector<TString>* getSysNames() {return &systematicNames;}
 
+  void setNSigEffs(float n){nSigEffSignalRegion=n;}
 
 protected:
   TFile *outputFile;
@@ -82,6 +83,7 @@ protected:
   float target_xsec=1; //target x-sec in pb
   const float HggBR = 2.28E-3; //Br H-->photons
 
+  float nSigEffSignalRegion=2;
 
   const static std::vector<TString> catNames;
   const static std::vector<TString> systematicNames;

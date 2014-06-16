@@ -67,6 +67,9 @@ public:
 
   void setNSigEffs(float n){nSigEffSignalRegion=n;}
 
+  static constexpr float minMgg = 110;
+  static constexpr float maxMgg = 140;
+
 protected:
   TFile *outputFile;
 

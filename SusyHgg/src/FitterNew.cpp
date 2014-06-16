@@ -32,12 +32,15 @@ void Fitter::buildHistograms() {
 	SignalRegionHistograms[cat+"_"+sys+"_"+dir] = new TH2F("data_"+cat+"_SignalRegion_"+sys+"_"+dir,"",nXbins-1,xBins,nYbins-1,yBins);
       }
     }
-    mgg_dists[cat] = new TH1D(cat+"_mgg_dist","",3000,110,140);
+    mgg_dists[cat] = new TH1D(cat+"_mgg_dist","",3000,minMgg,maxMgg);
   }
 }
 
 bool Fitter::passBasicSelection() {
   if(!pho1_pass_iso || !pho2_pass_iso) return false;
+
+  //AN13/239-like selection
+  if(pho1_pt<40 || pho2_pt < 25) return false;
   //if( fabs(pho1_eta)>1.442 || fabs(pho2_eta)>1.442) return false;
   return true;
 }

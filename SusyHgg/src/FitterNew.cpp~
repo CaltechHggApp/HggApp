@@ -38,7 +38,7 @@ void Fitter::buildHistograms() {
 
 bool Fitter::passBasicSelection() {
   if(!pho1_pass_iso || !pho2_pass_iso) return false;
-  if( fabs(pho1_eta)>1.442 || fabs(pho2_eta)>1.442) return false;
+  //if( fabs(pho1_eta)>1.442 || fabs(pho2_eta)>1.442) return false;
   return true;
 }
 
