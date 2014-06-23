@@ -107,8 +107,8 @@ void DataFitter::buildSidebandHistograms() {
       assert( normMap.find(cat) != normMap.end() && "scale not set for category");
       float min = ws->var("mgg")->getMin("sig");
       float max = ws->var("mgg")->getMax("sig");
-      float entries = ws->data("data")->sumEntries( Form("mgg > %0.4f && mgg < %0.4f",min,max) );
-      scales[cat].val = normMap[cat]/entries;
+      float N_sideband = ws->data("data")->sumEntries(Form("(mgg>%0.2f && mgg <120) || (mgg>131 && mgg<%0.2f)",minMgg,maxMgg));
+      scales[cat].val = normMap[cat]/N_sideband;
     }
     mggFitWorkspaces.push_back(ws);
   }
