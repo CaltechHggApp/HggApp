@@ -10,6 +10,8 @@
 #include "RooFormulaVar.h"
 #include "RooWorkspace.h"
 
+#include "assert.h"
+
 RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool dExp) {
 
   assert(data->GetEntries() != 0);
@@ -100,6 +102,14 @@ void DataFitter::buildSidebandHistograms() {
     std::cout << cat << std::endl;
     RooWorkspace *ws = new RooWorkspace(cat+"_mgg_workspace","");
     scales[cat] = doFitGetScale(&massTree,nSigEffSignalRegion*sigmaEffectives[cat],ws,(cat=="HighPt" ? false:true) );
+
+    if(fixScales) {
+      assert( normMap.find(cat) != normMap.end() && "scale not set for category");
+      float min = ws->var("mgg")->getMin("sig");
+      float max = ws->var("mgg")->getMax("sig");
+      float entries = ws->data("data")->sumEntries( Form("mgg > %0.4f && mgg < %0.4f",min,max) );
+      scales[cat].val = normMap[cat]/entries;
+    }
     mggFitWorkspaces.push_back(ws);
   }
 }
@@ -147,16 +157,16 @@ void DataFitter::processEntrySidebands() {
     float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
 
     if((mgg>minMgg && mgg<120) || (mgg>131 && mgg<maxMgg)){
-      SidebandRegionHistograms[cat]->Fill(MR,Rsq,scales[cat].val);
-      SidebandRegionHistograms[cat+"_fit_Up"]->Fill(MR,Rsq,scales[cat].val+scales[cat].error);
-      SidebandRegionHistograms[cat+"_fit_Down"]->Fill(MR,Rsq,scales[cat].val-scales[cat].error);
-      SidebandRegionHistogramsFineBin[cat]->Fill(MR,Rsq,scales[cat].val);
+      SidebandRegionHistograms[cat]->Fill(MR,Rsq,scales[cat].val*weight);
+      SidebandRegionHistograms[cat+"_fit_Up"]->Fill(MR,Rsq,scales[cat].val+scales[cat].error*weight);
+      SidebandRegionHistograms[cat+"_fit_Down"]->Fill(MR,Rsq,scales[cat].val-scales[cat].error*weight);
+      SidebandRegionHistogramsFineBin[cat]->Fill(MR,Rsq,scales[cat].val*weight);
     }
     if(mgg > 131 && mgg < maxMgg) {
-      SidebandRegionHistograms[cat+"_bkgShape_Up"]->Fill(MR,Rsq,scales[cat].val);
+      SidebandRegionHistograms[cat+"_bkgShape_Up"]->Fill(MR,Rsq,scales[cat].val*weight);
     }
     if(mgg > minMgg && mgg < 120) {
-      SidebandRegionHistograms[cat+"_bkgShape_Down"]->Fill(MR,Rsq,scales[cat].val);
+      SidebandRegionHistograms[cat+"_bkgShape_Down"]->Fill(MR,Rsq,scales[cat].val*weight);
     }
 }
 
@@ -171,4 +181,7 @@ float DataFitter::getSysErrPho(float eta, float r9) {
   return scaleSys[ Form("%s_%s",region.Data(),r9s.Data()) ]; 
 }
 
-
+void DataFitter::fixNorm(TString catName, float norm) {
+  fixScales = true;
+  normMap[catName] = norm;
+}

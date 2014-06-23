@@ -15,6 +15,8 @@ public:
 
   virtual void Run();
 
+  void fixNorm(TString catName, float norm);
+
 protected:
 
   void buildSidebandHistograms();
@@ -35,6 +37,8 @@ protected:
     {"EELow_lowR9",0.0013},{"EELow_highR9",0.0011},{"EEHigh_lowR9",0.0010},{"EEHigh_highR9",0.0009},
   };
 
+  bool fixScales = false;
+  std::map<TString,float> normMap;
 };
 
 #endif

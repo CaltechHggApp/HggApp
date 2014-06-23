@@ -73,6 +73,8 @@ int main(int argc,char** argv) {
   string sms_list_string = cfg.getParameter("sms_names");
   vector<string> sms_list = cfg.tokenizeString(sms_list_string,",");
 
+  int isMCData = atoi( cfg.getParameter("isMCData").c_str() );
+
   CombinePrep combine;
   combine.setOutputFolder(outputFolder);
 
@@ -135,6 +137,13 @@ int main(int argc,char** argv) {
       else datafitter.setSigEff(cat, sigEffs[cat]);
     }
     datafitter.setNSigEffs(nSigEffs);
+    if(isMCData) {
+      datafitter.fixNorm("HighPt",658.32);
+      datafitter.fixNorm("Hbb",7.282);
+      datafitter.fixNorm("Zbb",10.75);
+      datafitter.fixNorm("HighRes",2668.84);
+      datafitter.fixNorm("LowRes",5316.44);
+    }
     datafitter.Run();
 
   }
