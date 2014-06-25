@@ -45,6 +45,10 @@ public:
     {"gg_H_125",19.27},{"wz_H_125",0.7046},{"vbf_H_125",1.578},{"sms",0.3}
   };
 
+  enum kSelectionSet {kLoose, kAN239, kHighPt};
+
+  void setSelection(kSelectionSet set) { basicSelection = set; }
+
   void Run();
 
   bool passBasicSelection(); //!< event passes the basic event selection
@@ -74,6 +78,8 @@ protected:
   TFile *outputFile;
 
   bool isSMS=true;
+
+  kSelectionSet basicSelection = kLoose;
 
   float hggSigStrength = 1.11;
 

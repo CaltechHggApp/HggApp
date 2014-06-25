@@ -41,7 +41,7 @@ bool Fitter::passBasicSelection() {
 
   //AN13/239-like selection
   if(pho1_pt<40 || pho2_pt < 25) return false;
-  //if( fabs(pho1_eta)>1.442 || fabs(pho2_eta)>1.442) return false;
+  if( fabs(pho1_eta)>1.442 || fabs(pho2_eta)>1.442) return false;
   return true;
 }
 

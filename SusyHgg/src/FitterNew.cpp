@@ -3,6 +3,8 @@
 #include "TObjArray.h"
 #include "TMath.h"
 
+#include <iostream>
+
 #define NUM_CPU 1
 
 const std::vector<TString> Fitter::catNames = { "HighPt","Hbb","Zbb","HighRes","LowRes"};
@@ -39,9 +41,27 @@ void Fitter::buildHistograms() {
 bool Fitter::passBasicSelection() {
   if(!pho1_pass_iso || !pho2_pass_iso) return false;
 
-  //AN13/239-like selection
-  if(pho1_pt<40 || pho2_pt < 25) return false;
-  if( fabs(pho1_eta)>1.442 || fabs(pho2_eta)>1.442) return false;
+
+  switch(basicSelection) {
+  case kAN239:
+    //AN13/239-like selection
+    if(pho1_pt<40 || pho2_pt < 25) return false;
+    if( fabs(pho1_eta)>1.442 || fabs(pho2_eta)>1.442) return false;
+    break;
+
+  case kHighPt:
+    if(pho1_pt<40 || pho2_pt < 25) return false;
+    break;
+
+  case kLoose:
+    if(pho1_pt<32 || pho2_pt < 24) return false;
+    break;
+
+  default:
+    std::cout << "invalid basic selection (or selection not implemented)" << std::endl;
+    assert(false);
+
+  }
   return true;
 }
 

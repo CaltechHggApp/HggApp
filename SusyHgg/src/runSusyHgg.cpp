@@ -42,12 +42,27 @@ int main(int argc,char** argv) {
   a.addLongOption("nSigEffs",ArgParser::reqArg,"# of signma effectives for the signal region in each box");
   a.addLongOption("UseVariableBinning",ArgParser::noArg,"use different binning in each box depending on statistics");
 
+  a.addLongOption("AN239",ArgParser::noArg,"use AN13/239-like photon selection");
+  a.addLongOption("highPt",ArgParser::noArg,"use 40/25 photon pT cuts");
+
   string ret;
   if(a.process(ret) !=0){
     cout << "Invalid Options:  " << ret <<endl;
     a.printOptions(argv[0]);
     return 0;
   }
+
+  bool AN239 = a.longFlagPres("AN239");
+  bool highPt = a.longFlagPres("highPt");
+
+  if(AN239 && highPt) {
+    std::cout << "cannot specify both --AN239 and --highPt" << std::endl;
+    return -1;
+  }
+
+  Fitter::kSelectionSet selection = Fitter::kLoose;
+  if(AN239)  selection = Fitter::kAN239;
+  if(highPt) selection = Fitter::kHighPt;
 
   string cfgFilePath = a.getArgument("ConfigFile");
   string outputFolder = a.getArgument("OutputFolder");
@@ -98,6 +113,7 @@ int main(int argc,char** argv) {
       fitter.setNTotal( atoi(strN.c_str()) );
       fitter.setLumi( lumi );
       fitter.setNSigEffs(nSigEffs);
+      fitter.setSelection(selection);
 
       fitter.Run();
     }
@@ -149,6 +165,9 @@ int main(int argc,char** argv) {
       datafitter->fixNorm("HighRes",493.9);
       datafitter->fixNorm("LowRes",757.5);
     }
+
+    datafitter->setSelection(selection);
+
     datafitter->Run();
     delete datafitter;
   }
@@ -165,6 +184,8 @@ int main(int argc,char** argv) {
       smsFitter.setLumi( lumi );
       smsFitter.setNEntriesFile( normPath );
       smsFitter.setNSigEffs(nSigEffs);
+
+      smsFitter.setSelection(selection);
 
       smsFitter.Run();
     }
