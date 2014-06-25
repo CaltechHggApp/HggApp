@@ -45,7 +45,7 @@ RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool 
   sig_int->SetName("signal_integral");
 
 
-  float N_sideband = rdata.sumEntries(Form("(mgg>%0.2f && mgg <120) || (mgg>131 && mgg<%0.2f)",minMgg,maxMgg));
+  float N_sideband = rdata.sumEntries(Form("(mgg>%0.2f && mgg <120) || (mgg>131 && mgg<%0.2f)",minMgg,maxMgg));  
 
   RealVar scale;
   scale.val = NBkg.getVal()*sig_int->getVal()/N_sideband;
@@ -82,6 +82,7 @@ void DataFitter::buildSidebandHistograms() {
     massTree.Branch("mgg",&m);
     Long64_t iEntry=-1;
     while( fChain->GetEntry(++iEntry) ) {
+      if(!passBasicSelection()) continue;
       TLorentzVector pho1;
       TLorentzVector pho2;
   
@@ -103,13 +104,6 @@ void DataFitter::buildSidebandHistograms() {
     RooWorkspace *ws = new RooWorkspace(cat+"_mgg_workspace","");
     scales[cat] = doFitGetScale(&massTree,nSigEffSignalRegion*sigmaEffectives[cat],ws,(cat=="HighPt" ? false:true) );
 
-    if(fixScales) {
-      assert( normMap.find(cat) != normMap.end() && "scale not set for category");
-      float min = ws->var("mgg")->getMin("sig");
-      float max = ws->var("mgg")->getMax("sig");
-      float N_sideband = ws->data("data")->sumEntries(Form("(mgg>%0.2f && mgg <120) || (mgg>131 && mgg<%0.2f)",minMgg,maxMgg));
-      scales[cat].val = normMap[cat]/N_sideband;
-    }
     mggFitWorkspaces.push_back(ws);
   }
 }
@@ -123,13 +117,17 @@ void DataFitter::Run() {
     processEntry();
     processEntrySidebands();
   }
-
+  std::cout << "nProcessed:  " << iEntry << std::endl;
   for(auto cat: catNames) {
+    std::cout << cat << "  " << SidebandRegionHistograms[cat]->Integral() << std::endl;
+
     SidebandRegionHistograms[cat+"_bkgShape_Up"]->Scale( SidebandRegionHistograms[cat]->Integral()/SidebandRegionHistograms[cat+"_bkgShape_Up"]->Integral() );
     SidebandRegionHistograms[cat+"_bkgShape_Down"]->Scale( SidebandRegionHistograms[cat]->Integral()/SidebandRegionHistograms[cat+"_bkgShape_Down"]->Integral() );
   }
   outputFile->cd();
-  for(auto hist: SignalRegionHistograms) hist.second->Write();
+  for(auto hist: SignalRegionHistograms) {
+    hist.second->Write();
+  }
   for(auto hist: SignalRegionHistogramsFineBin) hist.second->Write();
 
   for(auto hist: SidebandRegionHistograms) hist.second->Write();
@@ -158,8 +156,8 @@ void DataFitter::processEntrySidebands() {
 
     if((mgg>minMgg && mgg<120) || (mgg>131 && mgg<maxMgg)){
       SidebandRegionHistograms[cat]->Fill(MR,Rsq,scales[cat].val*weight);
-      SidebandRegionHistograms[cat+"_fit_Up"]->Fill(MR,Rsq,scales[cat].val+scales[cat].error*weight);
-      SidebandRegionHistograms[cat+"_fit_Down"]->Fill(MR,Rsq,scales[cat].val-scales[cat].error*weight);
+      SidebandRegionHistograms[cat+"_fit_Up"]->Fill(MR,Rsq,(scales[cat].val+scales[cat].error)*weight);
+      SidebandRegionHistograms[cat+"_fit_Down"]->Fill(MR,Rsq,(scales[cat].val-scales[cat].error)*weight);
       SidebandRegionHistogramsFineBin[cat]->Fill(MR,Rsq,scales[cat].val*weight);
     }
     if(mgg > 131 && mgg < maxMgg) {

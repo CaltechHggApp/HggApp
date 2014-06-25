@@ -15,11 +15,11 @@ public:
 
   virtual void Run();
 
-  void fixNorm(TString catName, float norm);
+  virtual void fixNorm(TString catName, float norm);
 
 protected:
 
-  void buildSidebandHistograms();
+  virtual void buildSidebandHistograms();
 
   virtual void processEntrySidebands();
 

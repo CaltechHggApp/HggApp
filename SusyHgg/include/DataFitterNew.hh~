@@ -11,9 +11,11 @@ public:
     isSMS=false;
   }
 
-  static RealVar doFitGetScale(TTree *data,float sigEff,RooWorkspace* ws=0,bool dExp=true); //!< for real data, do the background fit and use that to compute the sideband->signal scale factor
+  static RealVar doFitGetScale(TTree *data,float width,RooWorkspace* ws=0,bool dExp=true); //!< for real data, do the background fit and use that to compute the sideband->signal scale factor
 
   virtual void Run();
+
+  virtual void fixNorm(TString catName, float norm);
 
 protected:
 
@@ -35,6 +37,8 @@ protected:
     {"EELow_lowR9",0.0013},{"EELow_highR9",0.0011},{"EEHigh_lowR9",0.0010},{"EEHigh_highR9",0.0009},
   };
 
+  bool fixScales = false;
+  std::map<TString,float> normMap;
 };
 
 #endif

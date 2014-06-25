@@ -3,6 +3,7 @@
 
 #include "FitterNew.hpp"
 #include "SMSFitterNew.hh"
+#include <algorithm>
 
 void CombinePrep::openFiles() {
   dataFile = std::unique_ptr<TFile>(new TFile(dataFilePath));
@@ -80,7 +81,7 @@ void CombinePrep::makeOnePoint(TString smsName, TString smsPoint) {
   dataCardFile << "\n";
 
   //trigger
-  dataCardFile << "lumi\tlnN\t\t\t"<< triggerEffErr+1 <<"\t\t-";
+  dataCardFile << "trigger\tlnN\t\t\t"<< triggerEffErr+1 <<"\t\t-";
   for(int i=0;i<smHiggsFiles.size();i++) dataCardFile << "\t\t" << triggerEffErr+1;
   dataCardFile << "\n";
   
@@ -166,13 +167,18 @@ void CombinePrep::makeRootFile() {
   if(useVarBinning) {
     for(auto cat: *catNames) {
       std::cout << "--------------------------------\n" << cat << "\n--------------------------------\n" << std::endl;
-      binningMap.insert( std::pair<TString,std::vector<int>>(cat,{}) ); //setup the binning map
-      TH2F* totalBkg = (TH2F*)dataFile->Get("data_"+cat+"_SidebandRegion")->Clone("tmp");
-      for(auto h = smHiggsFiles.begin(); h!=smHiggsFiles.end(); h++) {
-	totalBkg->Add( (TH2F*)h->second->Get("data_"+cat+"_SignalRegion") );
+      if(!externalBinning) {
+	binningMap.insert( std::pair<TString,std::vector<int>>(cat,{}) ); //setup the binning map
+	TH2F* totalBkg = (TH2F*)dataFile->Get("data_"+cat+"_SidebandRegion")->Clone("tmp");
+	for(auto h = smHiggsFiles.begin(); h!=smHiggsFiles.end(); h++) {
+	  totalBkg->Add( (TH2F*)h->second->Get("data_"+cat+"_SignalRegion") );
+	}
+	defineBinning(*totalBkg, binningMap[cat],1,1,1.);
+	delete totalBkg;
+      } else {
+	for(int i=0;i<binningMap[cat].size();i++) std::cout << binningMap[cat].at(i) << " ";
+	std::cout << std::endl;
       }
-      defineBinning(*totalBkg, binningMap[cat],1,1,1.);
-      delete totalBkg;
     }
   }
 
@@ -258,9 +264,9 @@ std::unique_ptr<TH1F> CombinePrep::compressHistogram(const TH2F& input,bool varB
 // 	std::cout << xBinEdges->at(iX) << "--" << xBinEdges->at(iX+1) << std::endl;
 // 	std::cout << iY << std::endl;
 // 	std::cout << input.Integral(xBinEdges->at(iX),xBinEdges->at(iX+1),iY,iY) << std::endl;
-	compressed->SetBinContent( index++, input.Integral(xBinEdges->at(iX+1),xBinEdges->at(iX),iY,iY) );
+	compressed->SetBinContent( index++, input.Integral(xBinEdges->at(iX+1),xBinEdges->at(iX)-1,iY,iY) );
       }
-      compressed->SetBinContent( index++, input.Integral(xBinEdges->at(iX+1),xBinEdges->at(iX),iX+1,nY+1) );
+      compressed->SetBinContent( index++, input.Integral(xBinEdges->at(iX+1),xBinEdges->at(iX)-1,iX+1,nY+1) );
     }    
 
     if(index != nBins+1) {
@@ -349,10 +355,24 @@ void CombinePrep::defineBinning(const TH2F& hist,std::vector<int>& xBinEdges, in
   }
 
   std::cout << xBinEdges.size() << std::endl;
-   for(int i=0;i<xBinEdges.size()-1;i++) {
+  for(int i=0;i<xBinEdges.size();i++) {
+    std::cout << xBinEdges.at(i) << " ";
+  }
+  std::cout << std::endl;
+  for(int i=0;i<xBinEdges.size()-1;i++) {
      for(int j=1;j<i+1;j++) {
        std::cout << x->GetBinLowEdge(xBinEdges.at(i+1)) << "--" <<x->GetBinLowEdge(xBinEdges.at(i)) << "   " << y->GetBinLowEdge(j) << "--"<<y->GetBinLowEdge(j+1) <<":    " << hist.Integral(xBinEdges.at(i+1),xBinEdges.at(i),j,j+1) << std::endl;
      }
      std::cout << x->GetBinLowEdge(xBinEdges.at(i+1)) << "--" <<x->GetBinLowEdge(xBinEdges.at(i)) << "   " << y->GetBinLowEdge(i+1) << "--"<<y->GetBinLowEdge(maxBinY+1) <<":    " << hist.Integral(xBinEdges.at(i+1),xBinEdges.at(i),i+1,maxBinY+1) << std::endl;
    }
+}
+
+
+void CombinePrep::defineExternalBinning(TString catName,std::vector<int>& xBinEdges) {
+  externalBinning = true;
+
+  if(binningMap.find(catName) == binningMap.end()) {
+    binningMap.insert( std::pair<TString,std::vector<int>>(catName,{}) ); //setup the binning map
+  }
+  binningMap[catName].assign(xBinEdges.begin(),xBinEdges.end());
 }

@@ -8,6 +8,9 @@
 #include "RooFitResult.h"
 #include "RooAbsReal.h"
 #include "RooFormulaVar.h"
+#include "RooWorkspace.h"
+
+#include "assert.h"
 
 RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool dExp) {
 
@@ -42,7 +45,7 @@ RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool 
   sig_int->SetName("signal_integral");
 
 
-  float N_sideband = rdata.sumEntries(Form("(mgg>%0.2f && mgg <120) || (mgg>131 && mgg<%0.2f)",minMgg,maxMgg));
+  float N_sideband = rdata.sumEntries(Form("(mgg>%0.2f && mgg <120) || (mgg>131 && mgg<%0.2f)",minMgg,maxMgg));  
 
   RealVar scale;
   scale.val = NBkg.getVal()*sig_int->getVal()/N_sideband;
@@ -79,6 +82,7 @@ void DataFitter::buildSidebandHistograms() {
     massTree.Branch("mgg",&m);
     Long64_t iEntry=-1;
     while( fChain->GetEntry(++iEntry) ) {
+      if(!passBasicSelection()) continue;
       TLorentzVector pho1;
       TLorentzVector pho2;
   
@@ -99,6 +103,13 @@ void DataFitter::buildSidebandHistograms() {
     std::cout << cat << std::endl;
     RooWorkspace *ws = new RooWorkspace(cat+"_mgg_workspace","");
     scales[cat] = doFitGetScale(&massTree,nSigEffSignalRegion*sigmaEffectives[cat],ws,(cat=="HighPt" ? false:true) );
+
+    if(fixScales) {
+      assert( normMap.find(cat) != normMap.end() && "scale not set for category");
+      float N_sideband = ws->data("data")->sumEntries(Form("(mgg>%0.2f && mgg <120) || (mgg>131 && mgg<%0.2f)",minMgg,maxMgg));
+      scales[cat].val = normMap[cat]/N_sideband;
+      scales[cat].error = scales[cat].val * sqrt(1/normMap[cat]+1/N_sideband);
+    }
     mggFitWorkspaces.push_back(ws);
   }
 }
@@ -112,13 +123,23 @@ void DataFitter::Run() {
     processEntry();
     processEntrySidebands();
   }
-
+  std::cout << "nProcessed:  " << iEntry << std::endl;
   for(auto cat: catNames) {
+    std::cout << cat << "  " << SidebandRegionHistograms[cat]->Integral() << std::endl;
+
     SidebandRegionHistograms[cat+"_bkgShape_Up"]->Scale( SidebandRegionHistograms[cat]->Integral()/SidebandRegionHistograms[cat+"_bkgShape_Up"]->Integral() );
     SidebandRegionHistograms[cat+"_bkgShape_Down"]->Scale( SidebandRegionHistograms[cat]->Integral()/SidebandRegionHistograms[cat+"_bkgShape_Down"]->Integral() );
   }
   outputFile->cd();
-  for(auto hist: SignalRegionHistograms) hist.second->Write();
+  for(auto hist: SignalRegionHistograms) {
+    if(fixScales) {
+      TString cat(hist.first);
+      int uPos = cat.First("_");
+      if(uPos!=-1) cat.Remove(uPos);      
+      hist.second->Scale(normMap[cat]/hist.second->Integral());
+    }
+    hist.second->Write();
+  }
   for(auto hist: SignalRegionHistogramsFineBin) hist.second->Write();
 
   for(auto hist: SidebandRegionHistograms) hist.second->Write();
@@ -146,16 +167,16 @@ void DataFitter::processEntrySidebands() {
     float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
 
     if((mgg>minMgg && mgg<120) || (mgg>131 && mgg<maxMgg)){
-      SidebandRegionHistograms[cat]->Fill(MR,Rsq,scales[cat].val);
-      SidebandRegionHistograms[cat+"_fit_Up"]->Fill(MR,Rsq,scales[cat].val+scales[cat].error);
-      SidebandRegionHistograms[cat+"_fit_Down"]->Fill(MR,Rsq,scales[cat].val-scales[cat].error);
-      SidebandRegionHistogramsFineBin[cat]->Fill(MR,Rsq,scales[cat].val);
+      SidebandRegionHistograms[cat]->Fill(MR,Rsq,scales[cat].val*weight);
+      SidebandRegionHistograms[cat+"_fit_Up"]->Fill(MR,Rsq,(scales[cat].val+scales[cat].error)*weight);
+      SidebandRegionHistograms[cat+"_fit_Down"]->Fill(MR,Rsq,(scales[cat].val-scales[cat].error)*weight);
+      SidebandRegionHistogramsFineBin[cat]->Fill(MR,Rsq,scales[cat].val*weight);
     }
     if(mgg > 131 && mgg < maxMgg) {
-      SidebandRegionHistograms[cat+"_bkgShape_Up"]->Fill(MR,Rsq,scales[cat].val);
+      SidebandRegionHistograms[cat+"_bkgShape_Up"]->Fill(MR,Rsq,scales[cat].val*weight);
     }
     if(mgg > minMgg && mgg < 120) {
-      SidebandRegionHistograms[cat+"_bkgShape_Down"]->Fill(MR,Rsq,scales[cat].val);
+      SidebandRegionHistograms[cat+"_bkgShape_Down"]->Fill(MR,Rsq,scales[cat].val*weight);
     }
 }
 
@@ -170,4 +191,7 @@ float DataFitter::getSysErrPho(float eta, float r9) {
   return scaleSys[ Form("%s_%s",region.Data(),r9s.Data()) ]; 
 }
 
-
+void DataFitter::fixNorm(TString catName, float norm) {
+  fixScales = true;
+  normMap[catName] = norm;
+}

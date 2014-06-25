@@ -31,6 +31,8 @@ void CombinePrep::Make(){
   for(auto pt: sms_points) {
     makeOnePoint("sms_ChiWH",pt);
     makeOnePoint("sms_ChiZH",pt);
+    makeOnePoint("sms_ChiWH_FSIMSmear",pt);
+    makeOnePoint("sms_ChiZH_FSIMSmear",pt);
     makeOnePoint("sms_ChiHH",pt);
     makeOnePoint("sms_ChiHH_FSIMSmear",pt);
   }
@@ -78,7 +80,7 @@ void CombinePrep::makeOnePoint(TString smsName, TString smsPoint) {
   dataCardFile << "\n";
 
   //trigger
-  dataCardFile << "lumi\tlnN\t\t\t"<< triggerEffErr+1 <<"\t\t-";
+  dataCardFile << "trigger\tlnN\t\t\t"<< triggerEffErr+1 <<"\t\t-";
   for(int i=0;i<smHiggsFiles.size();i++) dataCardFile << "\t\t" << triggerEffErr+1;
   dataCardFile << "\n";
   
@@ -256,9 +258,9 @@ std::unique_ptr<TH1F> CombinePrep::compressHistogram(const TH2F& input,bool varB
 // 	std::cout << xBinEdges->at(iX) << "--" << xBinEdges->at(iX+1) << std::endl;
 // 	std::cout << iY << std::endl;
 // 	std::cout << input.Integral(xBinEdges->at(iX),xBinEdges->at(iX+1),iY,iY) << std::endl;
-	compressed->SetBinContent( index++, input.Integral(xBinEdges->at(iX+1),xBinEdges->at(iX),iY,iY) );
+	compressed->SetBinContent( index++, input.Integral(xBinEdges->at(iX+1),xBinEdges->at(iX)-1,iY,iY) );
       }
-      compressed->SetBinContent( index++, input.Integral(xBinEdges->at(iX+1),xBinEdges->at(iX),iX+1,nY+1) );
+      compressed->SetBinContent( index++, input.Integral(xBinEdges->at(iX+1),xBinEdges->at(iX)-1,iX+1,nY+1) );
     }    
 
     if(index != nBins+1) {

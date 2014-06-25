@@ -40,6 +40,8 @@ public:
 
   static void defineBinning(const TH2F& hist, std::vector<int>& xBinEdges,int minWidth=2,int minBin=2,float targetYield=4.);
 
+  void defineExternalBinning(TString catName,std::vector<int>& xBinEdges);
+
   void Make();
 
 protected:
@@ -54,6 +56,8 @@ protected:
 
   //if we do variable binning, use these parameters
   bool useVarBinning=false;
+  bool externalBinning=false;
+
   std::map<TString,std::vector<int>> binningMap;
 
 

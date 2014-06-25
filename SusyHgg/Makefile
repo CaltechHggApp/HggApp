@@ -79,6 +79,7 @@ MakeSignalInjection:	$(SRCDIR)MakeSignalInjection.cpp \
 
 runSusyHgg:		$(SRCDIR)runSusyHgg.cpp\
 			$(OUTLIB)DataFitterNew.o \
+			$(OUTLIB)MCBackgroundFitterNew.o \
 			$(OUTLIB)SMSFitterNew.o \
 			$(OUTLIB)FitterNew.o \
 			$(OUTLIB)CombinePrep.o \
@@ -112,6 +113,10 @@ $(OUTLIB)FitterNew.o:		$(SRCDIR)FitterNew.cpp \
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
 
 $(OUTLIB)DataFitterNew.o:	$(SRCDIR)DataFitterNew.cpp \
+				$(OUTLIB)FitterNew.o
+		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
+
+$(OUTLIB)MCBackgroundFitterNew.o:	$(SRCDIR)MCBackgroundFitterNew.cpp \
 				$(OUTLIB)FitterNew.o
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
 

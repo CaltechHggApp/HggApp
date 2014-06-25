@@ -48,7 +48,10 @@ protected:
   std::map<TString,TString> smsFilePaths; //map of SMS name --> filePath
 
   TString outputFolder;
-  
+
+  float triggerEff=0.81;
+  float triggerEffErr = 0.05;
+
   //if we do variable binning, use these parameters
   bool useVarBinning=false;
   std::map<TString,std::vector<int>> binningMap;

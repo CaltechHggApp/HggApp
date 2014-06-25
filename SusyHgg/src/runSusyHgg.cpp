@@ -16,6 +16,7 @@ runs the whole susy hgg analysis
 #include "FitterNew.hpp"
 #include "SMSFitterNew.hh"
 #include "DataFitterNew.hh"
+#include "MCBackgroundFitterNew.hh"
 
 #include "CombinePrep.hh"
 
@@ -131,21 +132,25 @@ int main(int argc,char** argv) {
 
   std::string dataFileName = cfg.getParameter("data_path"); 
   if(!combineOnly) {
-    DataFitter datafitter(dataFileName,outputFolder+"/data.root");
-    for(auto cat:catNames) {
-      if(bigSigReg) datafitter.setSigEff(cat, 2.5);
-      else datafitter.setSigEff(cat, sigEffs[cat]);
-    }
-    datafitter.setNSigEffs(nSigEffs);
-    if(isMCData) {
-      datafitter.fixNorm("HighPt",658.32);
-      datafitter.fixNorm("Hbb",7.282);
-      datafitter.fixNorm("Zbb",10.75);
-      datafitter.fixNorm("HighRes",2668.84);
-      datafitter.fixNorm("LowRes",5316.44);
-    }
-    datafitter.Run();
+    DataFitter *datafitter = 0;
+    if(isMCData) datafitter = new MCBackgroundFitter(dataFileName,outputFolder+"/data.root");
+    else datafitter = new DataFitter(dataFileName,outputFolder+"/data.root");
+    assert(datafitter != 0);
 
+    for(auto cat:catNames) {
+      if(bigSigReg) datafitter->setSigEff(cat, 2.5);
+      else datafitter->setSigEff(cat, sigEffs[cat]);
+    }
+    datafitter->setNSigEffs(nSigEffs);
+    if(isMCData) {
+      datafitter->fixNorm("HighPt",223.39);
+      datafitter->fixNorm("Hbb",2.4);
+      datafitter->fixNorm("Zbb",2.3);
+      datafitter->fixNorm("HighRes",493.9);
+      datafitter->fixNorm("LowRes",757.5);
+    }
+    datafitter->Run();
+    delete datafitter;
   }
   if(sigInjName != "")   combine.addDataFilePath(outputFolder+"/"+sigInjName);
   else combine.addDataFilePath(outputFolder+"/data.root");
@@ -171,6 +176,19 @@ int main(int argc,char** argv) {
   combine.setSysNames(Fitter::getSysNames());
 
   combine.setUseVarBinning( a.longFlagPres("UseVariableBinning") );
+
+  if(!isMCData) {
+    std::vector<int> HighPt_bins = {23,16,8,3,1};
+    combine.defineExternalBinning("HighPt", HighPt_bins);
+    std::vector<int> Hbb_bins = {23,4,1};
+    combine.defineExternalBinning("Hbb", Hbb_bins);
+    std::vector<int> Zbb_bins = {23,3,1};
+    combine.defineExternalBinning("Zbb", Zbb_bins);
+    std::vector<int> HighRes_bins = {23,14,5,2,1};
+    combine.defineExternalBinning("HighRes", HighRes_bins);
+    std::vector<int> LowRes_bins = {23,14,6,3,1};
+    combine.defineExternalBinning("LowRes", LowRes_bins);
+  }
 
   combine.Make();
   
