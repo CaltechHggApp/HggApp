@@ -5,7 +5,7 @@
 
 class SMSFitter : public Fitter {
 public:
-  SMSFitter(TString inputFileName,TString outputFileName);
+  SMSFitter(TString inputFileName,TString outputFileName,bool useHT=false);
 
 
   virtual ~SMSFitter();

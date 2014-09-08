@@ -38,7 +38,7 @@ struct RealVar {
 
 class Fitter : public SusyHggTree{
 public:
-  Fitter(TString inputFileName,TString outputFileName);
+  Fitter(TString inputFileName,TString outputFileName,bool useHT=false);
   virtual ~Fitter();
 
   std::map<TString,float> xsecs = {
@@ -53,8 +53,7 @@ public:
 
   bool passBasicSelection(); //!< event passes the basic event selection
 
-
-  static TString getCategory(const TLorentzVector& pho1, const TLorentzVector&pho2,float se1, float se2,float btag,float mbbH, float mbbZ); //!< get the category for this event
+  static TString getCategory(const TLorentzVector& pho1, const TLorentzVector&pho2,float se1, float se2,float btag,float mbbH, float mbbZ,float r9_1,float r9_2); //!< get the category for this event
 
   
   void setSigEff(TString cat, float se) { sigmaEffectives[cat] = se; }
@@ -73,6 +72,8 @@ public:
 
   static constexpr float minMgg = 103;
   static constexpr float maxMgg = 160;
+
+  void setUseHT(bool b=true){useHT=b;}
 
 protected:
   TFile *outputFile;
@@ -102,6 +103,8 @@ protected:
   virtual void buildHistograms();
   std::map<TString, TH2F*> SignalRegionHistograms;
   std::map<TString, TH2F*> SignalRegionHistogramsFineBin;
+  std::map<TString, TH2F*> SignalRegionHistogramsHTMET;
+  std::map<TString, TH2F*> SignalRegionHistogramsFineBinHTMET;
   std::map<TString, TH1D*> mgg_dists;
   
   //sigma effectives per category
@@ -113,6 +116,8 @@ protected:
   //   double xBins[nXbins] = {0,200,400,1000,2000};
   //   const static int nYbins =6;
   //   double yBins[nYbins] = {0,0.05,0.1,0.2,0.5,1.0};
+
+  bool useHT=false;
 
   const static int nXbins =23;
   double xBins[nXbins] = {150,200,250,300,350,400,450,500,600,700,800,900,1000,1200,1400,1600,1800,2000,2200,2400,2600,2800,3000};

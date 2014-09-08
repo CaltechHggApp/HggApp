@@ -3,6 +3,8 @@
 #include "TObjArray.h"
 #include "TMath.h"
 
+#include <iostream>
+
 #define NUM_CPU 1
 
 const std::vector<TString> Fitter::catNames = { "HighPt","Hbb","Zbb","HighRes","LowRes"};
@@ -39,13 +41,32 @@ void Fitter::buildHistograms() {
 bool Fitter::passBasicSelection() {
   if(!pho1_pass_iso || !pho2_pass_iso) return false;
 
-  //AN13/239-like selection
-  if(pho1_pt<40 || pho2_pt < 25) return false;
-  if( fabs(pho1_eta)>1.442 || fabs(pho2_eta)>1.442) return false;
+  //if(ele1_pt>15 || mu1_pt>15) return false;
+
+  switch(basicSelection) {
+  case kAN239:
+    //AN13/239-like selection
+    if(pho1_pt<40 || pho2_pt < 25) return false;
+    if( fabs(pho1_eta)>1.442 || fabs(pho2_eta)>1.442) return false;
+    break;
+
+  case kHighPt:
+    if(pho1_pt<40 || pho2_pt < 25) return false;
+    break;
+
+  case kLoose:
+    if(pho1_pt<32 || pho2_pt < 24) return false;
+    break;
+
+  default:
+    std::cout << "invalid basic selection (or selection not implemented)" << std::endl;
+    assert(false);
+
+  }
   return true;
 }
 
-TString Fitter::getCategory(const TLorentzVector& pho1, const TLorentzVector&pho2,float se1, float se2,float btag,float mbbH,float mbbZ) {
+TString Fitter::getCategory(const TLorentzVector& pho1, const TLorentzVector&pho2,float se1, float se2,float btag,float mbbH,float mbbZ,float r9_1,float r9_2) {
   float ptgg = (pho1+pho2).Pt();
 
   //return catNames[0];
@@ -57,11 +78,14 @@ TString Fitter::getCategory(const TLorentzVector& pho1, const TLorentzVector&pho
 
   //if(btag > 0.244) return catNames[1];
 
+  //if(r9_1<0.94 || r9_2<0.94) return catNames[4];
+
+  
   if(  se1 > ( fabs(pho1.Eta())>1.48 ? 0.024 : 0.015 ) ) return catNames[4]; //pho1 fails se/e cut
   if(  se2 > ( fabs(pho2.Eta())>1.48 ? 0.024 : 0.015 ) ) return catNames[4]; //pho1 fails se/e cut
+  
 
   return catNames[3]; //high res category
-
 
 }
 
@@ -79,12 +103,15 @@ void Fitter::processEntry() {
     float btag = highest_csv;
     float mbbH = mbb_NearH;
     float mbbZ = mbb_NearZ;
-    TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);    
+    TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ,pho1_r9,pho2_r9);    
     float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
 
+    float thisMR = MR;
+    float thisRsq = Rsq;
+
     if(mgg > 125- sigRegWidth && mgg < 126 + sigRegWidth) {
-      SignalRegionHistograms[cat]->Fill(MR,Rsq,weight);
-      SignalRegionHistogramsFineBin[cat]->Fill(MR,Rsq,weight);
+      SignalRegionHistograms[cat]->Fill(thisMR,thisRsq,weight);
+      SignalRegionHistogramsFineBin[cat]->Fill(thisMR,thisRsq,weight);
     }
 
     
@@ -169,7 +196,7 @@ void Fitter::processEntry() {
       }
 
 
-      TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);
+      TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ,pho1_r9,pho2_r9);
       float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
 
       if(mass > 125- sigRegWidth && mass < 126 + sigRegWidth) {

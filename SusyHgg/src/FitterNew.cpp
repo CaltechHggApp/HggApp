@@ -13,12 +13,13 @@ const std::vector<TString> Fitter::systematicNames = {"jec","phoE","btag","sigE"
 //const std::vector<TString> Fitter::systematicNames = {}; 
 
 
-Fitter::Fitter(TString inputFileName,TString outputFileName):SusyHggTree(inputFileName) {
+Fitter::Fitter(TString inputFileName,TString outputFileName,bool useHT):SusyHggTree(inputFileName) {
   outputFile = new TFile(outputFileName,"RECREATE");
-
+  setUseHT(useHT);
   buildHistograms();  
 
   for(auto cat: catNames)   setSigEff(cat,3);
+
 }
 
 Fitter::~Fitter() {
@@ -27,11 +28,21 @@ Fitter::~Fitter() {
 
 void Fitter::buildHistograms() {
   for(auto cat: catNames) {
-    SignalRegionHistograms[cat] = new TH2F("data_"+cat+"_SignalRegion","",nXbins-1,xBins,nYbins-1,yBins);
-    SignalRegionHistogramsFineBin[cat] = new TH2F("data_"+cat+"_SignalRegion_FineBin","",250,0,2500,100,0,1);
-    for(auto dir: systematicDir) {
-      for(auto sys: systematicNames) {
-	SignalRegionHistograms[cat+"_"+sys+"_"+dir] = new TH2F("data_"+cat+"_SignalRegion_"+sys+"_"+dir,"",nXbins-1,xBins,nYbins-1,yBins);
+    if(useHT) {
+      SignalRegionHistograms[cat] = new TH2F("data_"+cat+"_SignalRegion","",50,0,2500,12,0,300);
+      SignalRegionHistogramsFineBin[cat] = new TH2F("data_"+cat+"_SignalRegion_FineBin","",500,0,2500,100,0,300);
+      for(auto dir: systematicDir) {
+	for(auto sys: systematicNames) {
+	  SignalRegionHistograms[cat+"_"+sys+"_"+dir] = new TH2F("data_"+cat+"_SignalRegion_"+sys+"_"+dir,"",50,0,2500,12,0,300);
+	}
+      }
+    } else {
+      SignalRegionHistograms[cat] = new TH2F("data_"+cat+"_SignalRegion","",nXbins-1,xBins,nYbins-1,yBins);
+      SignalRegionHistogramsFineBin[cat] = new TH2F("data_"+cat+"_SignalRegion_FineBin","",250,0,2500,100,0,1);
+      for(auto dir: systematicDir) {
+	for(auto sys: systematicNames) {
+	  SignalRegionHistograms[cat+"_"+sys+"_"+dir] = new TH2F("data_"+cat+"_SignalRegion_"+sys+"_"+dir,"",nXbins-1,xBins,nYbins-1,yBins);
+	}
       }
     }
     mgg_dists[cat] = new TH1D(cat+"_mgg_dist","",3000,minMgg,maxMgg);
@@ -41,6 +52,7 @@ void Fitter::buildHistograms() {
 bool Fitter::passBasicSelection() {
   if(!pho1_pass_iso || !pho2_pass_iso) return false;
 
+  //if(ele1_pt>15 || mu1_pt>15) return false;
 
   switch(basicSelection) {
   case kAN239:
@@ -65,7 +77,7 @@ bool Fitter::passBasicSelection() {
   return true;
 }
 
-TString Fitter::getCategory(const TLorentzVector& pho1, const TLorentzVector&pho2,float se1, float se2,float btag,float mbbH,float mbbZ) {
+TString Fitter::getCategory(const TLorentzVector& pho1, const TLorentzVector&pho2,float se1, float se2,float btag,float mbbH,float mbbZ,float r9_1,float r9_2) {
   float ptgg = (pho1+pho2).Pt();
 
   //return catNames[0];
@@ -77,11 +89,14 @@ TString Fitter::getCategory(const TLorentzVector& pho1, const TLorentzVector&pho
 
   //if(btag > 0.244) return catNames[1];
 
+  //if(r9_1<0.94 || r9_2<0.94) return catNames[4];
+
+  
   if(  se1 > ( fabs(pho1.Eta())>1.48 ? 0.024 : 0.015 ) ) return catNames[4]; //pho1 fails se/e cut
   if(  se2 > ( fabs(pho2.Eta())>1.48 ? 0.024 : 0.015 ) ) return catNames[4]; //pho1 fails se/e cut
+  
 
   return catNames[3]; //high res category
-
 
 }
 
@@ -99,12 +114,19 @@ void Fitter::processEntry() {
     float btag = highest_csv;
     float mbbH = mbb_NearH;
     float mbbZ = mbb_NearZ;
-    TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);    
+    TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ,pho1_r9,pho2_r9);    
     float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
 
+    float thisMR = MR;
+    float thisRsq = Rsq;
+    if(useHT) {
+      thisMR = HT;
+      thisRsq = MET;
+    }
+
     if(mgg > 125- sigRegWidth && mgg < 126 + sigRegWidth) {
-      SignalRegionHistograms[cat]->Fill(MR,Rsq,weight);
-      SignalRegionHistogramsFineBin[cat]->Fill(MR,Rsq,weight);
+      SignalRegionHistograms[cat]->Fill(thisMR,thisRsq,weight);
+      SignalRegionHistogramsFineBin[cat]->Fill(thisMR,thisRsq,weight);
     }
 
     
@@ -128,6 +150,10 @@ void Fitter::processEntry() {
  
       float thisMR = MR;
       float thisRsq = Rsq;
+      if(useHT) {
+	thisMR = HT;
+	thisRsq = MET;
+      }
      
       float mass = mgg;
 
@@ -156,12 +182,21 @@ void Fitter::processEntry() {
 	if(dir=="Up") {
 	  thisMR = MR_up;
 	  thisRsq = Rsq_up;
+	  if(useHT) {
+	    thisMR = HT_up;
+	    thisRsq = MET;
+	  }
 	  btag = highest_csv_up; //on the off chance this changes the jet 
 	  mbbH = mbb_NearH_up;
 	  mbbZ = mbb_NearZ_up;
 	}else{
 	  thisMR = MR_down;
 	  thisRsq = Rsq_down;
+	  if(useHT) {
+	    thisMR = HT_down;
+	    thisRsq = MET;
+	  }
+
 	  btag = highest_csv_down; //on the off chance this changes the jet 
 	  mbbH = mbb_NearH_down;
 	  mbbZ = mbb_NearZ_down;
@@ -189,7 +224,7 @@ void Fitter::processEntry() {
       }
 
 
-      TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);
+      TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ,pho1_r9,pho2_r9);
       float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
 
       if(mass > 125- sigRegWidth && mass < 126 + sigRegWidth) {

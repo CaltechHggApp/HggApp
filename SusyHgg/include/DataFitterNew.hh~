@@ -19,7 +19,7 @@ public:
 
 protected:
 
-  void buildSidebandHistograms();
+  virtual void buildSidebandHistograms();
 
   virtual void processEntrySidebands();
 

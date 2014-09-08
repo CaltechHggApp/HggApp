@@ -44,9 +44,9 @@ void MCBackgroundFitter::buildSidebandHistograms() {
       
       float btag = highest_csv;
 
-      if( getCategory(pho1,pho2,se1,se2,btag,mbb_NearH,mbb_NearZ) == cat ) {
+      if( getCategory(pho1,pho2,se1,se2,btag,mbb_NearH,mbb_NearZ,pho1_r9,pho2_r9) == cat ) {
 	if(mgg > 125 - nSigEffSignalRegion*sigmaEffectives[cat] && mgg < 126 + nSigEffSignalRegion*sigmaEffectives[cat] && MR>=150) {
-	  weightMap[cat]++;
+	  weightMap[cat]+=pileupWeight*getSherpaCorrection();
 	}
 	m=mgg;
 	massTree.Fill();
@@ -62,6 +62,7 @@ void MCBackgroundFitter::buildSidebandHistograms() {
 }
 
 void MCBackgroundFitter::Run() {
+  setCorrSherpa(false); //already corrected in input trees
   buildSidebandHistograms();
   Long64_t iEntry=-1;
   while(fChain->GetEntry(++iEntry)) {
@@ -76,8 +77,8 @@ void MCBackgroundFitter::Run() {
     float se2=pho2_sigEoE;
       
     float btag = highest_csv;
-    TString cat = getCategory(pho1,pho2,se1,se2,btag,mbb_NearH,mbb_NearZ);
-    weight=weightMap[cat];
+    TString cat = getCategory(pho1,pho2,se1,se2,btag,mbb_NearH,mbb_NearZ,pho1_r9,pho2_r9);
+    weight=weightMap[cat]*pileupWeight*getSherpaCorrection();
 
     processEntry();
     processEntrySidebands();
@@ -107,4 +108,12 @@ void MCBackgroundFitter::Run() {
 
 void MCBackgroundFitter::fixNorm(TString catName, float norm) {
   normMap[catName] = norm;
+}
+
+float MCBackgroundFitter::getSherpaCorrection() {
+  if(!correctSherpaEnhance) return 1.;
+
+  if(Njets==2) return 1;
+  if(Njets==3) return 1./enhance_3jet;
+  return 1./enhance_4jet;
 }

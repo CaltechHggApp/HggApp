@@ -3,7 +3,7 @@
 #include <cmath>
 #include <iostream>
 
-SMSFitter::SMSFitter(TString inputFileName,TString outputFileName) :Fitter(inputFileName,outputFileName) 
+SMSFitter::SMSFitter(TString inputFileName,TString outputFileName,bool useHT) :Fitter(inputFileName,outputFileName,useHT) 
 {
   isSMS=false;
   getSMSPoints(&sms_points);
@@ -35,9 +35,14 @@ void SMSFitter::getSMSPoints(std::vector<TString>* pts) {
 	pts->push_back(Form("%d_%d",m_l,m_h));
       }         
     }
-#endif
     for(int m_h=125;m_h<276;m_h+=25) {
       for(int m_l=0;m_l<1;m_l+=25){
+	pts->push_back(Form("%d_%d",m_l,m_h));
+      }         
+    }
+#endif
+    for(int m_h=125;m_h<201;m_h+=25) {
+      for(int m_l=0;m_l<m_h-124;m_l+=25){
 	pts->push_back(Form("%d_%d",m_l,m_h));
       }         
     }
@@ -93,13 +98,19 @@ void SMSFitter::processEntry() {
     float mbbH = mbb_NearH;
     float mbbZ = mbb_NearZ;
 
-    TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);
+    TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ,pho1_r9,pho2_r9);
     float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
+    float thisMR = MR;
+    float thisRsq;
+    if(useHT) {
+      thisMR = HT;
+      thisRsq = MET;
+    }
 
     if(mgg > 125 - sigRegWidth && mgg < 126 + sigRegWidth) {
       //std::cout << sms_pt << std::endl;
-      SignalRegionHistograms[sms_pt+"_"+cat]->Fill(MR,Rsq,weight);
-      SignalRegionHistogramsFineBin[sms_pt+"_"+cat]->Fill(MR,Rsq,weight);
+      SignalRegionHistograms[sms_pt+"_"+cat]->Fill(thisMR,thisRsq,weight);
+      SignalRegionHistogramsFineBin[sms_pt+"_"+cat]->Fill(thisMR,thisRsq,weight);
     }
 
     
@@ -123,6 +134,10 @@ void SMSFitter::processEntry() {
  
       float thisMR = MR;
       float thisRsq = Rsq;
+      if(useHT) {
+	thisMR = HT;
+	thisRsq = MET;
+      }
      
       float mass = mgg;
 
@@ -148,12 +163,21 @@ void SMSFitter::processEntry() {
 	if(dir=="Up") {
 	  thisMR = MR_up;
 	  thisRsq = Rsq_up;
+	  if(useHT) {
+	    thisMR = HT_up;
+	    thisRsq = MET;
+	  }
+
 	  btag = highest_csv_up; //on the off chance this changes the jet 
 	  mbbH = mbb_NearH_up;
 	  mbbZ = mbb_NearZ_up;
 	}else{
 	  thisMR = MR_down;
 	  thisRsq = Rsq_down;
+	  if(useHT) {
+	    thisMR = HT_down;
+	    thisRsq = MET;
+	  }
 	  btag = highest_csv_down; //on the off chance this changes the jet 
 	  mbbH = mbb_NearH_down;
 	  mbbZ = mbb_NearZ_down;
@@ -181,7 +205,7 @@ void SMSFitter::processEntry() {
       }
 
 
-      TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);
+      TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ,pho1_r9,pho2_r9);
       float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
 
       if(mass > 125- sigRegWidth && mass < 126 + sigRegWidth) {

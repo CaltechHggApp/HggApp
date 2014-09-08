@@ -58,6 +58,7 @@ void SusyHggSelector::clear() {
   nJ=0;
   MR=0;
   Rsq=0;
+  t1Rsq=0;
 
   nSusyPart=0;
   for(int i=0;i<20;i++) {
@@ -69,6 +70,15 @@ void SusyHggSelector::clear() {
   m23=0;
   m24=0;
   m25=0;
+
+  for(int i=0;i<kMaxJets;i++) {
+    indexJet[i]=-1;
+    ptJet[i]=0;
+    etaJet[i]=999;
+    phiJet[i]=999;
+    energyJet[i]=0;
+    hemJet[i]=0;
+  }
 }
 
 
@@ -79,6 +89,9 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
 
   puWeight=pileupWeight;
   runNum  = runNumber;
+  lumiSec = lumiBlock;
+  evtNum  = evtNumber;
+    
 
     for(int i=0;i<nPho_;i++) {
       auto photon = &(Photons_->at(i));
@@ -260,6 +273,27 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
   selectJets(&selectedJets_up,1);
   selectJets(&selectedJets_down,-1);
 
+  auto calcVars = [](float& HT,float& MHT,float& MHTphi,std::vector<TLorentzVector>& jets,TLorentzVector& pho1, TLorentzVector& pho2) -> void
+    {
+      HT=0;
+      TLorentzVector MHTvec; MHTvec.SetPtEtaPhiM(0.,0.,0.,0.);
+      for(auto jet : jets) {
+	HT+=jet.Pt();
+	MHTvec-=jet;
+      }
+      HT+=pho1.Pt();
+      HT+=pho2.Pt();
+      MHTvec-=pho1;
+      MHTvec-=pho2;
+      
+      MHT = MHTvec.Pt();
+      MHTphi = MHTvec.Phi();
+    };
+
+  calcVars(HT,MHT,MHTphi,selectedJets,pho1_p4,pho2_p4);
+  calcVars(HT_up,MHT_up,MHTphi_up,selectedJets_up,pho1_p4,pho2_p4);
+  calcVars(HT_down,MHT_down,MHTphi_down,selectedJets_down,pho1_p4,pho2_p4);
+
   selectedJets.push_back(gg_p4); //ensure the 'Higgs' vector is in there explicitly
   selectedJets_up.push_back(gg_p4); //ensure the 'Higgs' vector is in there explicitly
   selectedJets_down.push_back(gg_p4); //ensure the 'Higgs' vector is in there explicitly
@@ -269,9 +303,15 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
 
   TVector3 met;
   met.SetPtEtaPhi(pfMet,0.,pfMetPhi);
+  TVector3 t1met;
+  t1met.SetPtEtaPhi(type1PfMet,0.,type1PfMetPhi);
   
   MET = pfMet;
   METphi = pfMetPhi;
+
+  t1MET = type1PfMet;
+  t1METphi = type1PfMetPhi;
+
   nJ = selectedJets.size();
   nJ_up = selectedJets_up.size();
   nJ_down = selectedJets_down.size();
@@ -281,8 +321,9 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
 
   if(selectedJets.size()>=2) {
     TLorentzVector h1(0,0,0,0),h2(0,0,0,0);
+    std::vector<int> hemAssign;
     try{
-      RazorVariables::CombineJets(selectedJets,h1,h2);
+      RazorVariables::CombineJets(selectedJets,h1,h2,&hemAssign);
      }catch(TooManyJets& e) {
        std::cout << "TOO MANY JETS IN EVENT" << std::endl;
        return;
@@ -291,6 +332,25 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
        throw e;
     }
 
+    for(int i=0;i<selectedJets.size();i++) {
+      //fill the jet info
+      indexJet[i] = i;
+      ptJet[i] = selectedJets[i].Pt();
+      etaJet[i] = selectedJets[i].Eta();
+      phiJet[i] = selectedJets[i].Phi();
+      energyJet[i] = selectedJets[i].E();      
+
+      try{
+	corrUpJet[i] = jecReader.getCorrection(ptJet[i],etaJet[i],JECUReader::kUp);
+	corrDownJet[i] = jecReader.getCorrection(ptJet[i],etaJet[i],JECUReader::kDown);
+      }catch(std::runtime_error& e){
+	corrUpJet[i]=0;
+	corrDownJet[i]=0;
+      }
+      hemJet[i] = hemAssign.at(i);
+    }
+
+    hemgg = hemAssign.at(hemAssign.size()-1);
     if(h1.Pt()==0) return;
 
     hem1_pt  = h1.Pt();
@@ -306,9 +366,15 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
     MR = RazorVariables::CalcGammaMRstar(h1,h2);
 
     double MTR = RazorVariables::CalcMTR(h1,h2,met);
+    double t1MTR = RazorVariables::CalcMTR(h1,h2,t1met);
 
     Rsq = MTR/MR;
     Rsq=Rsq*Rsq; //square it!
+
+    t1Rsq = t1MTR/MR;
+    t1Rsq=t1Rsq*t1Rsq; //square it!
+
+    
   }
 
   if(selectedJets_up.size()>=2) {
@@ -338,10 +404,15 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
       MR_up = RazorVariables::CalcGammaMRstar(h1,h2);
 
       double MTR = RazorVariables::CalcMTR(h1,h2,met);
+      double t1MTR = RazorVariables::CalcMTR(h1,h2,t1met);
 
       Rsq_up = MTR/MR_up;
       Rsq_up=Rsq_up*Rsq_up; //square it!
+      
+      t1Rsq_up = t1MTR/MR_up;
+      t1Rsq_up=t1Rsq_up*t1Rsq_up; //square it!
     }else{
+      t1Rsq_up=-1;
       Rsq_up=-1;
       MR_up=-1;
     }
@@ -374,10 +445,12 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
       MR_down = RazorVariables::CalcGammaMRstar(h1,h2);
 
       double MTR = RazorVariables::CalcMTR(h1,h2,met);
+      double t1MTR = RazorVariables::CalcMTR(h1,h2,t1met);
 
-      Rsq_down = MTR/MR_down;
-      Rsq_down=Rsq_down*Rsq_down; //square it!
+      t1Rsq_down = t1MTR/MR_down;
+      t1Rsq_down=t1Rsq_down*t1Rsq_down; //square it!
     }else{
+      t1Rsq_down=-1;
       Rsq_down=-1;
       MR_down=-1;
     }
@@ -435,13 +508,17 @@ void SusyHggSelector::setupOutputTree() {
   outTree = new TTree("SusyHggTree","");
 
   outTree->Branch("run",&runNum,"run/I");
+  outTree->Branch("lumi",&lumiSec,"lumi/I");
+  outTree->Branch("evt",&evtNum,"evt/I");
 
   outTree->Branch("mgg",&mgg,"mgg/F");
   outTree->Branch("ptgg",&ptgg);
   outTree->Branch("etagg",&etagg);
   outTree->Branch("phigg",&phigg);
+  outTree->Branch("hemgg",&hemgg,"hemgg/I");
 
-  outTree->Branch("pho1_pt",&pho1_pt);
+
+  outTree->Branch("pho1_pt",&pho1_pt,"pho1_pt/F");
   outTree->Branch("pho1_eta",&pho1_eta);
   outTree->Branch("pho1_phi",&pho1_phi);
   outTree->Branch("pho1_r9",&pho1_r9);
@@ -449,7 +526,7 @@ void SusyHggSelector::setupOutputTree() {
   outTree->Branch("pho1_energyGen",&pho1_energyGen);
   outTree->Branch("pho1_genMatch",&pho1_genMatch,"pho1_genMatch/B");
 
-  outTree->Branch("pho1_sieie",&pho1_sieie);
+  outTree->Branch("pho1_sieie",&pho1_sieie,"pho1_sieie/F");
   outTree->Branch("pho1_HE",&pho1_HE);
   outTree->Branch("pho1_charged",&pho1_charged);
   outTree->Branch("pho1_neutral",&pho1_neutral);
@@ -459,7 +536,7 @@ void SusyHggSelector::setupOutputTree() {
   outTree->Branch("pho1_pass_iso",&pho1_pass_iso,"pho1_pass_iso/B");
   
   
-  outTree->Branch("pho2_pt",&pho2_pt);
+  outTree->Branch("pho2_pt",&pho2_pt,"pho2_pt/F");
   outTree->Branch("pho2_eta",&pho2_eta);
   outTree->Branch("pho2_phi",&pho2_phi);
   outTree->Branch("pho2_r9",&pho2_r9);
@@ -467,7 +544,7 @@ void SusyHggSelector::setupOutputTree() {
   outTree->Branch("pho2_energyGen",&pho2_energyGen);
   outTree->Branch("pho2_genMatch",&pho2_genMatch,"pho2_genMatch/B");
 
-  outTree->Branch("pho2_sieie",&pho2_sieie);
+  outTree->Branch("pho2_sieie",&pho2_sieie,"pho2_sieie/F");
   outTree->Branch("pho2_HE",&pho2_HE);
   outTree->Branch("pho2_charged",&pho2_charged);
   outTree->Branch("pho2_neutral",&pho2_neutral);
@@ -476,7 +553,7 @@ void SusyHggSelector::setupOutputTree() {
   outTree->Branch("pho2_pass_id",&pho2_pass_id,"pho2_pass_id/B");
   outTree->Branch("pho2_pass_iso",&pho2_pass_iso,"pho2_pass_iso/B");
 
-  outTree->Branch("ele1_pt",&ele1_pt);
+  outTree->Branch("ele1_pt",&ele1_pt,"ele1_pt/F");
   outTree->Branch("ele1_eta",&ele1_eta);
   outTree->Branch("ele1_phi",&ele1_phi);
 
@@ -559,20 +636,47 @@ void SusyHggSelector::setupOutputTree() {
   outTree->Branch("MET",&MET);
   outTree->Branch("METPhi",&METphi);
 
-  outTree->Branch("Njets",&nJ,"nJets/I");
+  outTree->Branch("t1MET",&t1MET);
+  outTree->Branch("t1METPhi",&t1METphi);
+
   outTree->Branch("MR",&MR,"MR/F");
   outTree->Branch("Rsq",&Rsq);
+  outTree->Branch("t1Rsq",&t1Rsq);
 
   outTree->Branch("Njets_up",&nJ_up,"nJets_up/I");
   outTree->Branch("MR_up",&MR_up,"MR_up/F");
   outTree->Branch("Rsq_up",&Rsq_up);
+  outTree->Branch("t1Rsq_up",&t1Rsq_up);
 
   outTree->Branch("Njets_down",&nJ_down,"nJets_down/I");
   outTree->Branch("MR_down",&MR_down,"MR_down/F");
   outTree->Branch("Rsq_down",&Rsq_down);
+  outTree->Branch("t1Rsq_down",&t1Rsq_down);
 
 
   outTree->Branch("pileupWeight",&puWeight);
+
+  outTree->Branch("HT",&HT,"HT/F");
+  outTree->Branch("HT_up",&HT_up,"HT_up/F");
+  outTree->Branch("HT_down",&HT_down,"HT_down/F");
+
+  outTree->Branch("MHT",&MHT,"MHT/F");
+  outTree->Branch("MHT_up",&MHT_up,"MHT_up/F");
+  outTree->Branch("MHT_down",&MHT_down,"MHT_down/F");
+
+  outTree->Branch("MHTphi",&MHTphi,"MHTphi/F");
+  outTree->Branch("MHTphi_up",&MHTphi_up,"MHTphi_up/F");
+  outTree->Branch("MHTphi_down",&MHTphi_down,"MHTphi_down/F");
+
+  outTree->Branch("Njets",&nJ,"Njets/I");
+  outTree->Branch("indexJet",indexJet,"indexJet[Njets]/I");
+  outTree->Branch("ptJet",ptJet,"ptJet[Njets]/F");
+  outTree->Branch("etaJet",etaJet,"etaJet[Njets]/F");
+  outTree->Branch("phiJet",phiJet,"phiJet[Njets]/F");
+  outTree->Branch("energyJet",energyJet,"energyJet[Njets]/F");
+  outTree->Branch("corrUpJet",corrUpJet,"corrUpJet[Njets]/F");
+  outTree->Branch("corrDownJet",corrDownJet,"corrDownJet[Njets]/F");
+  outTree->Branch("hemJet",hemJet,"hemJet[Njets]/I");
 
 
   outTree->Branch("nSusyPart",&nSusyPart,"nSusyPart/I");
@@ -691,9 +795,12 @@ void SusyHggSelector::selectJets(std::vector<TLorentzVector>* selectedJets, int 
     if(jet_p4.Pt() < 10 || fabs(jet_p4.Eta()) >5) continue; //basic detector cuts
 
     float corr = 1;
-    if(correction==-1) corr-= jecReader.getCorrection(jet_p4.Pt(),jet_p4.Eta(),JECUReader::kDown);
-    if(correction==1) corr+= jecReader.getCorrection(jet_p4.Pt(),jet_p4.Eta(),JECUReader::kUp);
-
+    try{
+      if(correction==-1) corr-= jecReader.getCorrection(jet_p4.Pt(),jet_p4.Eta(),JECUReader::kDown);
+      if(correction==1) corr+= jecReader.getCorrection(jet_p4.Pt(),jet_p4.Eta(),JECUReader::kUp);
+    }catch(std::runtime_error& e){
+      corr=1;
+    }
     jet_p4.SetPtEtaPhiM( jet_p4.Pt()*corr, jet_p4.Eta(), jet_p4.Phi(), 0. );
 
     if(jet_p4.Pt() < min_jet_pt) continue;
@@ -755,3 +862,188 @@ void SusyHggSelector::selectJets(std::vector<TLorentzVector>* selectedJets, int 
     *mbb_ptr = (b1+b2).M();
   }
 }
+
+
+/*
+int SusyHggSelector::getptbin_for_btag(float pt){
+  if(pt<30) return 0;
+  else if(pt<40) return 1;
+  else if(pt<50) return 2;
+  else if(pt<60) return 3;
+  else if(pt<70) return 4;
+  else if(pt<80) return 5;
+  else if(pt<100) return 6;
+  else if(pt<120) return 7;
+  else if(pt<160) return 8;
+  else if(pt<210) return 9;
+  else if(pt<260) return 10;
+  else if(pt<320) return 11;
+  else if(pt<400) return 12;
+  else if(pt<500) return 13;
+  else if(pt<600) return 14;
+  else return 15;
+  
+}
+
+int SusyHggSelector::get_eta_bin_jet(float eta){
+  eta = fabs(eta);
+  if(eta<0.9) return 0;
+  else if(eta<1.2) return 1;
+  else if(eta<2.1) return 2;
+  else if(eta<2.4) return 3;
+  else return -1;
+}
+
+void SusyHggSelector::get_SF_btag(const VecbosJet& jet, float &SF, float &SFerr){
+  float SFb_error[100] = {
+    0.0415694,
+    0.023429,
+    0.0261074,
+    0.0239251,
+    0.0232416,
+    0.0197251,
+    0.0217319,
+    0.0198108,
+    0.0193,
+    0.0276144,
+    0.0205839,
+    0.026915,
+    0.0312739,
+    0.0415054,
+    0.0740561,
+  0.0598311 
+  };
+
+  float x = jet.pt; ///the pt of the jet 
+  float eta = fabs(jet.eta); ///abs(eta) 
+
+  if(eta>2.4){
+    std::cout<<"warning SF_btag_eta>2.4 ?? " << eta << std::endl; 
+    exit(1);
+  }
+  
+  if(x<20) x=20; 
+  if(x>800) x= 800;
+
+  //figure out the MC true flavor
+
+  auto matchLambda = [](const VecbosJet& j, std::vector<VecbosGen>* v,float & minDR) {
+    index = -1;
+    for(int i=0;i<v->size();i++) {
+      auto gen = v->at(i);
+      if( fabs(j.pt-gen.pt)/gen.pt > 0.5 && fabs(j.pt-gen.pt)/gen.pt < 2. ){
+	TLorentzVector gp4; gp4.SetPtEtaPhiM(gen.pt,gen.eta,gen.phi,gen.mass);
+	float dr = gp4.DeltaR(j.getP4());
+	if(dr < minDR) {
+	  minDR = dr;
+	  index=i;
+	}
+      }
+    }
+    return index;
+  }
+  
+  bool isLight=false;
+
+  float smallestDR = 10;
+  int index = matchLambda(j,GenOthers,smallestDR);
+  float dr;
+  matchLambda(j,GenElectrons,dr);
+  matchLambda(j,GenMuons,dr);
+  matchLambda(j,GenPhotons,dr);
+  if(dr < smallestDR) { isLight=true; } //don't care what flavor of lepton/photon it is, it can't be a b jet
+  if(index==-1) isLight=true;
+
+  if(!isLight) {
+    int flavor = GenOthers->At(index)->id;
+    if( abs(flavor) != 5 && abs(flavor) !=4) isLight=true;
+  }
+
+  
+
+  if(!isLight){ //for b or c. flavJet[indj] refers to the MC-true flavor of the jet
+    SF  = (0.938887+(0.00017124*x))+(-2.76366e-07*(x*x)); 
+    int ptbin = getptbin_for_btag( jet.pt ); ///--> ptJet[indj] refers to the pt of this jet
+    SFerr = SFb_error[ptbin];
+    if(x>800 || x<20 ) SFerr *= 2;
+    if(abs(flavJet[indj]) == 4 ) SFerr *= 2; 
+  }else{ ///SFlight
+    float max;
+    float min;
+    if(eta<=0.8){
+      SF = ((1.07541+(0.00231827*x))+(-4.74249e-06*(x*x)))+(2.70862e-09*(x*(x*x)));
+      max = ((1.18638+(0.00314148*x))+(-6.68993e-06*(x*x)))+(3.89288e-09*(x*(x*x)));
+      min = ((0.964527+(0.00149055*x))+(-2.78338e-06*(x*x)))+(1.51771e-09*(x*(x*x)));
+    }
+    else if(eta<=1.6){
+      SF = ((1.05613+(0.00114031*x))+(-2.56066e-06*(x*x)))+(1.67792e-09*(x*(x*x)));
+      max = ((1.16624+(0.00151884*x))+(-3.59041e-06*(x*x)))+(2.38681e-09*(x*(x*x)));
+      min = ((0.946051+(0.000759584*x))+(-1.52491e-06*(x*x)))+(9.65822e-10*(x*(x*x)));
+    }  else if(eta>1.6 && eta<=2.4){
+      SF = ((1.05625+(0.000487231*x))+(-2.22792e-06*(x*x)))+(1.70262e-09*(x*(x*x)));
+      max = ((1.15575+(0.000693344*x))+(-3.02661e-06*(x*x)))+(2.39752e-09*(x*(x*x)));
+      min = ((0.956736+(0.000280197*x))+(-1.42739e-06*(x*x)))+(1.0085e-09*(x*(x*x)));
+    }
+    SFerr = fabs(max-SF)>fabs(min-SF)? fabs(max-SF):fabs(min-SF);
+    
+  }
+  
+}
+void SusyHggSelector::computeBTagSF() {
+  float mcTag = 1.;
+  float mcNoTag = 1.;
+  float dataTag = 1.;
+  float dataNoTag = 1.;
+  float errTag = 0.;
+  float errNoTag = 0.;
+
+  float err1 = 0; 
+  float err2 = 0; 
+  flaot err3 = 0; 
+  float err4 = 0; 
+  
+  for(int nj=0; nj<int(indseljet.size());nj++){ //Here we loop over all selected jets ( for our case, pt>30, PF loose ID, etc ) 
+    int indj = indseljet[nj];
+    float csv = btagJet[indj][0]; ////here we get the CSV btag value 
+    int partonFlavor = abs(flavJet[indj]);
+    float eta = fabs(etaJet[indj]);
+    if(eta>2.4) continue;
+    if(partonFlavor==0) continue; //for jets with flavor 0, we ignore. 
+
+    int etabin = get_eta_bin_jet(eta);
+    float eff; 
+    if( partonFlavor==5 ) {
+      ///here one need to provide the pt/eta dependent efficiency for b-tag for "b jet"
+    }else if( partonFlavor==4){
+      ///here one need to provide the pt/eta dependent efficiency for b-tag for "c jet"
+    }else{
+      ///here one need to provide the pt/eta dependent efficiency for b-tag for "light jet"
+    }
+    bool istag = csv > 0.679 && fabs(etaJet[indj])<2.4 ;
+    float SF = 0.;
+    float SFerr = 0.;
+    get_SF_btag(indj,SF,SFerr);
+
+    if(istag){
+      mcTag *= eff; 
+      dataTag *= eff*SF; 
+
+      if(partonFlavor==5 || partonFlavor ==4)  err1 += SFerr/SF; ///correlated for b/c
+      else err3 += SFerr/SF; //correlated for light
+      
+      
+    }else{
+      mcNoTag *= (1- eff); 
+      dataNoTag *= (1- eff*SF); 
+      
+      if(partonFlavor==5 || partonFlavor ==4 ) err2 += (-eff*SFerr)/(1-eff*SF); /// /correlated for b/c
+      else err4 +=  (-eff*SFerr)/(1-eff*SF);  ////correlated for light
+      
+    }
+    
+  }
+  
+  wtbtag = (dataNoTag * dataTag ) / ( mcNoTag * mcTag ); 
+  wtbtagErr = sqrt( pow(err1+err2,2) + pow( err3 + err4,2)) * wtbtag;  ///un-correlated for b/c and light
+}
+*/

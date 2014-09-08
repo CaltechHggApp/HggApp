@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Fri Mar 14 17:46:02 2014 by ROOT version 5.34/07
+// Mon Aug 25 23:52:57 2014 by ROOT version 5.34/07
 // from TTree SusyHggTree/
-// found on file: /home/amott/raid4/SMS-TChiHH_2b2g_2J_mChargino-130to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola__Summer12-START53_V19_FSIM-v1_SUSY.root
+// found on file: /home/amott/raid4/SMS-TChiHH_2b2g_2J_mChargino-130to200_mLSP-1to70_TuneZ2star_8TeV-madgraph-tauola__Summer12_DR53X-PU_S10_START53_V19-v1_v3.root
 //////////////////////////////////////////////////////////
 
 #ifndef SusyHggTreeBase_h
@@ -23,10 +23,13 @@ public :
 
    // Declaration of leaf types
    Int_t           run;
+   Int_t           lumi;
+   Int_t           evt;
    Float_t         mgg;
    Float_t         ptgg;
    Float_t         etagg;
    Float_t         phigg;
+   Int_t           hemgg;
    Float_t         pho1_pt;
    Float_t         pho1_eta;
    Float_t         pho1_phi;
@@ -122,19 +125,41 @@ public :
    Float_t         hem2_M_down;
    Float_t         MET;
    Float_t         METPhi;
-   Int_t           Njets;
+   Float_t         t1MET;
+   Float_t         t1METPhi;
    Float_t         MR;
    Float_t         Rsq;
+   Float_t         t1Rsq;
    Int_t           Njets_up;
    Float_t         MR_up;
    Float_t         Rsq_up;
+   Float_t         t1Rsq_up;
    Int_t           Njets_down;
    Float_t         MR_down;
    Float_t         Rsq_down;
+   Float_t         t1Rsq_down;
    Float_t         pileupWeight;
+   Float_t         HT;
+   Float_t         HT_up;
+   Float_t         HT_down;
+   Float_t         MHT;
+   Float_t         MHT_up;
+   Float_t         MHT_down;
+   Float_t         MHTphi;
+   Float_t         MHTphi_up;
+   Float_t         MHTphi_down;
+   Int_t           Njets;
+   Int_t           indexJet[10];   //[Njets]
+   Float_t         ptJet[10];   //[Njets]
+   Float_t         etaJet[10];   //[Njets]
+   Float_t         phiJet[10];   //[Njets]
+   Float_t         energyJet[10];   //[Njets]
+   Float_t         corrUpJet[10];   //[Njets]
+   Float_t         corrDownJet[10];   //[Njets]
+   Int_t           hemJet[10];   //[Njets]
    Int_t           nSusyPart;
-   Float_t         mSusyPart[6];   //[nSusyPart]
-   Int_t           idSusyPart[6];   //[nSusyPart]
+   Float_t         mSusyPart[4];   //[nSusyPart]
+   Int_t           idSusyPart[4];   //[nSusyPart]
    Float_t         m22;
    Float_t         m23;
    Float_t         m24;
@@ -142,10 +167,13 @@ public :
 
    // List of branches
    TBranch        *b_run;   //!
+   TBranch        *b_lumi;   //!
+   TBranch        *b_evt;   //!
    TBranch        *b_mgg;   //!
    TBranch        *b_ptgg;   //!
    TBranch        *b_etagg;   //!
    TBranch        *b_phigg;   //!
+   TBranch        *b_hemgg;   //!
    TBranch        *b_pho1_pt;   //!
    TBranch        *b_pho1_eta;   //!
    TBranch        *b_pho1_phi;   //!
@@ -241,16 +269,38 @@ public :
    TBranch        *b_hem2_M_down;   //!
    TBranch        *b_MET;   //!
    TBranch        *b_METPhi;   //!
-   TBranch        *b_nJets;   //!
+   TBranch        *b_t1MET;   //!
+   TBranch        *b_t1METPhi;   //!
    TBranch        *b_MR;   //!
    TBranch        *b_Rsq;   //!
+   TBranch        *b_t1Rsq;   //!
    TBranch        *b_nJets_up;   //!
    TBranch        *b_MR_up;   //!
    TBranch        *b_Rsq_up;   //!
+   TBranch        *b_t1Rsq_up;   //!
    TBranch        *b_nJets_down;   //!
    TBranch        *b_MR_down;   //!
    TBranch        *b_Rsq_down;   //!
+   TBranch        *b_t1Rsq_down;   //!
    TBranch        *b_pileupWeight;   //!
+   TBranch        *b_HT;   //!
+   TBranch        *b_HT_up;   //!
+   TBranch        *b_HT_down;   //!
+   TBranch        *b_MHT;   //!
+   TBranch        *b_MHT_up;   //!
+   TBranch        *b_MHT_down;   //!
+   TBranch        *b_MHTphi;   //!
+   TBranch        *b_MHTphi_up;   //!
+   TBranch        *b_MHTphi_down;   //!
+   TBranch        *b_Njets;   //!
+   TBranch        *b_indexJet;   //!
+   TBranch        *b_ptJet;   //!
+   TBranch        *b_etaJet;   //!
+   TBranch        *b_phiJet;   //!
+   TBranch        *b_energyJet;   //!
+   TBranch        *b_corrUpJet;   //!
+   TBranch        *b_corrDownJet;   //!
+   TBranch        *b_hemJet;   //!
    TBranch        *b_nSusyPart;   //!
    TBranch        *b_mSusyPart;   //!
    TBranch        *b_idSusyPart;   //!
@@ -275,6 +325,17 @@ public :
 #ifdef SusyHggTreeBase_cxx
 SusyHggTreeBase::SusyHggTreeBase(TTree *tree) : fChain(0) 
 {
+// if parameter tree is not specified (or zero), connect the file
+// used to generate this class and read the Tree.
+   if (tree == 0) {
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("/home/amott/raid4/SMS-TChiHH_2b2g_2J_mChargino-130to200_mLSP-1to70_TuneZ2star_8TeV-madgraph-tauola__Summer12_DR53X-PU_S10_START53_V19-v1_v3.root");
+      if (!f || !f->IsOpen()) {
+         f = new TFile("/home/amott/raid4/SMS-TChiHH_2b2g_2J_mChargino-130to200_mLSP-1to70_TuneZ2star_8TeV-madgraph-tauola__Summer12_DR53X-PU_S10_START53_V19-v1_v3.root");
+      }
+      f->GetObject("SusyHggTree",tree);
+
+   }
+   Init(tree);
 }
 
 SusyHggTreeBase::~SusyHggTreeBase()
@@ -319,10 +380,13 @@ void SusyHggTreeBase::Init(TTree *tree)
    fChain->SetMakeClass(1);
 
    fChain->SetBranchAddress("run", &run, &b_run);
+   fChain->SetBranchAddress("lumi", &lumi, &b_lumi);
+   fChain->SetBranchAddress("evt", &evt, &b_evt);
    fChain->SetBranchAddress("mgg", &mgg, &b_mgg);
    fChain->SetBranchAddress("ptgg", &ptgg, &b_ptgg);
    fChain->SetBranchAddress("etagg", &etagg, &b_etagg);
    fChain->SetBranchAddress("phigg", &phigg, &b_phigg);
+   fChain->SetBranchAddress("hemgg", &hemgg, &b_hemgg);
    fChain->SetBranchAddress("pho1_pt", &pho1_pt, &b_pho1_pt);
    fChain->SetBranchAddress("pho1_eta", &pho1_eta, &b_pho1_eta);
    fChain->SetBranchAddress("pho1_phi", &pho1_phi, &b_pho1_phi);
@@ -418,16 +482,44 @@ void SusyHggTreeBase::Init(TTree *tree)
    fChain->SetBranchAddress("hem2_M_down", &hem2_M_down, &b_hem2_M_down);
    fChain->SetBranchAddress("MET", &MET, &b_MET);
    fChain->SetBranchAddress("METPhi", &METPhi, &b_METPhi);
-   fChain->SetBranchAddress("Njets", &Njets, &b_nJets);
+   fChain->SetBranchAddress("t1MET", &t1MET, &b_t1MET);
+   fChain->SetBranchAddress("t1METPhi", &t1METPhi, &b_t1METPhi);
    fChain->SetBranchAddress("MR", &MR, &b_MR);
    fChain->SetBranchAddress("Rsq", &Rsq, &b_Rsq);
+   fChain->SetBranchAddress("t1Rsq", &t1Rsq, &b_t1Rsq);
+   //fChain->SetBranchAddress("t1Rsq", &Rsq, &b_Rsq);
+   //fChain->SetBranchAddress("Rsq", &t1Rsq, &b_t1Rsq);
    fChain->SetBranchAddress("Njets_up", &Njets_up, &b_nJets_up);
    fChain->SetBranchAddress("MR_up", &MR_up, &b_MR_up);
    fChain->SetBranchAddress("Rsq_up", &Rsq_up, &b_Rsq_up);
+   fChain->SetBranchAddress("t1Rsq_up", &t1Rsq_up, &b_t1Rsq_up);
+   //fChain->SetBranchAddress("t1Rsq_up", &Rsq_up, &b_Rsq_up);
+   //fChain->SetBranchAddress("Rsq_up", &t1Rsq_up, &b_t1Rsq_up);
    fChain->SetBranchAddress("Njets_down", &Njets_down, &b_nJets_down);
    fChain->SetBranchAddress("MR_down", &MR_down, &b_MR_down);
    fChain->SetBranchAddress("Rsq_down", &Rsq_down, &b_Rsq_down);
+   fChain->SetBranchAddress("t1Rsq_down", &t1Rsq_down, &b_t1Rsq_down);
+   //fChain->SetBranchAddress("t1Rsq_down", &Rsq_down, &b_Rsq_down);
+   //fChain->SetBranchAddress("Rsq_down", &t1Rsq_down, &b_t1Rsq_down);
    fChain->SetBranchAddress("pileupWeight", &pileupWeight, &b_pileupWeight);
+   fChain->SetBranchAddress("HT", &HT, &b_HT);
+   fChain->SetBranchAddress("HT_up", &HT_up, &b_HT_up);
+   fChain->SetBranchAddress("HT_down", &HT_down, &b_HT_down);
+   fChain->SetBranchAddress("MHT", &MHT, &b_MHT);
+   fChain->SetBranchAddress("MHT_up", &MHT_up, &b_MHT_up);
+   fChain->SetBranchAddress("MHT_down", &MHT_down, &b_MHT_down);
+   fChain->SetBranchAddress("MHTphi", &MHTphi, &b_MHTphi);
+   fChain->SetBranchAddress("MHTphi_up", &MHTphi_up, &b_MHTphi_up);
+   fChain->SetBranchAddress("MHTphi_down", &MHTphi_down, &b_MHTphi_down);
+   fChain->SetBranchAddress("Njets", &Njets, &b_Njets);
+   fChain->SetBranchAddress("indexJet", indexJet, &b_indexJet);
+   fChain->SetBranchAddress("ptJet", ptJet, &b_ptJet);
+   fChain->SetBranchAddress("etaJet", etaJet, &b_etaJet);
+   fChain->SetBranchAddress("phiJet", phiJet, &b_phiJet);
+   fChain->SetBranchAddress("energyJet", energyJet, &b_energyJet);
+   fChain->SetBranchAddress("corrUpJet", corrUpJet, &b_corrUpJet);
+   fChain->SetBranchAddress("corrDownJet", corrDownJet, &b_corrDownJet);
+   fChain->SetBranchAddress("hemJet", hemJet, &b_hemJet);
    fChain->SetBranchAddress("nSusyPart", &nSusyPart, &b_nSusyPart);
    fChain->SetBranchAddress("mSusyPart", mSusyPart, &b_mSusyPart);
    fChain->SetBranchAddress("idSusyPart", idSusyPart, &b_idSusyPart);

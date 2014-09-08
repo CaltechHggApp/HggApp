@@ -7,7 +7,7 @@
 
 class DataFitter : public Fitter {
 public:
-  DataFitter(TString inputFileName, TString outputFileName): Fitter(inputFileName,outputFileName) {
+  DataFitter(TString inputFileName, TString outputFileName,bool useHT=false): Fitter(inputFileName,outputFileName,useHT) {
     isSMS=false;
   }
 

@@ -35,9 +35,14 @@ void SMSFitter::getSMSPoints(std::vector<TString>* pts) {
 	pts->push_back(Form("%d_%d",m_l,m_h));
       }         
     }
-#endif
     for(int m_h=125;m_h<276;m_h+=25) {
       for(int m_l=0;m_l<1;m_l+=25){
+	pts->push_back(Form("%d_%d",m_l,m_h));
+      }         
+    }
+#endif
+    for(int m_h=125;m_h<201;m_h+=25) {
+      for(int m_l=0;m_l<m_h-124;m_l+=25){
 	pts->push_back(Form("%d_%d",m_l,m_h));
       }         
     }
@@ -72,7 +77,7 @@ void SMSFitter::buildHistograms() {
 	  SignalRegionHistograms[sms_pt+"_"+cat+"_"+sys+"_"+dir] = new TH2F("data_"+sms_pt+"_"+cat+"_SignalRegion_"+sys+"_"+dir,"",nXbins-1,xBins,nYbins-1,yBins);
 	}
       }
-      mgg_dists[sms_pt+"_"+cat] = new TH1D(sms_pt+"_"+cat+"_mgg_dist","",3000,110,140);
+      mgg_dists[sms_pt+"_"+cat] = new TH1D(sms_pt+"_"+cat+"_mgg_dist","",3000,minMgg,maxMgg);
     }
   }
 }
@@ -93,13 +98,15 @@ void SMSFitter::processEntry() {
     float mbbH = mbb_NearH;
     float mbbZ = mbb_NearZ;
 
-    TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);
+    TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ,pho1_r9,pho2_r9);
     float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
+    float thisMR = MR;
+    float thisRsq;
 
     if(mgg > 125 - sigRegWidth && mgg < 126 + sigRegWidth) {
       //std::cout << sms_pt << std::endl;
-      SignalRegionHistograms[sms_pt+"_"+cat]->Fill(MR,Rsq,weight);
-      SignalRegionHistogramsFineBin[sms_pt+"_"+cat]->Fill(MR,Rsq,weight);
+      SignalRegionHistograms[sms_pt+"_"+cat]->Fill(thisMR,thisRsq,weight);
+      SignalRegionHistogramsFineBin[sms_pt+"_"+cat]->Fill(thisMR,thisRsq,weight);
     }
 
     
@@ -181,7 +188,7 @@ void SMSFitter::processEntry() {
       }
 
 
-      TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ);
+      TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ,pho1_r9,pho2_r9);
       float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
 
       if(mass > 125- sigRegWidth && mass < 126 + sigRegWidth) {

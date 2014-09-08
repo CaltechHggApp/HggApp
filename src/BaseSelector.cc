@@ -186,6 +186,12 @@ void BaseSelector::setBranchAddresses(){
   fChain->SetBranchAddress("nGenPho",&nGenPho);
   fChain->SetBranchAddress("GenPhotons",&GenPhotons);
   
+  fChain->SetBranchAddress("nGenEle",&nGenEle);
+  fChain->SetBranchAddress("GenElectrons",&GenElectrons);
+  
+  fChain->SetBranchAddress("nGenMu",&nGenMu);
+  fChain->SetBranchAddress("GenMuons",&GenMuons);
+  
   fChain->SetBranchAddress("nGenOthers",&nGenOthers);
   fChain->SetBranchAddress("GenOthers",&GenOthers);
   
@@ -193,6 +199,9 @@ void BaseSelector::setBranchAddresses(){
   
   fChain->SetBranchAddress("PFMET",&pfMet);
   fChain->SetBranchAddress("PFMETPhi",&pfMetPhi);
+
+  fChain->SetBranchAddress("type1PFMET",&type1PfMet);
+  fChain->SetBranchAddress("type1PFMETPhi",&type1PfMetPhi);
 
   vector<string>::const_iterator trigIt;
   int i=0;

@@ -51,11 +51,15 @@ RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool 
   scale.val = NBkg.getVal()*sig_int->getVal()/N_sideband;
   scale.error = scale.val*sqrt( 1/N_sideband + pow(sig_int->getPropagatedError(*res)/sig_int->getVal(),2) + 1/NBkg.getVal() );
 
+  RooRealVar scaleFactor("scaleFactor","",scale.val);
+  scaleFactor.setError(scale.error);
+
   if(ws) {
     ws->import(*pdf);
     ws->import(rdata);
     ws->import(*res);
     ws->import(*sig_int);
+    ws->import(scaleFactor);
   }else{
     delete res;
     delete sig_int;
@@ -65,17 +69,21 @@ RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool 
 
 void DataFitter::buildSidebandHistograms() {
   for(auto cat: catNames) {
-    SidebandRegionHistograms[cat] = new TH2F("data_"+cat+"_SidebandRegion","",nXbins-1,xBins,nYbins-1,yBins);
-    SidebandRegionHistogramsFineBin[cat] = new TH2F("data_"+cat+"_SidebandRegion_FineBin","",250,0,2500,100,0,1);
-
-    SidebandRegionHistograms[cat+"_fit_Up"] = new TH2F("data_"+cat+"_SidebandRegion_fitUp","",nXbins-1,xBins,nYbins-1,yBins);
-
-    SidebandRegionHistograms[cat+"_fit_Down"] = new TH2F("data_"+cat+"_SidebandRegion_fitDown","",nXbins-1,xBins,nYbins-1,yBins);
-
-    SidebandRegionHistograms[cat+"_bkgShape_Up"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeUp","",nXbins-1,xBins,nYbins-1,yBins);
-
-    SidebandRegionHistograms[cat+"_bkgShape_Down"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeDown","",nXbins-1,xBins,nYbins-1,yBins);
-
+    if(useHT) {
+      SidebandRegionHistograms[cat] = new TH2F("data_"+cat+"_SidebandRegion","",50,0,2500,12,0,300);
+      SidebandRegionHistogramsFineBin[cat] = new TH2F("data_"+cat+"_SidebandRegion_FineBin","",500,0,2500,100,0,300);
+      SidebandRegionHistograms[cat+"_fit_Up"] = new TH2F("data_"+cat+"_SidebandRegion_fitUp","",50,0,2500,12,0,300);
+      SidebandRegionHistograms[cat+"_fit_Down"] = new TH2F("data_"+cat+"_SidebandRegion_fitDown","",50,0,2500,12,0,300);
+      SidebandRegionHistograms[cat+"_bkgShape_Up"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeUp","",50,0,2500,12,0,300);
+      SidebandRegionHistograms[cat+"_bkgShape_Down"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeDown","",50,0,2500,12,0,300);
+    }else{
+      SidebandRegionHistograms[cat] = new TH2F("data_"+cat+"_SidebandRegion","",nXbins-1,xBins,nYbins-1,yBins);
+      SidebandRegionHistogramsFineBin[cat] = new TH2F("data_"+cat+"_SidebandRegion_FineBin","",250,0,2500,100,0,1);
+      SidebandRegionHistograms[cat+"_fit_Up"] = new TH2F("data_"+cat+"_SidebandRegion_fitUp","",nXbins-1,xBins,nYbins-1,yBins);
+      SidebandRegionHistograms[cat+"_fit_Down"] = new TH2F("data_"+cat+"_SidebandRegion_fitDown","",nXbins-1,xBins,nYbins-1,yBins);
+      SidebandRegionHistograms[cat+"_bkgShape_Up"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeUp","",nXbins-1,xBins,nYbins-1,yBins);
+      SidebandRegionHistograms[cat+"_bkgShape_Down"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeDown","",nXbins-1,xBins,nYbins-1,yBins);
+    }
 
     TTree massTree("massTree","");
     float m;
@@ -94,7 +102,7 @@ void DataFitter::buildSidebandHistograms() {
       
       float btag = highest_csv;
 
-      if( getCategory(pho1,pho2,se1,se2,btag,mbb_NearH,mbb_NearZ) == cat ) {
+      if( getCategory(pho1,pho2,se1,se2,btag,mbb_NearH,mbb_NearZ,pho1_r9,pho2_r9) == cat ) {
 	m=mgg;
 	massTree.Fill();
       }
@@ -151,20 +159,27 @@ void DataFitter::processEntrySidebands() {
     float se2=pho2_sigEoE;
     
     float btag = highest_csv;
-    TString cat = getCategory(pho1,pho2,se1,se2,btag,mbb_NearH,mbb_NearZ);
+    TString cat = getCategory(pho1,pho2,se1,se2,btag,mbb_NearH,mbb_NearZ,pho1_r9,pho2_r9);
     float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
 
+    float thisMR = MR;
+    float thisRsq = Rsq;
+    if(useHT) {
+      thisMR = HT;
+      thisRsq = MET;
+    }
+
     if((mgg>minMgg && mgg<120) || (mgg>131 && mgg<maxMgg)){
-      SidebandRegionHistograms[cat]->Fill(MR,Rsq,scales[cat].val*weight);
-      SidebandRegionHistograms[cat+"_fit_Up"]->Fill(MR,Rsq,(scales[cat].val+scales[cat].error)*weight);
-      SidebandRegionHistograms[cat+"_fit_Down"]->Fill(MR,Rsq,(scales[cat].val-scales[cat].error)*weight);
-      SidebandRegionHistogramsFineBin[cat]->Fill(MR,Rsq,scales[cat].val*weight);
+      SidebandRegionHistograms[cat]->Fill(thisMR,thisRsq,scales[cat].val*weight);
+      SidebandRegionHistograms[cat+"_fit_Up"]->Fill(thisMR,thisRsq,(scales[cat].val+scales[cat].error)*weight);
+      SidebandRegionHistograms[cat+"_fit_Down"]->Fill(thisMR,thisRsq,(scales[cat].val-scales[cat].error)*weight);
+      SidebandRegionHistogramsFineBin[cat]->Fill(thisMR,thisRsq,scales[cat].val*weight);
     }
     if(mgg > 131 && mgg < maxMgg) {
-      SidebandRegionHistograms[cat+"_bkgShape_Up"]->Fill(MR,Rsq,scales[cat].val*weight);
+      SidebandRegionHistograms[cat+"_bkgShape_Up"]->Fill(thisMR,thisRsq,scales[cat].val*weight);
     }
     if(mgg > minMgg && mgg < 120) {
-      SidebandRegionHistograms[cat+"_bkgShape_Down"]->Fill(MR,Rsq,scales[cat].val*weight);
+      SidebandRegionHistograms[cat+"_bkgShape_Down"]->Fill(thisMR,thisRsq,scales[cat].val*weight);
     }
 }
 

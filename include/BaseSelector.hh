@@ -140,11 +140,20 @@ protected:
   int nGenPho;
   std::vector<VecbosGen> *GenPhotons=0;
 
+  int nGenEle;
+  std::vector<VecbosGen> *GenElectrons=0;
+
+  int nGenMu;
+  std::vector<VecbosGen> *GenMuons=0;
+
   int nGenOthers;
   std::vector<VecbosGen> *GenOthers=0;
 
   float pfMet;
   float pfMetPhi;
+
+  float type1PfMet;
+  float type1PfMetPhi;
 
   float inPU;
 

@@ -110,7 +110,7 @@ void CombinePrep::makeOnePoint(TString smsName, TString smsPoint) {
 
   dataCardFile << "QCDScale_ggH\tlnN\t\t\t-\t\t-";
   for(auto sm = smHiggsFiles.begin(); sm!= smHiggsFiles.end(); sm++) {
-    if( sm->first == "ggH") dataCardFile << "\t\t0.918/1.076";
+    if( sm->first == "ggH" || sm->first=="ttH") dataCardFile << "\t\t0.918/1.076";
     else dataCardFile << "\t\t-";
   }
   dataCardFile << "\n";
@@ -131,7 +131,7 @@ void CombinePrep::makeOnePoint(TString smsName, TString smsPoint) {
 
   dataCardFile << "pdf_ggH\tlnN\t\t\t-\t\t-";
   for(auto sm = smHiggsFiles.begin(); sm!= smHiggsFiles.end(); sm++) {
-    if( sm->first == "ggH") dataCardFile << "\t\t0.930/1.076";
+    if( sm->first == "ggH" || sm->first=="ttH") dataCardFile << "\t\t0.930/1.076";
     else dataCardFile << "\t\t-";
   }
   dataCardFile << "\n";

@@ -24,7 +24,7 @@ class RazorVariables {
 public:
   RazorVariables(){}
 
-  static void CombineJets(const std::vector<TLorentzVector>& jets, TLorentzVector& hem1, TLorentzVector& hem2) throw(TooManyJets,TooFewJets);
+  static void CombineJets(const std::vector<TLorentzVector>& jets, TLorentzVector& hem1, TLorentzVector& hem2,std::vector<int>* hemAssignment=0) throw(TooManyJets,TooFewJets);
   static double CalcGammaMRstar(const TLorentzVector& hem1, const TLorentzVector& hem2) throw();
   static double CalcMTR(const TLorentzVector&hem1, const TLorentzVector&hem2,const TVector3& met) throw();
 };

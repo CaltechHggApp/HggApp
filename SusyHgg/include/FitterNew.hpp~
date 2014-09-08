@@ -45,12 +45,15 @@ public:
     {"gg_H_125",19.27},{"wz_H_125",0.7046},{"vbf_H_125",1.578},{"sms",0.3}
   };
 
+  enum kSelectionSet {kLoose, kAN239, kHighPt};
+
+  void setSelection(kSelectionSet set) { basicSelection = set; }
+
   void Run();
 
   bool passBasicSelection(); //!< event passes the basic event selection
 
-
-  static TString getCategory(const TLorentzVector& pho1, const TLorentzVector&pho2,float se1, float se2,float btag,float mbbH, float mbbZ); //!< get the category for this event
+  static TString getCategory(const TLorentzVector& pho1, const TLorentzVector&pho2,float se1, float se2,float btag,float mbbH, float mbbZ,float r9_1,float r9_2); //!< get the category for this event
 
   
   void setSigEff(TString cat, float se) { sigmaEffectives[cat] = se; }
@@ -75,6 +78,8 @@ protected:
 
   bool isSMS=true;
 
+  kSelectionSet basicSelection = kLoose;
+
   float hggSigStrength = 1.11;
 
   float lumi = 1;
@@ -96,6 +101,8 @@ protected:
   virtual void buildHistograms();
   std::map<TString, TH2F*> SignalRegionHistograms;
   std::map<TString, TH2F*> SignalRegionHistogramsFineBin;
+  std::map<TString, TH2F*> SignalRegionHistogramsHTMET;
+  std::map<TString, TH2F*> SignalRegionHistogramsFineBinHTMET;
   std::map<TString, TH1D*> mgg_dists;
   
   //sigma effectives per category

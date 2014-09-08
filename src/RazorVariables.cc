@@ -1,7 +1,7 @@
 #include "RazorVariables.hh"
 
 
-void RazorVariables::CombineJets(const std::vector<TLorentzVector>& jets,TLorentzVector& hem1, TLorentzVector &hem2) throw(TooManyJets,TooFewJets){
+void RazorVariables::CombineJets(const std::vector<TLorentzVector>& jets,TLorentzVector& hem1, TLorentzVector &hem2,std::vector<int>* hemAssignment) throw(TooManyJets,TooFewJets){
   hem1.SetPtEtaPhiM(0.,0.,0.,0.);
   hem2.SetPtEtaPhiM(0.,0.,0.,0.);
   if(jets.size() > 30) {
@@ -10,6 +10,7 @@ void RazorVariables::CombineJets(const std::vector<TLorentzVector>& jets,TLorent
   if(jets.size() < 2 ) throw new TooFewJets;
 
   double M_min=9999999999999.;
+  int bestAssign=0;
   for(int icount=0; icount < pow(2,jets.size()); icount++) { //we will treat icount as a binary array with 0 indicating the jet
     TLorentzVector h1_temp,h2_temp;
     //should be in hem1 and 1 indicating it should be in hem2
@@ -21,6 +22,14 @@ void RazorVariables::CombineJets(const std::vector<TLorentzVector>& jets,TLorent
       M_min = h1_temp.M2()+h2_temp.M2();
       hem1 = h1_temp;
       hem2 = h2_temp;
+      bestAssign=icount;
+    }
+  }
+
+  if(hemAssignment) {
+    for(int iJet=0;iJet<jets.size();iJet++) {
+      if( (bestAssign>>iJet)&1 ) hemAssignment->push_back(2);
+      else hemAssignment->push_back(1);
     }
   }
 }

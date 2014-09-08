@@ -42,12 +42,27 @@ int main(int argc,char** argv) {
   a.addLongOption("nSigEffs",ArgParser::reqArg,"# of signma effectives for the signal region in each box");
   a.addLongOption("UseVariableBinning",ArgParser::noArg,"use different binning in each box depending on statistics");
 
+  a.addLongOption("AN239",ArgParser::noArg,"use AN13/239-like photon selection");
+  a.addLongOption("highPt",ArgParser::noArg,"use 40/25 photon pT cuts");
+
   string ret;
   if(a.process(ret) !=0){
     cout << "Invalid Options:  " << ret <<endl;
     a.printOptions(argv[0]);
     return 0;
   }
+
+  bool AN239 = a.longFlagPres("AN239");
+  bool highPt = a.longFlagPres("highPt");
+
+  if(AN239 && highPt) {
+    std::cout << "cannot specify both --AN239 and --highPt" << std::endl;
+    return -1;
+  }
+
+  Fitter::kSelectionSet selection = Fitter::kLoose;
+  if(AN239)  selection = Fitter::kAN239;
+  if(highPt) selection = Fitter::kHighPt;
 
   string cfgFilePath = a.getArgument("ConfigFile");
   string outputFolder = a.getArgument("OutputFolder");
@@ -98,6 +113,7 @@ int main(int argc,char** argv) {
       fitter.setNTotal( atoi(strN.c_str()) );
       fitter.setLumi( lumi );
       fitter.setNSigEffs(nSigEffs);
+      fitter.setSelection(selection);
 
       fitter.Run();
     }
@@ -143,12 +159,29 @@ int main(int argc,char** argv) {
     }
     datafitter->setNSigEffs(nSigEffs);
     if(isMCData) {
-      datafitter->fixNorm("HighPt",223.39);
-      datafitter->fixNorm("Hbb",2.4);
-      datafitter->fixNorm("Zbb",2.3);
-      datafitter->fixNorm("HighRes",493.9);
-      datafitter->fixNorm("LowRes",757.5);
+      if(AN239) {
+	datafitter->fixNorm("HighPt",223.39);
+	datafitter->fixNorm("Hbb",2.4);
+	datafitter->fixNorm("Zbb",2.3);
+	datafitter->fixNorm("HighRes",493.9);
+	datafitter->fixNorm("LowRes",757.5);
+      } else if(highPt) {
+	datafitter->fixNorm("HighPt",654.679);
+	datafitter->fixNorm("Hbb",6.68);
+	datafitter->fixNorm("Zbb",6.55);
+	datafitter->fixNorm("HighRes",1472.3);
+	datafitter->fixNorm("LowRes",2841.8);
+      } else {
+	datafitter->fixNorm("HighPt",696.0);
+	datafitter->fixNorm("Hbb",7.67);
+	datafitter->fixNorm("Zbb",7.64);
+	datafitter->fixNorm("HighRes",1553.8);
+	datafitter->fixNorm("LowRes",3258.1);
+      }
     }
+
+    datafitter->setSelection(selection);
+
     datafitter->Run();
     delete datafitter;
   }
@@ -166,6 +199,8 @@ int main(int argc,char** argv) {
       smsFitter.setNEntriesFile( normPath );
       smsFitter.setNSigEffs(nSigEffs);
 
+      smsFitter.setSelection(selection);
+
       smsFitter.Run();
     }
     combine.addSMSFilePath(sms_name,outputFolder+"/"+sms_name+".root");
@@ -178,16 +213,40 @@ int main(int argc,char** argv) {
   combine.setUseVarBinning( a.longFlagPres("UseVariableBinning") );
 
   if(!isMCData) {
-    std::vector<int> HighPt_bins = {23,16,8,3,1};
-    combine.defineExternalBinning("HighPt", HighPt_bins);
-    std::vector<int> Hbb_bins = {23,4,1};
-    combine.defineExternalBinning("Hbb", Hbb_bins);
-    std::vector<int> Zbb_bins = {23,3,1};
-    combine.defineExternalBinning("Zbb", Zbb_bins);
-    std::vector<int> HighRes_bins = {23,14,5,2,1};
-    combine.defineExternalBinning("HighRes", HighRes_bins);
-    std::vector<int> LowRes_bins = {23,14,6,3,1};
-    combine.defineExternalBinning("LowRes", LowRes_bins);
+    if(AN239) {
+      std::vector<int> HighPt_bins = {23,16,8,3,1};
+      combine.defineExternalBinning("HighPt", HighPt_bins);
+      std::vector<int> Hbb_bins = {23,4,1};
+      combine.defineExternalBinning("Hbb", Hbb_bins);
+      std::vector<int> Zbb_bins = {23,3,1};
+      combine.defineExternalBinning("Zbb", Zbb_bins);
+      std::vector<int> HighRes_bins = {23,14,5,2,1};
+      combine.defineExternalBinning("HighRes", HighRes_bins);
+      std::vector<int> LowRes_bins = {23,14,6,3,1};
+      combine.defineExternalBinning("LowRes", LowRes_bins);
+    } else if(highPt) {
+      std::vector<int> HighPt_bins = {23,19,8,4,2,1};
+      combine.defineExternalBinning("HighPt", HighPt_bins);
+      std::vector<int> Hbb_bins = {23,8,1};
+      combine.defineExternalBinning("Hbb", Hbb_bins);
+      std::vector<int> Zbb_bins = {23,8,1};
+      combine.defineExternalBinning("Zbb", Zbb_bins);
+      std::vector<int> HighRes_bins = {23,17,7,3,1};
+      combine.defineExternalBinning("HighRes", HighRes_bins);
+      std::vector<int> LowRes_bins = {23,17,8,4,2,1};
+      combine.defineExternalBinning("LowRes", LowRes_bins);
+    } else {
+      std::vector<int> HighPt_bins = {23,19,8,4,2,1};
+      combine.defineExternalBinning("HighPt", HighPt_bins);
+      std::vector<int> Hbb_bins = {23,9,1};
+      combine.defineExternalBinning("Hbb", Hbb_bins);
+      std::vector<int> Zbb_bins = {23,9,1};
+      combine.defineExternalBinning("Zbb", Zbb_bins);
+      std::vector<int> HighRes_bins = {23,17,7,3,1};
+      combine.defineExternalBinning("HighRes", HighRes_bins);
+      std::vector<int> LowRes_bins = {23,17,8,4,2,1};
+      combine.defineExternalBinning("LowRes", LowRes_bins);
+    }
   }
 
   combine.Make();

@@ -51,11 +51,15 @@ RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool 
   scale.val = NBkg.getVal()*sig_int->getVal()/N_sideband;
   scale.error = scale.val*sqrt( 1/N_sideband + pow(sig_int->getPropagatedError(*res)/sig_int->getVal(),2) + 1/NBkg.getVal() );
 
+  RooRealVar scaleFactor("scaleFactor","",scale.val);
+  scaleFactor.setError(scale.error);
+
   if(ws) {
     ws->import(*pdf);
     ws->import(rdata);
     ws->import(*res);
     ws->import(*sig_int);
+    ws->import(scaleFactor);
   }else{
     delete res;
     delete sig_int;
@@ -94,7 +98,7 @@ void DataFitter::buildSidebandHistograms() {
       
       float btag = highest_csv;
 
-      if( getCategory(pho1,pho2,se1,se2,btag,mbb_NearH,mbb_NearZ) == cat ) {
+      if( getCategory(pho1,pho2,se1,se2,btag,mbb_NearH,mbb_NearZ,pho1_r9,pho2_r9) == cat ) {
 	m=mgg;
 	massTree.Fill();
       }
@@ -104,12 +108,6 @@ void DataFitter::buildSidebandHistograms() {
     RooWorkspace *ws = new RooWorkspace(cat+"_mgg_workspace","");
     scales[cat] = doFitGetScale(&massTree,nSigEffSignalRegion*sigmaEffectives[cat],ws,(cat=="HighPt" ? false:true) );
 
-    if(fixScales) {
-      assert( normMap.find(cat) != normMap.end() && "scale not set for category");
-      float N_sideband = ws->data("data")->sumEntries(Form("(mgg>%0.2f && mgg <120) || (mgg>131 && mgg<%0.2f)",minMgg,maxMgg));
-      scales[cat].val = normMap[cat]/N_sideband;
-      scales[cat].error = scales[cat].val * sqrt(1/normMap[cat]+1/N_sideband);
-    }
     mggFitWorkspaces.push_back(ws);
   }
 }
@@ -132,12 +130,6 @@ void DataFitter::Run() {
   }
   outputFile->cd();
   for(auto hist: SignalRegionHistograms) {
-    if(fixScales) {
-      TString cat(hist.first);
-      int uPos = cat.First("_");
-      if(uPos!=-1) cat.Remove(uPos);      
-      hist.second->Scale(normMap[cat]/hist.second->Integral());
-    }
     hist.second->Write();
   }
   for(auto hist: SignalRegionHistogramsFineBin) hist.second->Write();
@@ -163,20 +155,27 @@ void DataFitter::processEntrySidebands() {
     float se2=pho2_sigEoE;
     
     float btag = highest_csv;
-    TString cat = getCategory(pho1,pho2,se1,se2,btag,mbb_NearH,mbb_NearZ);
+    TString cat = getCategory(pho1,pho2,se1,se2,btag,mbb_NearH,mbb_NearZ,pho1_r9,pho2_r9);
     float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
 
+    float thisMR = MR;
+    float thisRsq = Rsq;
+    if(useHT) {
+      thisMR = HT;
+      thisRsq = MET;
+    }
+
     if((mgg>minMgg && mgg<120) || (mgg>131 && mgg<maxMgg)){
-      SidebandRegionHistograms[cat]->Fill(MR,Rsq,scales[cat].val*weight);
-      SidebandRegionHistograms[cat+"_fit_Up"]->Fill(MR,Rsq,(scales[cat].val+scales[cat].error)*weight);
-      SidebandRegionHistograms[cat+"_fit_Down"]->Fill(MR,Rsq,(scales[cat].val-scales[cat].error)*weight);
-      SidebandRegionHistogramsFineBin[cat]->Fill(MR,Rsq,scales[cat].val*weight);
+      SidebandRegionHistograms[cat]->Fill(thisMR,thisRsq,scales[cat].val*weight);
+      SidebandRegionHistograms[cat+"_fit_Up"]->Fill(thisMR,thisRsq,(scales[cat].val+scales[cat].error)*weight);
+      SidebandRegionHistograms[cat+"_fit_Down"]->Fill(thisMR,thisRsq,(scales[cat].val-scales[cat].error)*weight);
+      SidebandRegionHistogramsFineBin[cat]->Fill(thisMR,thisRsq,scales[cat].val*weight);
     }
     if(mgg > 131 && mgg < maxMgg) {
-      SidebandRegionHistograms[cat+"_bkgShape_Up"]->Fill(MR,Rsq,scales[cat].val*weight);
+      SidebandRegionHistograms[cat+"_bkgShape_Up"]->Fill(thisMR,thisRsq,scales[cat].val*weight);
     }
     if(mgg > minMgg && mgg < 120) {
-      SidebandRegionHistograms[cat+"_bkgShape_Down"]->Fill(MR,Rsq,scales[cat].val*weight);
+      SidebandRegionHistograms[cat+"_bkgShape_Down"]->Fill(thisMR,thisRsq,scales[cat].val*weight);
     }
 }
 

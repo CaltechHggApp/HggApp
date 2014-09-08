@@ -46,6 +46,14 @@ protected:
 
   void fillGenTruth(); //fill the generator truth info in the output
 
+  /*
+  //functions to compute the BTagSF for the event
+  int getptbin_for_btag(float pt);
+  int get_eta_bin_jet(float eta);
+  void get_SF_btag(const VecbosJet& jet, float &SF, float &SFerr);
+  void computeBTagSF();
+  */
+
   bool optimize=false; //setting this flag will reduce selection cuts and output more info
   bool isMC=false;
   bool isDY=false; // is a Z->ll sample
@@ -64,11 +72,14 @@ protected:
 
   //output variables
   int runNum;
+  int lumiSec;
+  int evtNum;
 
   float mgg;
   float ptgg;
   float etagg;
   float phigg;
+  int hemgg;
 
   float pho1_pt;
   float pho1_eta;
@@ -153,14 +164,32 @@ protected:
   float MET;
   float METphi;
 
+  float HT;
+  float HT_up;
+  float HT_down;
+
+  float MHT;
+  float MHT_up;
+  float MHT_down;
+
+  float MHTphi;
+  float MHTphi_up;
+  float MHTphi_down;
+
+  float t1MET;
+  float t1METphi;
+
   float MR;
   float Rsq;
+  float t1Rsq;
   
   float MR_down;
   float Rsq_down;
+  float t1Rsq_down;
   
   float MR_up;
   float Rsq_up;
+  float t1Rsq_up;
   
   float mu1_pt;
   float mu1_eta;
@@ -212,9 +241,18 @@ protected:
   float mbb_NearZ_up;
   float mbb_NearZ_down;
 
-
-
+  float btagSF;
   float puWeight;
+
+  const static size_t kMaxJets=20;
+  int indexJet[kMaxJets];
+  float ptJet[kMaxJets];
+  float etaJet[kMaxJets];
+  float phiJet[kMaxJets];
+  float energyJet[kMaxJets];
+  float corrUpJet[kMaxJets];
+  float corrDownJet[kMaxJets];
+  int hemJet[kMaxJets];
 
   const static int maxSusyPart=50;
   int nSusyPart;
