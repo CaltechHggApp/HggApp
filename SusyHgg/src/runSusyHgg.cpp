@@ -94,6 +94,8 @@ int main(int argc,char** argv) {
 
   int isMCData = atoi( cfg.getParameter("isMCData").c_str() );
 
+  string metphi = cfg.getParameter("METPhiCorrection");
+
   CombinePrep combine;
   combine.setOutputFolder(outputFolder);
 
@@ -117,6 +119,7 @@ int main(int argc,char** argv) {
       fitter.setLumi( lumi );
       fitter.setNSigEffs(nSigEffs);
       fitter.setSelection(selection);
+      fitter.setMetPhiSF( metphi.c_str() );
 
       fitter.Run();
     }

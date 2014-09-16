@@ -248,8 +248,18 @@ float Fitter::getSysErrPho(float eta,float r9) {
 
 void Fitter::Run() {
   Long64_t iEntry=-1;
+  TFile* metPhiRatio_f=0;
+  TH1D* metPhiRatio=0;
+  if(MetPhiSF_file!="") {
+    metPhiRatio_f=new TFile(MetPhiSF_file);
+    metPhiRatio=(TH1D*)metPhiRatio_f->Get("weight");
+  }
+  
   while(fChain->GetEntry(++iEntry)) {
     weight = pileupWeight * hggSigStrength*target_xsec*lumi*HggBR/N_total;
+    if(metPhiRatio) {
+      weight*= metPhiRatio->GetBinContent(metPhiRatio->FindFixBin(METPhi));
+    }
     if(!passBasicSelection()) continue;
     processEntry();
   }
