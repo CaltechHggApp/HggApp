@@ -141,7 +141,8 @@ protected:
     {500,0.0481008},{600,0.0474291}
   };
 
-
+  std::map<TString,int> nSignal;
+  std::map<TString,int> nTotal;
 };
 
 #endif

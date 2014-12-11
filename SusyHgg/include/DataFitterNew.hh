@@ -17,6 +17,9 @@ public:
 
   virtual void fixNorm(TString catName, float norm);
 
+  void SetTriggerPath(TString triggerFilePath);
+  void SetNoisePath(TString noiseFilePath);
+
 protected:
 
   virtual void buildSidebandHistograms();
@@ -39,6 +42,12 @@ protected:
 
   bool fixScales = false;
   std::map<TString,float> normMap;
+  bool hasTrigger=false;
+  bool triggerBit=true;
+  bool hasNoise=false;
+  bool noiseBit=true;
+
+  std::map<TString,int> nSideband;
 };
 
 #endif

@@ -27,7 +27,7 @@ using namespace std;
 #include "../src/HggPhysUtils.cc"
 #include "assert.h"
 
-#define debugReducer 0
+#define debugReducer 1
 
 HggReducer::HggReducer(TTree *tree) : Vecbos(tree) {
   _goodRunLS = false;

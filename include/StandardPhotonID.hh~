@@ -16,8 +16,8 @@ public:
   bool passID(const VecbosPho& pho,WP wp);
   bool passIso(const VecbosPho& pho,WP wp);
   std::bitset<5> cutResults(const VecbosPho& pho,WP wp);
-private:
   typedef std::map<std::pair<StandardPhotonID::WP,StandardPhotonID::Region>,float> cutMap;
+protected:
   cutMap cut_HE;
   cutMap cut_sieie;
   cutMap cut_pfcharged;

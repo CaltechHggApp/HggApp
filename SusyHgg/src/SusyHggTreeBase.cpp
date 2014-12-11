@@ -1,5 +1,6 @@
 #define SusyHggTreeBase_cxx
 #include "SusyHggTreeBase.h"
+//#include "SusyHggTreeBase_DEF.h"
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>

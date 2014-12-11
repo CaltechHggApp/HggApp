@@ -75,6 +75,8 @@ public:
 
   void setUseHT(bool b=true){useHT=b;}
 
+  void setMetPhiSF(TString s) { MetPhiSF_file=s; }
+
 protected:
   TFile *outputFile;
 
@@ -94,6 +96,8 @@ protected:
   const float HggBR = 2.28E-3; //Br H-->photons
 
   float nSigEffSignalRegion=2;
+
+  TString MetPhiSF_file="";
 
   const static std::vector<TString> catNames;
   const static std::vector<TString> systematicNames;

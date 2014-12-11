@@ -5,7 +5,7 @@
 #include <iostream>
 #include <exception>
 
-#define debugEGEnergy 0
+#define debugEGEnergy 1
 HggEGEnergyCorrector::HggEGEnergyCorrector(VecbosBase *r,string cfgFile,Bool_t realData):
   usePhoton(true),
   version(""),
@@ -126,6 +126,10 @@ std::pair<double,double> HggEGEnergyCorrector::photonEnergyCorrector_May2012(Vec
   }
   //finished filling array
 
+  if(debugEGEnergy) {
+    for(int i=0;i<38;i++) { std::cout << "\t" << i << ":   " << fVals[i] << std::endl; }
+  }
+
   const Double_t varscale = 1.;
   Double_t den;
   const GBRForest *greader;
@@ -142,7 +146,7 @@ std::pair<double,double> HggEGEnergyCorrector::photonEnergyCorrector_May2012(Vec
     greadervar = fReadereevariance;
   }
   Double_t ecor = greader->GetResponse(fVals)*den;
-
+  if(debugEGEnergy) std::cout << "correction:  " << ecor/den << std::endl;
   if(rescale){
     if(pho.isBarrel()){
       fVals[3] = 1.0045*pho.SC.r9 + 0.001;

@@ -59,7 +59,9 @@ all: 	lib \
 	$(MAKETARGET)MakePUDist \
 	$(MAKETARGET)SusyHggSelectorApp \
 	$(MAKETARGET)MuMuGammaSelectorApp \
-	$(MAKETARGET)MakeRegressionInputTreeApp	
+	$(MAKETARGET)MakeRegressionInputTreeApp	\
+	$(MAKETARGET)PassTriggerApp \
+	$(MAKETARGET)VecbosSkimmerApp
 
 lib: 	$(OUTLIBCOMMON)Conditions.o \
 	$(OUTLIBCOMMON)Selection.o \
@@ -250,6 +252,14 @@ $(MAKETARGET)HggMakeTrainingTreeApp: $(SRCDIR)HggMakeTrainingTreeApp.C \
 	$(OUTLIB)HggMakeTrainingTree.o
 	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
 
+$(MAKETARGET)PassTriggerApp: $(SRCDIR)PassTriggerApp.C \
+	$(OUTLIB)PassTrigger.o
+	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
+
+$(MAKETARGET)VecbosSkimmerApp: $(SRCDIR)VecbosSkimmerApp.C \
+	$(OUTLIB)VecbosSkimmer.o
+	$(CXX) $(CXXFLAGS) -o $@ $(OUTLIB)/*.o $(OUTLIBCOMMON)/*o $(OUTLIBEGAMMA)/*o $(GLIBS) $ $<	
+
 $(OUTLIB)HggSelector.o: $(SRCDIR)HggSelector.cc \
 			$(OUTLIB)HggMassResolution.o \
 			$(OUTLIB)HggPhotonID.o \
@@ -391,6 +401,13 @@ $(OUTLIB)HggReducer.o: $(SRCDIR)HggReducer.cc \
 		$(OUTLIB)HggScaling.o \
 		$(OUTLIB)VecbosJetCorrector.o
 		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)HggReducer.o $(OUTLIB)HggDict.o $<
+
+$(OUTLIB)PassTrigger.o: $(SRCDIR)PassTrigger.cc
+		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $(OUTLIB)PassTrigger.o $<
+
+$(OUTLIB)VecbosSkimmer.o: $(SRCDIR)VecbosSkimmer.cc \
+			$(OUTLIB)PassTrigger.o
+		$(CXX) $(CXXFLAGS) -c -I$(INCLUDEDIR) -o $@ $<
 
 $(OUTLIB)VecbosEGObject.o: $(SRCDIR)VecbosEGObject.cc
 		$(CXX) $(CXXFLAGS) -c -fPIC -I$(INCLUDEDIR) -o $(OUTLIB)VecbosEGObject.o $<

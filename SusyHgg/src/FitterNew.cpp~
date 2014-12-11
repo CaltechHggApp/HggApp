@@ -7,8 +7,10 @@
 
 #define NUM_CPU 1
 
+//#define USER9 //use r9 base categories
+
 const std::vector<TString> Fitter::catNames = { "HighPt","Hbb","Zbb","HighRes","LowRes"};
-const std::vector<TString> Fitter::systematicNames = {"jec","phoE","btag","sigE"}; 
+const std::vector<TString> Fitter::systematicNames = {"jec","phoE","btag","sigE","statistics"}; 
 //const std::vector<TString> Fitter::catNames = { "Hbb"};
 //const std::vector<TString> Fitter::systematicNames = {}; 
 
@@ -18,8 +20,11 @@ Fitter::Fitter(TString inputFileName,TString outputFileName,bool useHT):SusyHggT
   setUseHT(useHT);
   buildHistograms();  
 
-  for(auto cat: catNames)   setSigEff(cat,3);
-
+  for(auto cat: catNames) {
+    setSigEff(cat,3);
+    nSignal[cat] = 0;
+    nTotal[cat] = 0;
+  }
 }
 
 Fitter::~Fitter() {
@@ -51,6 +56,9 @@ void Fitter::buildHistograms() {
 
 bool Fitter::passBasicSelection() {
   if(!pho1_pass_iso || !pho2_pass_iso) return false;
+  if(ptgg<20) return false;
+
+  if(mgg<100 || mgg>180) return false;
 
   //if(ele1_pt>15 || mu1_pt>15) return false;
 
@@ -58,7 +66,7 @@ bool Fitter::passBasicSelection() {
   case kAN239:
     //AN13/239-like selection
     if(pho1_pt<40 || pho2_pt < 25) return false;
-    if( fabs(pho1_eta)>1.442 || fabs(pho2_eta)>1.442) return false;
+    if( fabs(pho1_eta)>1.46 || fabs(pho2_eta)>1.46) return false;
     break;
 
   case kHighPt:
@@ -82,19 +90,19 @@ TString Fitter::getCategory(const TLorentzVector& pho1, const TLorentzVector&pho
 
   //return catNames[0];
 
-  if(ptgg > 400) return catNames[0];
+  if(ptgg > 110) return catNames[0];
 
   if( fabs(mbbH-125.) <15. ) return catNames[1];
   if( fabs(mbbZ-91.) <15. ) return catNames[2];
 
   //if(btag > 0.244) return catNames[1];
 
-  //if(r9_1<0.94 || r9_2<0.94) return catNames[4];
-
-  
+#ifdef USER9
+  if(r9_1<0.9 || r9_2<0.9) return catNames[4];
+#else
   if(  se1 > ( fabs(pho1.Eta())>1.48 ? 0.024 : 0.015 ) ) return catNames[4]; //pho1 fails se/e cut
   if(  se2 > ( fabs(pho2.Eta())>1.48 ? 0.024 : 0.015 ) ) return catNames[4]; //pho1 fails se/e cut
-  
+#endif
 
   return catNames[3]; //high res category
 
@@ -128,7 +136,8 @@ void Fitter::processEntry() {
       SignalRegionHistograms[cat]->Fill(thisMR,thisRsq,weight);
       SignalRegionHistogramsFineBin[cat]->Fill(thisMR,thisRsq,weight);
     }
-
+    nSignal[cat]++;
+    nTotal[cat]++;
     
     mgg_dists[cat]->Fill(mgg,weight);
   }
@@ -264,6 +273,15 @@ void Fitter::Run() {
     processEntry();
   }
 
+  for(auto cat: catNames) {
+    for(int iBin=0; iBin<SignalRegionHistograms[cat]->GetNbinsX()+1; iBin++) {
+      float content = SignalRegionHistograms[cat]->GetBinContent(iBin);
+      float stat = 1./sqrt(nSignal[cat]);
+      SignalRegionHistograms[ cat+"_statistics_Up" ]->SetBinContent(iBin,content*(1+stat));
+      SignalRegionHistograms[ cat+"_statistics_Down" ]->SetBinContent(iBin,content*(1-stat));      
+    }
+    
+  }
   outputFile->cd();
   for(auto hist: SignalRegionHistograms) hist.second->Write();
   for(auto hist: SignalRegionHistogramsFineBin) hist.second->Write();

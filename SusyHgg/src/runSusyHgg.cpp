@@ -45,6 +45,8 @@ int main(int argc,char** argv) {
   a.addLongOption("AN239",ArgParser::noArg,"use AN13/239-like photon selection");
   a.addLongOption("highPt",ArgParser::noArg,"use 40/25 photon pT cuts");
 
+  a.addLongOption("ForceV3Widths",ArgParser::noArg,"force the sig region widths from v3");
+
   a.addLongOption("HT",ArgParser::noArg,"Use HT:MET instead of razor");
 
   string ret;
@@ -57,6 +59,8 @@ int main(int argc,char** argv) {
   bool AN239 = a.longFlagPres("AN239");
   bool highPt = a.longFlagPres("highPt");
   bool bHT = a.longFlagPres("HT");
+
+  bool v3Widths = a.longFlagPres("ForceV3Widths");
 
   if(AN239 && highPt) {
     std::cout << "cannot specify both --AN239 and --highPt" << std::endl;
@@ -95,6 +99,7 @@ int main(int argc,char** argv) {
   int isMCData = atoi( cfg.getParameter("isMCData").c_str() );
 
   string metphi = cfg.getParameter("METPhiCorrection");
+  std::cout << "METPhi:  " << metphi << std::endl;
 
   CombinePrep combine;
   combine.setOutputFolder(outputFolder);
@@ -119,7 +124,8 @@ int main(int argc,char** argv) {
       fitter.setLumi( lumi );
       fitter.setNSigEffs(nSigEffs);
       fitter.setSelection(selection);
-      fitter.setMetPhiSF( metphi.c_str() );
+      if(metphi.size()>2) fitter.setMetPhiSF( metphi.c_str() );
+	
 
       fitter.Run();
     }
@@ -150,13 +156,24 @@ int main(int argc,char** argv) {
     sigEffs["Hbb"] = 2.;
     sigEffs["Zbb"] = 2.;
     
+    if(v3Widths) {
+      sigEffs["HighPt"] = 1.77;
+      sigEffs["HighRes"] = 1.68;
+      sigEffs["LowRes"] = 2.5;
+    }
       
 
   std::string dataFileName = cfg.getParameter("data_path"); 
+  std::string triggerFileName = cfg.getParameter("trigger_path"); 
+  std::string noiseFileName = cfg.getParameter("noise_path"); 
   if(!combineOnly) {
     DataFitter *datafitter = 0;
     if(isMCData) datafitter = new MCBackgroundFitter(dataFileName,outputFolder+"/data.root",bHT);
-    else datafitter = new DataFitter(dataFileName,outputFolder+"/data.root",bHT);
+    else {
+      datafitter = new DataFitter(dataFileName,outputFolder+"/data.root",bHT);
+      datafitter->SetTriggerPath(triggerFileName.c_str());
+      datafitter->SetNoisePath(noiseFileName.c_str());
+    }
     assert(datafitter != 0);
 
     for(auto cat:catNames) {
@@ -166,11 +183,11 @@ int main(int argc,char** argv) {
     datafitter->setNSigEffs(nSigEffs);
     if(isMCData) {
       if(AN239) {
-	datafitter->fixNorm("HighPt",223.39);
-	datafitter->fixNorm("Hbb",2.4);
-	datafitter->fixNorm("Zbb",2.3);
-	datafitter->fixNorm("HighRes",493.9);
-	datafitter->fixNorm("LowRes",757.5);
+	datafitter->fixNorm("HighPt",394.6);
+	datafitter->fixNorm("Hbb",3.6);
+	datafitter->fixNorm("Zbb",6.8);
+	datafitter->fixNorm("HighRes",934.4);
+	datafitter->fixNorm("LowRes",2087.0);
       } else if(highPt) {
 	datafitter->fixNorm("HighPt",654.679);
 	datafitter->fixNorm("Hbb",6.68);

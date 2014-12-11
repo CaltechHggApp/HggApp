@@ -13,9 +13,9 @@ public:
   enum WP:unsigned int{kLoose,kMedium,kTight};
   enum Region:unsigned int{kEB,kEE};
 
-  bool passID(const VecbosPho& pho,WP wp);
-  bool passIso(const VecbosPho& pho,WP wp);
-  std::bitset<5> cutResults(const VecbosPho& pho,WP wp);
+  bool passID(const VecbosPho& pho,WP wp,float rho);
+  bool passIso(const VecbosPho& pho,WP wp,float rho);
+  std::bitset<5> cutResults(const VecbosPho& pho,WP wp,float rho);
   typedef std::map<std::pair<StandardPhotonID::WP,StandardPhotonID::Region>,float> cutMap;
 protected:
   cutMap cut_HE;
@@ -23,6 +23,10 @@ protected:
   cutMap cut_pfcharged;
   cutMap cut_pfneutral;
   cutMap cut_pfphoton;
+
+  std::vector<std::pair<float,float>> chEA;
+  std::vector<std::pair<float,float>> nhEA;
+  std::vector<std::pair<float,float>> phEA;
 };
 
 #endif

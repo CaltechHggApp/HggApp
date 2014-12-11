@@ -50,8 +50,8 @@ void MakeRegressionInputTree::processEntry(Long64_t iEntry) {
   for(int i=0;i<nPho_;i++) {
     auto photon = &(Photons_->at(i));
     pt = photon->correctedEnergy/cosh(photon->eta);
-    passWP90_id  = photonID.passID (*photon,StandardPhotonID::kLoose);
-    passWP90_iso = photonID.passIso(*photon,StandardPhotonID::kLoose);
+    passWP90_id  = photonID.passID (*photon,StandardPhotonID::kLoose,rho);
+    passWP90_iso = photonID.passIso(*photon,StandardPhotonID::kLoose,rho);
     passWP90 = passWP90_id && passWP90_iso;
 
     se = photon->correctedEnergyError/photon->correctedEnergy;

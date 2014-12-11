@@ -47,7 +47,7 @@ OUTLIB	         = ./lib/
 .PREFIXES: ./lib/
 
 .PHONY: all
-all: CreateWorkspace CreateFits CreatePlots CountEntries MakeSignalInjection runSusyHgg runSignalInjectionNew runSMSValidation
+all: CreateWorkspace CreateFits CreatePlots CountEntries MakeSignalInjection runSusyHgg runSignalInjectionNew runSMSValidation passMetFilters
 
 .PHONY: clean
 clean: 
@@ -84,6 +84,9 @@ runSusyHgg:		$(SRCDIR)runSusyHgg.cpp\
 			$(OUTLIB)FitterNew.o \
 			$(OUTLIB)CombinePrep.o \
 			$(OUTLIB)SusyHggTreeBase.o
+	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $^	
+
+passMetFilters:		$(SRCDIR)passMetFilters.C
 	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $^	
 
 runSignalInjectionNew:	$(SRCDIR)runSignalInjectionNew.cpp \

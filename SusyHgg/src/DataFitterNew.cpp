@@ -72,6 +72,8 @@ void DataFitter::buildSidebandHistograms() {
     if(useHT) {
       SidebandRegionHistograms[cat] = new TH2F("data_"+cat+"_SidebandRegion","",50,0,2500,12,0,300);
       SidebandRegionHistogramsFineBin[cat] = new TH2F("data_"+cat+"_SidebandRegion_FineBin","",500,0,2500,100,0,300);
+      SidebandRegionHistograms[cat+"_statistics_Up"] = new TH2F("data_"+cat+"_SidebandRegion_statisticsUp","",50,0,2500,12,0,300);
+      SidebandRegionHistograms[cat+"_statistics_Down"] = new TH2F("data_"+cat+"_SidebandRegion_statisticsDown","",50,0,2500,12,0,300);
       SidebandRegionHistograms[cat+"_fit_Up"] = new TH2F("data_"+cat+"_SidebandRegion_fitUp","",50,0,2500,12,0,300);
       SidebandRegionHistograms[cat+"_fit_Down"] = new TH2F("data_"+cat+"_SidebandRegion_fitDown","",50,0,2500,12,0,300);
       SidebandRegionHistograms[cat+"_bkgShape_Up"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeUp","",50,0,2500,12,0,300);
@@ -79,6 +81,8 @@ void DataFitter::buildSidebandHistograms() {
     }else{
       SidebandRegionHistograms[cat] = new TH2F("data_"+cat+"_SidebandRegion","",nXbins-1,xBins,nYbins-1,yBins);
       SidebandRegionHistogramsFineBin[cat] = new TH2F("data_"+cat+"_SidebandRegion_FineBin","",250,0,2500,100,0,1);
+      SidebandRegionHistograms[cat+"_statistics_Up"] = new TH2F("data_"+cat+"_SidebandRegion_statisticsUp","",nXbins-1,xBins,nYbins-1,yBins);
+      SidebandRegionHistograms[cat+"_statistics_Down"] = new TH2F("data_"+cat+"_SidebandRegion_statisticsDown","",nXbins-1,xBins,nYbins-1,yBins);
       SidebandRegionHistograms[cat+"_fit_Up"] = new TH2F("data_"+cat+"_SidebandRegion_fitUp","",nXbins-1,xBins,nYbins-1,yBins);
       SidebandRegionHistograms[cat+"_fit_Down"] = new TH2F("data_"+cat+"_SidebandRegion_fitDown","",nXbins-1,xBins,nYbins-1,yBins);
       SidebandRegionHistograms[cat+"_bkgShape_Up"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeUp","",nXbins-1,xBins,nYbins-1,yBins);
@@ -91,6 +95,7 @@ void DataFitter::buildSidebandHistograms() {
     Long64_t iEntry=-1;
     while( fChain->GetEntry(++iEntry) ) {
       if(!passBasicSelection()) continue;
+      if(hasTrigger && !triggerBit) continue;
       TLorentzVector pho1;
       TLorentzVector pho2;
   
@@ -117,11 +122,23 @@ void DataFitter::buildSidebandHistograms() {
 }
 
 void DataFitter::Run() {
+  for( auto cat: catNames) {
+    nSideband[cat]=0;
+  }
+
   buildSidebandHistograms();
   Long64_t iEntry=-1;
+  Long64_t nPassSelection=0;
+  Long64_t nPassTrigger=0;
+  Long64_t nPassNoise=0;
   while(fChain->GetEntry(++iEntry)) {
     weight=1; //for data
     if(!passBasicSelection()) continue;
+    nPassSelection++;
+    if(hasTrigger && !triggerBit) continue;
+    nPassTrigger++;
+    if(hasNoise && !noiseBit) continue;
+    nPassNoise++;
     processEntry();
     processEntrySidebands();
   }
@@ -132,6 +149,21 @@ void DataFitter::Run() {
     SidebandRegionHistograms[cat+"_bkgShape_Up"]->Scale( SidebandRegionHistograms[cat]->Integral()/SidebandRegionHistograms[cat+"_bkgShape_Up"]->Integral() );
     SidebandRegionHistograms[cat+"_bkgShape_Down"]->Scale( SidebandRegionHistograms[cat]->Integral()/SidebandRegionHistograms[cat+"_bkgShape_Down"]->Integral() );
   }
+  
+  for(auto cat: catNames) {
+    assert(nSideband[cat]!=0);
+    float scale = nSideband[cat]/SidebandRegionHistograms[cat]->Integral(); //scale up to full statistics
+    for(int xBin=0; xBin<SidebandRegionHistograms[cat]->GetNbinsX()+1; xBin++) {
+      for(int yBin=0; yBin<SidebandRegionHistograms[cat]->GetNbinsY()+1; yBin++) {
+	float content = SidebandRegionHistograms[cat]->GetBinContent(xBin,yBin);
+	float error = TMath::Sqrt(content/scale);
+	SidebandRegionHistograms[ cat+"_statistics_Up" ]->SetBinContent(xBin,yBin,content+error);
+	SidebandRegionHistograms[ cat+"_statistics_Down" ]->SetBinContent(xBin,yBin,content-error);      
+      }
+    }
+  }
+
+
   outputFile->cd();
   for(auto hist: SignalRegionHistograms) {
     hist.second->Write();
@@ -146,6 +178,10 @@ void DataFitter::Run() {
   outputFile->Close();
 
   for(auto scale: scales) std::cout << scale.first << "   " << scale.second.val << " +- " << scale.second.error << std::endl;
+
+  std::cout << nPassSelection << " / " << iEntry << "  events passing baseline selection" << std::endl;
+  std::cout << nPassTrigger << " / " << nPassSelection << "  events passing trigger" << std::endl;
+  std::cout << nPassNoise << " / " << nPassTrigger << "  events passing noise filters" << std::endl;
 }
 
 void DataFitter::processEntrySidebands() {
@@ -174,6 +210,7 @@ void DataFitter::processEntrySidebands() {
       SidebandRegionHistograms[cat+"_fit_Up"]->Fill(thisMR,thisRsq,(scales[cat].val+scales[cat].error)*weight);
       SidebandRegionHistograms[cat+"_fit_Down"]->Fill(thisMR,thisRsq,(scales[cat].val-scales[cat].error)*weight);
       SidebandRegionHistogramsFineBin[cat]->Fill(thisMR,thisRsq,scales[cat].val*weight);
+      nSideband[cat]++;
     }
     if(mgg > 131 && mgg < maxMgg) {
       SidebandRegionHistograms[cat+"_bkgShape_Up"]->Fill(thisMR,thisRsq,scales[cat].val*weight);
@@ -197,4 +234,22 @@ float DataFitter::getSysErrPho(float eta, float r9) {
 void DataFitter::fixNorm(TString catName, float norm) {
   fixScales = true;
   normMap[catName] = norm;
+}
+
+void DataFitter::SetTriggerPath(TString triggerFilePath) {
+  if(triggerFilePath!="") {
+    std::cout << "adding trigger path: " << triggerFilePath << std::endl;
+    fChain->AddFriend("SusyHggTriggerTree",triggerFilePath);
+    hasTrigger=true;
+    fChain->SetBranchAddress("passTrigger",&triggerBit);
+  }
+}
+
+void DataFitter::SetNoisePath(TString noiseFilePath) {
+  if(noiseFilePath!="") {
+    std::cout << "adding noise path: " << noiseFilePath << std::endl;
+    fChain->AddFriend("SusyHggNoiseTree",noiseFilePath);
+    hasNoise=true;
+    fChain->SetBranchAddress("passNoise",&noiseBit);
+  }
 }

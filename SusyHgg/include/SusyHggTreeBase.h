@@ -25,6 +25,7 @@ public :
    Int_t           run;
    Int_t           lumi;
    Int_t           evt;
+   Float_t         rho;
    Float_t         mgg;
    Float_t         ptgg;
    Float_t         etagg;
@@ -169,6 +170,7 @@ public :
    TBranch        *b_run;   //!
    TBranch        *b_lumi;   //!
    TBranch        *b_evt;   //!
+   TBranch        *b_rho;   //!
    TBranch        *b_mgg;   //!
    TBranch        *b_ptgg;   //!
    TBranch        *b_etagg;   //!
@@ -382,6 +384,7 @@ void SusyHggTreeBase::Init(TTree *tree)
    fChain->SetBranchAddress("run", &run, &b_run);
    fChain->SetBranchAddress("lumi", &lumi, &b_lumi);
    fChain->SetBranchAddress("evt", &evt, &b_evt);
+   fChain->SetBranchAddress("rho", &rho, &b_rho);
    fChain->SetBranchAddress("mgg", &mgg, &b_mgg);
    fChain->SetBranchAddress("ptgg", &ptgg, &b_ptgg);
    fChain->SetBranchAddress("etagg", &etagg, &b_etagg);
@@ -485,22 +488,22 @@ void SusyHggTreeBase::Init(TTree *tree)
    fChain->SetBranchAddress("t1MET", &t1MET, &b_t1MET);
    fChain->SetBranchAddress("t1METPhi", &t1METPhi, &b_t1METPhi);
    fChain->SetBranchAddress("MR", &MR, &b_MR);
-   fChain->SetBranchAddress("Rsq", &Rsq, &b_Rsq);
-   fChain->SetBranchAddress("t1Rsq", &t1Rsq, &b_t1Rsq);
-   //fChain->SetBranchAddress("t1Rsq", &Rsq, &b_Rsq);
-   //fChain->SetBranchAddress("Rsq", &t1Rsq, &b_t1Rsq);
+   //fChain->SetBranchAddress("Rsq", &Rsq, &b_Rsq);
+   //fChain->SetBranchAddress("t1Rsq", &t1Rsq, &b_t1Rsq);
+   fChain->SetBranchAddress("t1Rsq", &Rsq, &b_Rsq);
+   fChain->SetBranchAddress("Rsq", &t1Rsq, &b_t1Rsq);
    fChain->SetBranchAddress("Njets_up", &Njets_up, &b_nJets_up);
    fChain->SetBranchAddress("MR_up", &MR_up, &b_MR_up);
-   fChain->SetBranchAddress("Rsq_up", &Rsq_up, &b_Rsq_up);
-   fChain->SetBranchAddress("t1Rsq_up", &t1Rsq_up, &b_t1Rsq_up);
-   //fChain->SetBranchAddress("t1Rsq_up", &Rsq_up, &b_Rsq_up);
-   //fChain->SetBranchAddress("Rsq_up", &t1Rsq_up, &b_t1Rsq_up);
+   //fChain->SetBranchAddress("Rsq_up", &Rsq_up, &b_Rsq_up);
+   //fChain->SetBranchAddress("t1Rsq_up", &t1Rsq_up, &b_t1Rsq_up);
+   fChain->SetBranchAddress("t1Rsq_up", &Rsq_up, &b_Rsq_up);
+   fChain->SetBranchAddress("Rsq_up", &t1Rsq_up, &b_t1Rsq_up);
    fChain->SetBranchAddress("Njets_down", &Njets_down, &b_nJets_down);
    fChain->SetBranchAddress("MR_down", &MR_down, &b_MR_down);
-   fChain->SetBranchAddress("Rsq_down", &Rsq_down, &b_Rsq_down);
-   fChain->SetBranchAddress("t1Rsq_down", &t1Rsq_down, &b_t1Rsq_down);
-   //fChain->SetBranchAddress("t1Rsq_down", &Rsq_down, &b_Rsq_down);
-   //fChain->SetBranchAddress("Rsq_down", &t1Rsq_down, &b_t1Rsq_down);
+   //fChain->SetBranchAddress("Rsq_down", &Rsq_down, &b_Rsq_down);
+   //fChain->SetBranchAddress("t1Rsq_down", &t1Rsq_down, &b_t1Rsq_down);
+   fChain->SetBranchAddress("t1Rsq_down", &Rsq_down, &b_Rsq_down);
+   fChain->SetBranchAddress("Rsq_down", &t1Rsq_down, &b_t1Rsq_down);
    fChain->SetBranchAddress("pileupWeight", &pileupWeight, &b_pileupWeight);
    fChain->SetBranchAddress("HT", &HT, &b_HT);
    fChain->SetBranchAddress("HT_up", &HT_up, &b_HT_up);

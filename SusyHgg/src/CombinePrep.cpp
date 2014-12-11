@@ -147,6 +147,11 @@ void CombinePrep::makeOnePoint(TString smsName, TString smsPoint) {
   for(int i=0;i<smHiggsFiles.size();i++) dataCardFile << "\t\t-";
   dataCardFile << "\n";
     
+  //bkgstatistics systematic
+  dataCardFile << "sidebandStatistics\tshape\t\t\t-\t\t1";
+  for(int i=0;i<smHiggsFiles.size();i++) dataCardFile << "\t\t-";
+  dataCardFile << "\n";
+    
   //mc systematics
   for(auto sys: *sysNames) {
     dataCardFile << sys << "\tshape\t\t\t1\t\t-";
@@ -197,6 +202,9 @@ void CombinePrep::makeRootFile() {
   TH1F* bkgDownHist = makeCategoryHistogram(dataFile.get(),"bkg_fitDown","SidebandRegion_fitDown");
   makeCategoryHistogram(dataFile.get(),"bkg_bkgShapeUp","SidebandRegion_bkgShapeUp")->Write();
   makeCategoryHistogram(dataFile.get(),"bkg_bkgShapeDown","SidebandRegion_bkgShapeDown")->Write();
+  
+  makeCategoryHistogram(dataFile.get(),"bkg_sidebandStatisticsUp","SidebandRegion_statisticsUp")->Write();
+  makeCategoryHistogram(dataFile.get(),"bkg_sidebandStatisticsDown","SidebandRegion_statisticsDown")->Write();
   
 
   std::cout << "Adding SM Higgs" << std::endl;
