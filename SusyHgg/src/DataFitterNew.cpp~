@@ -18,6 +18,10 @@ RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool 
 
   RooRealVar mgg("mgg","",minMgg,maxMgg);
 
+  mgg.setRange("fit",103,160);
+  mgg.setRange("low",103,120);
+  mgg.setRange("high",131,160);
+
   RooRealVar a1("a1","",-0.3,-2.,0.);
   RooRealVar a2("a2","",-0.1,-2.,0.);
   RooRealVar f("f","",0.5,0.00,1.0);
@@ -36,8 +40,8 @@ RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool 
   RooDataSet rdata("data","",data,mgg);
     
 
-  pdf->fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE));
-  RooFitResult* res = pdf->fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE));
+  pdf->fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::Range("fit"));
+  RooFitResult* res = pdf->fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE),RooFit::Range("fit"));
   
   mgg.setRange("sig",125-width,126+width);
 
@@ -151,13 +155,16 @@ void DataFitter::Run() {
   }
   
   for(auto cat: catNames) {
-    for(int iBin=0; iBin<SidebandRegionHistograms[cat]->GetNbinsX()+1; iBin++) {
-      float content = SidebandRegionHistograms[cat]->GetBinContent(iBin);
-      float stat = 1./sqrt(nSideband[cat]);
-      SidebandRegionHistograms[ cat+"_statistics_Up" ]->SetBinContent(iBin,content*(1+stat));
-      SidebandRegionHistograms[ cat+"_statistics_Down" ]->SetBinContent(iBin,content*(1-stat));      
+    assert(nSideband[cat]!=0);
+    float scale = nSideband[cat]/SidebandRegionHistograms[cat]->Integral(); //scale up to full statistics
+    for(int xBin=0; xBin<SidebandRegionHistograms[cat]->GetNbinsX()+1; xBin++) {
+      for(int yBin=0; yBin<SidebandRegionHistograms[cat]->GetNbinsY()+1; yBin++) {
+	float content = SidebandRegionHistograms[cat]->GetBinContent(xBin,yBin);
+	float error = TMath::Sqrt(content/scale);
+	SidebandRegionHistograms[ cat+"_statistics_Up" ]->SetBinContent(xBin,yBin,content+error);
+	SidebandRegionHistograms[ cat+"_statistics_Down" ]->SetBinContent(xBin,yBin,content-error);      
+      }
     }
-    
   }
 
 

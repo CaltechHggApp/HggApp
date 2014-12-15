@@ -71,7 +71,7 @@ public:
   void setNSigEffs(float n){nSigEffSignalRegion=n;}
 
   static constexpr float minMgg = 103;
-  static constexpr float maxMgg = 160;
+  static constexpr float maxMgg = 180;
 
   void setUseHT(bool b=true){useHT=b;}
 
@@ -141,7 +141,8 @@ protected:
     {500,0.0481008},{600,0.0474291}
   };
 
-
+  std::map<TString,int> nSignal;
+  std::map<TString,int> nTotal;
 };
 
 #endif

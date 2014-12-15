@@ -18,6 +18,10 @@ RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool 
 
   RooRealVar mgg("mgg","",minMgg,maxMgg);
 
+  mgg.setRange("fit",103,160);
+  mgg.setRange("low",103,120);
+  mgg.setRange("high",131,160);
+
   RooRealVar a1("a1","",-0.3,-2.,0.);
   RooRealVar a2("a2","",-0.1,-2.,0.);
   RooRealVar f("f","",0.5,0.00,1.0);
@@ -36,8 +40,8 @@ RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool 
   RooDataSet rdata("data","",data,mgg);
     
 
-  pdf->fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE));
-  RooFitResult* res = pdf->fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE));
+  pdf->fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::Range("low,high"));
+  RooFitResult* res = pdf->fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE),RooFit::Range("low,high"));
   
   mgg.setRange("sig",125-width,126+width);
 
