@@ -1,0 +1,1 @@
+enum BinningRegion {kHighPt, kHbb, kZbb, kHighRes, kLowRes};

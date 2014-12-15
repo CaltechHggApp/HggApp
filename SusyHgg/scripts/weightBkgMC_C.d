@@ -1,0 +1,49 @@
+
+# DO NOT DELETE
+
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TTree.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TBranch.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TNamed.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TObject.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/Rtypes.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/RConfig.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/RVersion.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/DllImport.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/Rtypeinfo.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/snprintf.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/strlcpy.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TGenericClassInfo.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TSchemaHelper.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TStorage.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TVersionCheck.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/Riosfwd.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TBuffer.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TString.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TMathBase.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TObjArray.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TSeqCollection.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TCollection.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TIterator.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TAttFill.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TDataType.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TDictionary.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/Property.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TAttLine.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TAttMarker.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TArrayD.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TArray.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TArrayI.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TClass.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TObjString.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TVirtualTreePlayer.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TFile.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TDirectoryFile.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TDirectory.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TList.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TDatime.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TUUID.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TMap.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/THashTable.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TUrl.h
+./scripts/weightBkgMC_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/cintdictversion.h /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/RVersion.h
+weightBkgMC_C__ROOTBUILDVERSION= 5.34/07
