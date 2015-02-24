@@ -23,7 +23,7 @@ int getBins(int reg, int* edges,bool isHT=false) {
   //edges = new int[4];
 
 
-
+  /*  
   //NOMINAL BINNING
   int HighPt_bins[] = {1,2,4,8,16};
   int Hbb_bins[] = {1,4};
@@ -31,9 +31,8 @@ int getBins(int reg, int* edges,bool isHT=false) {
   //int HighRes_bins[] = {1,4,6,15};
   int HighRes_bins[] = {1,3,6,15};
   int LowRes_bins[] = {1,2,3,6,14};
+  */
 
-
-  /*
   //ALTERNATE BINNING
   int HighPt_bins[] = {1,2,4,8,16};
   int Hbb_bins[] = {1,5};
@@ -41,7 +40,7 @@ int getBins(int reg, int* edges,bool isHT=false) {
   //int HighRes_bins[] = {1,4,6,15};
   int HighRes_bins[] = {1,3,6,15};
   int LowRes_bins[] = {1,2,3,6,15};
-  */
+
   /*
   //DEFAULT CORRECTION BINNING
   int HighPt_bins[] = {1,2,4,8,16};
@@ -109,7 +108,7 @@ int getBins(int reg, int* edges,bool isHT=false) {
 
 
 std::vector<TString> getDataShapeSys() {
-  std::vector<TString> sys = { "bkgShape", "fit" };
+  std::vector<TString> sys = { "bkgShape", "fit", "sfSyst"};
   return sys;
 }
 std::vector<TString> getMCShapeSys() {
@@ -189,56 +188,6 @@ TH2F* makeSignalRegionPlot(TH2F* inputHist,TString name,const int nMRbins,int* b
   }
   return output;
 }
-
-void makeSignalRegionTable(std::vector<TH2F*>& inputHist,const int nMRbins,int* binEdges,std::vector<float>& sf) {
-  const TH2F* output = inputHist.at(0);
-  assert(output!=0);
-
-
-  for(int iXbin=0;iXbin<nMRbins;iXbin++) {
-    for(int iYbin=0;iYbin<nMRbins-iXbin;iYbin++) {
-      for(int iHist=0;iHist<inputHist.size();iHist++) {
-	assert(inputHist[iHist] != 0);
-	float sum = 0;
-	for(int x=1;x<output->GetNbinsX()+1;x++) {
-	  for(int y=0;y<output->GetNbinsY()+1;y++) {
-	    if(x<binEdges[iXbin]) continue;
-	    if(iXbin<nMRbins-1 && x>=binEdges[iXbin+1]) continue;
-	    if(y<iYbin+1) continue;
-	    if(iYbin<nMRbins-iXbin-1 && y>iYbin+1) continue;
-	    sum+=inputHist.at(iHist)->GetBinContent(x,y);
-	  }
-	}
-	if(iHist==0) {
-	  printf("% 5.0f -",output->GetXaxis()->GetBinLowEdge(binEdges[iXbin]));
-	  if(iXbin<nMRbins-1) printf("% 5.0f",output->GetXaxis()->GetBinLowEdge(binEdges[iXbin+1]));
-	  else printf( " 3000");
-	  printf(" & %0.2f - ",output->GetYaxis()->GetBinLowEdge(iYbin+1));
-	  if(iYbin<nMRbins-iXbin-1) printf("%0.2f",output->GetYaxis()->GetBinLowEdge(iYbin+2));
-	  else printf("1.00");
-
-	  /*
-	  std::cout << std::setw(4) << output->GetXaxis()->GetBinLowEdge(binEdges[iXbin]) << " - ";
-	  if(iXbin<nMRbins-1) std::cout << std::setw(4) << output->GetXaxis()->GetBinLowEdge(binEdges[iXbin+1]);
-	  else std::cout << std::setw(4) << "3000";
-	  
-	  std::cout << "& " << std::setw(4) << output->GetYaxis()->GetBinLowEdge(iYbin+1) << " - ";
-	  if(iYbin<nMRbins-iXbin-1) std::cout << std::setw(4) << output->GetYaxis()->GetBinLowEdge(iYbin+2);
-	  else std::cout << "1.00";
-	  */
-	}
-	if(sf.at(iHist)>=0) printf(" & $ % 7.2f \\pm % 7.3f $ ", sum, sqrt(sum*sf.at(iHist)));
-	else printf(" & $ % 7.2f $ ", sum);
-	  
-	//std::cout << " & $"  << std::setw(6) << sum << " \\pm " << sqrt(sum*sf.at(iHist)) << std::setprecision(4) << " $ ";
-      
-
-      }
-      std::cout << " \\\\ " << std::endl;
-    }
-  }
-}
-
 
 TH2F* getHist(TFile **f, int nFiles,TString tag) {
   TH2F* sum = (TH2F*)f[0]->Get(tag);
@@ -449,7 +398,7 @@ float getPVal(float exp, float sf, float sfE,float obs) {
 
   size_t count=0;
 
-  float diff = fabs(obs-exp);
+  float diff = abs(obs-exp);
 
   size_t nToy = 100;
   while(count<100) {
@@ -462,7 +411,7 @@ float getPVal(float exp, float sf, float sfE,float obs) {
       float r = rng.Poisson(thisExp);
 
       //if( rng.Poisson(thisExp) >=obs ) count++;
-      if( fabs(r-exp) >= diff ) count++;
+      if( abs(r-exp) >= diff ) count++;
     }
   }
   return float(count)/nToy;

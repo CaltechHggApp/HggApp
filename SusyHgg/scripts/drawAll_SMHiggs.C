@@ -67,6 +67,7 @@ void drawAll_SMHiggs(TString folder) {
     prelim.Draw("SAME");
     lumi.Draw("SAME");
     cv.SaveAs(folder+"/figs/"+h.first+"_SMTot.png");
+    cv.SaveAs(folder+"/figs/"+h.first+"_SMTot.pdf");
   }
 
 }

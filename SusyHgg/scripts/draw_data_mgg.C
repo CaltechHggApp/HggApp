@@ -4,6 +4,9 @@
 #include "TLatex.h"
 #include "TObject.h"
 #include "TNamed.h"
+#include "TGraphErrors.h"
+
+#include "TBox.h"
 
 #include "RooWorkspace.h"
 #include "RooPlot.h"
@@ -11,6 +14,7 @@
 #include "RooRealVar.h"
 #include "RooAbsPdf.h"
 #include "RooAbsData.h"
+#include "RooCurve.h"
 
 
 void draw_data_mgg(TString folderName,bool blind=true,float min=103,float max=160) {
@@ -36,31 +40,72 @@ void draw_data_mgg(TString folderName,bool blind=true,float min=103,float max=16
 
     RooAbsPdf * pdf = ws->pdf("pdf");
 
-    double norm=1; //normalization for the plot
-    if(blind) { //need a different normalization if we are blinding
-
-      double total = pdf->createIntegral(*mass,RooFit::NormSet(*mass))->getVal();
-      double sig   = pdf->createIntegral(*mass,RooFit::NormSet(*mass),RooFit::Range("blind"))->getVal();
-
-      norm = (total-sig)/total;
-    }
 
     mass->SetTitle("m_{#gamma#gamma}");
     RooPlot *plot = mass->frame(min,max,max-min);
     plot->SetTitle("");
 
-    RooAbsData* data = ws->data("data");
+    RooAbsData* data = ws->data("data")->reduce(Form("mgg > %f && mgg < %f",min,max));
+    double nTot= data->sumEntries();
     if(blind) data = data->reduce("mgg < 121 || mgg>130");
+    double nBlind= data->sumEntries();
+
+    double norm=nTot/nBlind; //normalization for the plot
+
 
     data->plotOn(plot);
 
-    pdf->plotOn(plot,RooFit::NormRange( "low,high" ) );
-    pdf->plotOn(plot,RooFit::NormRange( "low,high" ),RooFit::FillColor(kGreen), RooFit::VisualizeError(*res,2.0));
-    pdf->plotOn(plot,RooFit::NormRange( "low,high" ),RooFit::FillColor(kYellow), RooFit::VisualizeError(*res,1.0));
+    pdf->plotOn(plot,RooFit::NormRange( "low,high" ),RooFit::Range("Full"),RooFit::LineWidth(0.1) );
+
+    plot->Print();
+    //add the fix error band
+    RooCurve* c = plot->getCurve("pdf_Norm[mgg]_Range[Full]_NormRange[Full]");
+    const int Nc = c->GetN();
+    TGraphErrors errfix(Nc);
+    Double_t *x = c->GetX();
+    Double_t *y = c->GetY();
+      
+    for(int i=0;i<Nc;i++) {
+      errfix.SetPoint(i,x[i],y[i]);
+      mass->setVal(x[i]);      
+      //      float relErr = pdf->getPropagatedError(*res)/pdf->getVal();
+      //if(relErr<10e-3) relErr = 10e-3;
+      float relErr = 1e-2;
+      errfix.SetPointError(i,0,relErr*y[i]);
+      std::cout << x[i] << " " << y[i] << " " << relErr*y[i] << std::endl;
+    }
+    errfix.SetFillColor(kYellow);
+    
+
+
+    //pdf->plotOn(plot,RooFit::NormRange( "low,high" ),RooFit::FillColor(kGreen),RooFit::Range("Full"), RooFit::VisualizeError(*res,2.0,kFALSE));
+    //pdf->plotOn(plot,RooFit::NormRange( "low,high" ),RooFit::FillColor(kYellow),RooFit::Range("Full"), RooFit::VisualizeError(*res,1.0,kFALSE));
+    pdf->plotOn(plot,RooFit::NormRange( "low,high" ),RooFit::FillColor(kGreen),RooFit::Range("Full"), RooFit::VisualizeError(*res,2.0,kTRUE));
+    pdf->plotOn(plot,RooFit::NormRange( "low,high" ),RooFit::FillColor(kYellow),RooFit::Range("Full"), RooFit::VisualizeError(*res,1.0,kTRUE));
+    //plot->addObject(&errfix,"4");
+    //data->plotOn(plot);
+    TBox blindBox(121,plot->GetMinimum()-(plot->GetMaximum()-plot->GetMinimum())*0.015,130,plot->GetMaximum());
+    blindBox.SetFillColor(kGray);
+    if(blind) {
+      plot->addObject(&blindBox);
+      pdf->plotOn(plot,RooFit::NormRange( "low,high" ),RooFit::FillColor(kGreen),RooFit::Range("Full"), RooFit::VisualizeError(*res,2.0,kTRUE));
+      pdf->plotOn(plot,RooFit::NormRange( "low,high" ),RooFit::FillColor(kYellow),RooFit::Range("Full"), RooFit::VisualizeError(*res,1.0,kTRUE));
+    }
+    plot->addObject(&errfix,"4");
     data->plotOn(plot);
+
     //pdf->plotOn(plot,RooFit::Normalization( norm ) );
-    pdf->plotOn(plot,RooFit::NormRange( "low,high" ) );
-
+    pdf->plotOn(plot,RooFit::NormRange( "low,high" ),RooFit::Range("Full"),RooFit::LineWidth(0.1) );
+    
+    /*
+    pdf->plotOn(plot,RooFit::Normalization(norm),RooFit::Range("all"),RooFit::LineWidth(0.8) );
+    //pdf->plotOn(plot,RooFit::Normalization(norm),RooFit::FillColor(kGreen),RooFit::Range("all"), RooFit::VisualizeError(*res,2.0,kFALSE));
+    //pdf->plotOn(plot,RooFit::Normalization(norm),RooFit::FillColor(kYellow),RooFit::Range("all"), RooFit::VisualizeError(*res,1.0,kFALSE));
+    pdf->plotOn(plot,RooFit::Normalization(norm),RooFit::FillColor(kGreen),RooFit::Range("all"), RooFit::VisualizeError(*res,2.0,kTRUE));
+    pdf->plotOn(plot,RooFit::Normalization(norm),RooFit::FillColor(kYellow),RooFit::Range("all"), RooFit::VisualizeError(*res,1.0,kTRUE));
+    data->plotOn(plot);
+    pdf->plotOn(plot,RooFit::Normalization(norm),RooFit::Range("all"),RooFit::LineWidth(0.8) );
+    */
     TLatex lbl0(0.1,0.96,"CMS Preliminary");
     lbl0.SetNDC();
     lbl0.SetTextSize(0.042);

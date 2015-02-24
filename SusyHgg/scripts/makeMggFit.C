@@ -11,6 +11,7 @@
 #include "RooStats/SPlot.h"
 #include "RooStats/ModelConfig.h"
 #include "RooGenericPdf.h"
+#include "RooFormulaVar.h"
 
 #include "TLatex.h"
 #include "TString.h"
@@ -160,13 +161,22 @@ RooWorkspace* makeMggFit(TTree* tree,bool doBkg=true, float forceSigma=-1,float 
 }
 
 TString makeDoubleExp(TString tag, RooRealVar& mgg,RooWorkspace& w) {
-  RooRealVar *alpha1 = new RooRealVar(tag+"_dexp_alpha1","#alpha_{1}",-1,-10,-0.0001);
-  RooRealVar *alpha2 = new RooRealVar(tag+"_dexp_alpha2","#alpha_{2}",-0.1,-10,-0.0001);
-  RooRealVar *f      = new RooRealVar(tag+"_dexp_f","f",0.3,0.0001,0.9999);
-  RooRealVar *Nbkg   = new RooRealVar(tag+"_dexp_Nbkg","N_{bkg}",10,1,1E9);
+  RooRealVar *alpha1 = new RooRealVar(tag+"_dexp_alpha1","#alpha_{1}",-0.03,-4.,4.);
+  RooRealVar *alpha2 = new RooRealVar(tag+"_dexp_alpha2","#alpha_{2}",-0.01,-4.,4.);
 
-  RooExponential *exp1 = new RooExponential(tag+"_dexp_exp1","",mgg,*alpha1);
-  RooExponential *exp2 = new RooExponential(tag+"_dexp_exp2","",mgg,*alpha2);
+  RooFormulaVar *asq1 = new RooFormulaVar(tag+"_dexp_asq1","","-1*@0^2",*alpha1);
+  RooFormulaVar *asq2 = new RooFormulaVar(tag+"_dexp_asq2","","-1*@0^2",*alpha2);
+
+  RooRealVar *f      = new RooRealVar(tag+"_dexp_f","f",0.3,0.001,0.999);
+  RooRealVar *Nbkg   = new RooRealVar(tag+"_dexp_Nbkg","N_{bkg}",10,0.001,1E9);
+
+  //RooFormulaVar *fn = new RooFormulaVar(tag+"_dexp_fn","","0.5*(tanh(@0)+1)",*f);
+
+  //RooExponential *exp1 = new RooExponential(tag+"_dexp_exp1","",mgg,*alpha1);
+  //RooExponential *exp2 = new RooExponential(tag+"_dexp_exp2","",mgg,*alpha2);
+
+  RooExponential *exp1 = new RooExponential(tag+"_dexp_exp1","",mgg,*asq1);
+  RooExponential *exp2 = new RooExponential(tag+"_dexp_exp2","",mgg,*asq2);
 
   RooAddPdf *add       = new RooAddPdf(tag+"_dexp","",*exp1,*exp2,*f);
 
