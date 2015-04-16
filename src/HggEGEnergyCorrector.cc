@@ -5,7 +5,7 @@
 #include <iostream>
 #include <exception>
 
-#define debugEGEnergy 1
+#define debugEGEnergy 0
 HggEGEnergyCorrector::HggEGEnergyCorrector(VecbosBase *r,string cfgFile,Bool_t realData):
   usePhoton(true),
   version(""),

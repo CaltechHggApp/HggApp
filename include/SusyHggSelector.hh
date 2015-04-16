@@ -67,8 +67,9 @@ protected:
   float max_jet_eta=3.;
 
   float min_mgg = 100;
-  float max_mgg = 180;
-  float min_ptgg = 20;
+  float max_mgg = 100000;
+  //float min_ptgg = 20;
+  float min_ptgg = 1;
 
   //output variables
   int runNum;
@@ -81,12 +82,6 @@ protected:
   float etagg;
   float phigg;
   int hemgg;
-
-  float mgg_def;
-  float ptgg_def;
-  float etagg_def;
-  float phigg_def;
-  int hemgg_def;
 
   float pho1_pt;
   float pho1_eta;
@@ -110,30 +105,6 @@ protected:
   bool pho1_eleveto;
 
   float pho1_energyGen;
-
-  //default corrections
-  float pho1_def_pt;
-  float pho1_def_eta;
-  float pho1_def_sc_eta;
-  float pho1_def_phi;
-  float pho1_def_r9;
-  float pho1_def_seoe;
-  bool pho1_def_genMatch;
-
-
-  bool pho1_def_pass_id;
-  bool pho1_def_pass_iso;
-  bool pho1_def_pass_pixel;
-
-  //optimize only
-  float pho1_def_sieie;
-  float pho1_def_HE;
-  float pho1_def_charged;
-  float pho1_def_neutral;
-  float pho1_def_photon;
-  bool pho1_def_eleveto;
-
-  float pho1_def_energyGen;
   
   float pho2_pt;
   float pho2_pt_def;
@@ -157,29 +128,6 @@ protected:
   bool pho2_eleveto;
 
   float pho2_energyGen;
-
-  float pho2_def_pt;
-  float pho2_def_pt_def;
-  float pho2_def_eta;
-  float pho2_def_sc_eta;
-  float pho2_def_phi;
-  float pho2_def_r9;
-  float pho2_def_seoe;
-  bool pho2_def_genMatch;
-
-  bool pho2_def_pass_id;
-  bool pho2_def_pass_iso;
-  bool pho2_def_pass_pixel;
-
-  //optimize only
-  float pho2_def_sieie;
-  float pho2_def_HE;
-  float pho2_def_charged;
-  float pho2_def_neutral;
-  float pho2_def_photon;
-  bool pho2_def_eleveto;
-
-  float pho2_def_energyGen;
 
   int nJ;
   int nJ_up;
@@ -217,39 +165,6 @@ protected:
   float hem2_phi_up;
   float hem2_M_up;
 
-  float hem1_def_pt;
-  float hem1_def_eta;
-  float hem1_def_phi;
-  float hem1_def_M;
-
-  float hem2_def_pt;
-  float hem2_def_eta;
-  float hem2_def_phi;
-  float hem2_def_M;
-
-  //down 1 sigma JEC
-  float hem1_def_pt_down;
-  float hem1_def_eta_down;
-  float hem1_def_phi_down;
-  float hem1_def_M_down;
-
-  float hem2_def_pt_down;
-  float hem2_def_eta_down;
-  float hem2_def_phi_down;
-  float hem2_def_M_down;
-
-  //up 1 sigma JEC
-  float hem1_def_pt_up;
-  float hem1_def_eta_up;
-  float hem1_def_phi_up;
-  float hem1_def_M_up;
-
-  float hem2_def_pt_up;
-  float hem2_def_eta_up;
-  float hem2_def_phi_up;
-  float hem2_def_M_up;
-
-
   float MET;
   float METphi;
 
@@ -279,18 +194,6 @@ protected:
   float MR_up;
   float Rsq_up;
   float t1Rsq_up;
-  
-  float MR_def;
-  float Rsq_def;
-  float t1Rsq_def;
-  
-  float MR_down_def;
-  float Rsq_down_def;
-  float t1Rsq_down_def;
-  
-  float MR_up_def;
-  float Rsq_up_def;
-  float t1Rsq_up_def;
   
   float mu1_pt;
   float mu1_eta;
