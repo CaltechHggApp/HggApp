@@ -117,16 +117,11 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
   //identify the two highest pT photons
   const int NPho=2;
   float pho_sum_pt=0;
-  float pho_sum_pt_def=0;
   float M_max=-1;
 
   int selected_photons[NPho];
   for(int i=0;i<NPho;i++) {
     selected_photons[i]=0;
-  }
-  int selected_photons_def[NPho];
-  for(int i=0;i<NPho;i++) {
-    selected_photons_def[i]=0;
   }
   for(int iPho=0; iPho < nPho_;iPho++) {
     auto photon1 =&(Photons_->at(iPho));
@@ -184,17 +179,9 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
 	pho_sum_pt = (p4_pho1.Pt() + p4_pho2.Pt());
 	if(VERBOSE) std::cout << "\tsumPT: " << pho_sum_pt << std::endl;
       }
-      float M_def = (p4_pho1_def+p4_pho2_def).M();
-      if(VERBOSE) std::cout << "\tM: " << M  << std::endl;
-      if( M_def > min_mgg && M < max_mgg && (p4_pho1_def.Pt() + p4_pho2_def.Pt()) > pho_sum_pt_def) {
-	selected_photons_def[0]=(pt1>pt2 ? iPho : jPho);
-	selected_photons_def[1]=(pt1>pt2 ? jPho : iPho);
-	pho_sum_pt_def = (p4_pho1_def.Pt() + p4_pho2_def.Pt());
-	if(VERBOSE) std::cout << "\tsumPT: " << pho_sum_pt << std::endl;
-      }
     }
   }
-  if(selected_photons[0]==selected_photons[1] && selected_photons_def[0]==selected_photons_def[1]) return; //no selected photons
+  if(selected_photons[0]==selected_photons[1]) return; //no selected photons
 
   //std::cout << "pho pts: " << pho_pts[0] << "  "<< pho_pts[1] << std::endl;
   //pho_pts is now the sorted pts of the highest pt photons in the event
@@ -204,22 +191,16 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
   TLorentzVector pho1_p4 = Photons_->at(selected_photons[0]).p4FromVtx(vtx,Photons_->at(selected_photons[0]).finalEnergy);
   TLorentzVector pho2_p4 = Photons_->at(selected_photons[1]).p4FromVtx(vtx,Photons_->at(selected_photons[1]).finalEnergy);
 
-  TLorentzVector pho1_p4_def = Photons_->at(selected_photons_def[0]).p4FromVtx(vtx,Photons_->at(selected_photons_def[0]).energy);
-  TLorentzVector pho2_p4_def = Photons_->at(selected_photons_def[1]).p4FromVtx(vtx,Photons_->at(selected_photons_def[1]).energy);
-
   TLorentzVector gg_p4 = pho1_p4+pho2_p4;
-  TLorentzVector gg_p4_def = pho1_p4_def+pho2_p4_def;
 
   mgg = gg_p4.M();
-  mgg_def = gg_p4_def.M();
   //std::cout << "mgg: " << mgg << std::endl;
   ptgg = gg_p4.Pt();
-  ptgg_def = gg_p4_def.Pt();
 
   if(VERBOSE) std::cout << ">>>>>>>>>>>>>" << selected_photons[0] << " " << selected_photons[1] << " " << mgg << "  " << ptgg << std::endl;
   if(!optimize) {
-    if(mgg < min_mgg && mgg_def < min_mgg) return; //mgg too low
-    if(ptgg < min_ptgg && ptgg_def < min_ptgg) return;
+    if(mgg < min_mgg) return; //mgg too low
+    if(ptgg < min_ptgg) return;
   }
   etagg = gg_p4.Eta();
   phigg = gg_p4.Phi();
@@ -247,32 +228,7 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
 
   pho1_energyGen = (pho1_genMatch ? Photons_->at(selected_photons[0]).genMatch.energy : -1);
 
-  etagg_def = gg_p4_def.Eta();
-  phigg_def = gg_p4_def.Phi();
-  pho1_def_pt = pho1_p4_def.Pt();
-  pho1_def_eta = pho1_p4_def.Eta();
-  pho1_def_sc_eta = Photons_->at(selected_photons_def[0]).SC.eta;
-  pho1_def_phi = pho1_p4_def.Phi();
-  pho1_def_r9 = Photons_->at(selected_photons_def[0]).SC.r9;
-  //if(isMC)pho1_def_seoe = Photons_->at(selected_photons[0]).correctedEnergyError/Photons_->at(selected_photons[0]).correctedEnergy;
-  pho1_def_seoe = 0;
-
-  std::bitset<5> id_res_pho1_def = photonID.cutResults(Photons_->at(selected_photons_def[0]),StandardPhotonID::kLoose,rho);
-
-  pho1_def_pass_id  = !(id_res_pho1_def[0] || id_res_pho1_def[1]);
-  pho1_def_pass_iso = !(id_res_pho1_def[2] || id_res_pho1_def[3] || id_res_pho1_def[4]);
-
-
-  pho1_def_sieie = Photons_->at(selected_photons_def[0]).SC.sigmaIEtaIEta;
-  pho1_def_HE = Photons_->at(selected_photons_def[0]).HoverE;
-  pho1_def_charged = Photons_->at(selected_photons_def[0]).dr03ChargedHadronPFIso[0];
-  pho1_def_neutral = Photons_->at(selected_photons_def[0]).dr03NeutralHadronPFIso;
-  pho1_def_photon = Photons_->at(selected_photons_def[0]).dr03PhotonPFIso;
-  pho1_def_eleveto = photonMatchedElectron[selected_photons_def[0]];
-  pho1_def_genMatch = (Photons_->at(selected_photons_def[0]).genMatch.index!=-1);
-
-  pho1_def_energyGen = (pho1_def_genMatch ? Photons_->at(selected_photons_def[0]).genMatch.energy : -1);
-
+  //photon 2
   pho2_pt = pho2_p4.Pt();
   pho2_eta = pho2_p4.Eta();
   pho2_sc_eta = Photons_->at(selected_photons[1]).SC.eta;
@@ -295,30 +251,6 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
   pho2_genMatch = (Photons_->at(selected_photons[1]).genMatch.index!=-1);
 
   pho2_energyGen = (pho2_genMatch ? Photons_->at(selected_photons[1]).genMatch.energy : -1);
-
-
-  pho2_def_pt = pho2_p4_def.Pt();
-  pho2_def_eta = pho2_p4_def.Eta();
-  pho2_def_sc_eta = Photons_->at(selected_photons_def[1]).SC.eta;
-  pho2_def_phi = pho2_p4_def.Phi();
-  pho2_def_r9 = Photons_->at(selected_photons_def[1]).SC.r9;
-  //if(isMC) pho2_def_seoe = Photons_->at(selected_photons_def[1]).correctedEnergyError/Photons_->at(selected_photons_def[1]).correctedEnergy;
-  pho2_def_seoe = 0; 
-
-  std::bitset<5> id_res_pho2_def = photonID.cutResults(Photons_->at(selected_photons_def[1]),StandardPhotonID::kLoose,rho);
-
-  pho2_def_pass_id  = !(id_res_pho2_def[0] || id_res_pho2_def[1]);
-  pho2_def_pass_iso = !(id_res_pho2_def[2] || id_res_pho2_def[3] || id_res_pho2_def[4]);
-
-  pho2_def_sieie = Photons_->at(selected_photons_def[1]).SC.sigmaIEtaIEta;
-  pho2_def_HE = Photons_->at(selected_photons_def[1]).HoverE;
-  pho2_def_charged = Photons_->at(selected_photons_def[1]).dr03ChargedHadronPFIso[0];
-  pho2_def_neutral = Photons_->at(selected_photons_def[1]).dr03NeutralHadronPFIso;
-  pho2_def_photon = Photons_->at(selected_photons_def[1]).dr03PhotonPFIso;
-  pho2_def_eleveto = photonMatchedElectron[selected_photons_def[1]];
-  pho2_def_genMatch = (Photons_->at(selected_photons_def[1]).genMatch.index!=-1);
-
-  pho2_def_energyGen = (pho2_def_genMatch ? Photons_->at(selected_photons_def[1]).genMatch.energy : -1);
 
   //clear the highest_csv info
   highest_csv = -1000;
@@ -397,342 +329,158 @@ void SusyHggSelector::processEntry(Long64_t iEntry) {
   nJ_up = selectedJets_up.size();
   nJ_down = selectedJets_down.size();
 
-  if(gg_p4.M()>5) { //there is a regression pair
-    selectedJets.push_back(gg_p4); //ensure the 'Higgs' vector is in there explicitly
-    selectedJets_up.push_back(gg_p4); //ensure the 'Higgs' vector is in there explicitly
-    selectedJets_down.push_back(gg_p4); //ensure the 'Higgs' vector is in there explicitly
-    if(!optimize) {
-      if(selectedJets.size()<2) {
-	if(VERBOSE) std::cout << "NOT ENOUGH JETS" << std::endl;
-	return;
-      }
+  selectedJets.push_back(gg_p4); //ensure the 'Higgs' vector is in there explicitly
+  selectedJets_up.push_back(gg_p4); //ensure the 'Higgs' vector is in there explicitly
+  selectedJets_down.push_back(gg_p4); //ensure the 'Higgs' vector is in there explicitly
+  if(!optimize) {
+    if(selectedJets.size()<2) {
+      if(VERBOSE) std::cout << "NOT ENOUGH JETS" << std::endl;
+      return;
     }
+  }
 
-    TLorentzVector top_b;
-    TLorentzVector second_b;
-
-    if(selectedJets.size()>=2) {
-      TLorentzVector h1(0,0,0,0),h2(0,0,0,0);
-      std::vector<int> hemAssign;
+  TLorentzVector top_b;
+  TLorentzVector second_b;
+  
+  if(selectedJets.size()>=2) {
+    TLorentzVector h1(0,0,0,0),h2(0,0,0,0);
+    std::vector<int> hemAssign;
+    try{
+      RazorVariables::CombineJets(selectedJets,h1,h2,&hemAssign);
+    }catch(TooManyJets& e) {
+      std::cout << "TOO MANY JETS IN EVENT" << std::endl;
+      return;
+    }catch(TooFewJets& e) {
+      std::cout << "shouldn't happen......" << std::endl;
+      throw e;
+    }
+    
+    for(int i=0;i<selectedJets.size();i++) {
+      //fill the jet info
+      indexJet[i] = i;
+      ptJet[i] = selectedJets[i].Pt();
+      etaJet[i] = selectedJets[i].Eta();
+      phiJet[i] = selectedJets[i].Phi();
+      energyJet[i] = selectedJets[i].E();      
+      
       try{
-	RazorVariables::CombineJets(selectedJets,h1,h2,&hemAssign);
-      }catch(TooManyJets& e) {
+	corrUpJet[i] = jecReader.getCorrection(ptJet[i],etaJet[i],JECUReader::kUp);
+	corrDownJet[i] = jecReader.getCorrection(ptJet[i],etaJet[i],JECUReader::kDown);
+      }catch(std::runtime_error& e){
+	corrUpJet[i]=0;
+	corrDownJet[i]=0;
+      }
+      hemJet[i] = hemAssign.at(i);
+    }
+    
+    hemgg = hemAssign.at(hemAssign.size()-1);
+    if(h1.Pt()==0) {
+      if(VERBOSE) std::cout << "HEMISPHERE 1 had 0 pT!" << std::endl;
+      return;
+    }
+    hem1_pt  = h1.Pt();
+    hem1_eta = h1.Eta();
+    hem1_phi = h1.Phi();
+    hem1_M   = h1.M();
+    
+    hem2_pt  = h2.Pt();
+    hem2_eta = h2.Eta();
+    hem2_phi = h2.Phi();
+    hem2_M   = h2.M();
+    
+    MR = RazorVariables::CalcGammaMRstar(h1,h2);
+    
+    double MTR = RazorVariables::CalcMTR(h1,h2,met);
+    double t1MTR = RazorVariables::CalcMTR(h1,h2,t1met);
+    
+    Rsq = MTR/MR;
+    Rsq=Rsq*Rsq; //square it!
+    
+    t1Rsq = t1MTR/MR;
+    t1Rsq=t1Rsq*t1Rsq; //square it!
+    
+    
+  }
+  
+  if(selectedJets_up.size()>=2) {
+    TLorentzVector h1(0,0,0,0),h2(0,0,0,0);
+    try{
+      RazorVariables::CombineJets(selectedJets_up,h1,h2);
+    }catch(TooManyJets& e) {
 	std::cout << "TOO MANY JETS IN EVENT" << std::endl;
 	return;
-      }catch(TooFewJets& e) {
-	std::cout << "shouldn't happen......" << std::endl;
-	throw e;
-      }
-
-      for(int i=0;i<selectedJets.size();i++) {
-	//fill the jet info
-	indexJet[i] = i;
-	ptJet[i] = selectedJets[i].Pt();
-	etaJet[i] = selectedJets[i].Eta();
-	phiJet[i] = selectedJets[i].Phi();
-	energyJet[i] = selectedJets[i].E();      
-
-	try{
-	  corrUpJet[i] = jecReader.getCorrection(ptJet[i],etaJet[i],JECUReader::kUp);
-	  corrDownJet[i] = jecReader.getCorrection(ptJet[i],etaJet[i],JECUReader::kDown);
-	}catch(std::runtime_error& e){
-	  corrUpJet[i]=0;
-	  corrDownJet[i]=0;
-	}
-	hemJet[i] = hemAssign.at(i);
-      }
-
-      hemgg = hemAssign.at(hemAssign.size()-1);
-      if(h1.Pt()==0) {
-	if(VERBOSE) std::cout << "HEMISPHERE 1 had 0 pT!" << std::endl;
-	return;
-      }
-      hem1_pt  = h1.Pt();
-      hem1_eta = h1.Eta();
-      hem1_phi = h1.Phi();
-      hem1_M   = h1.M();
+    }catch(TooFewJets& e) {
+      std::cout << "shouldn't happen......" << std::endl;
+      throw e;
+    }
+    
+    if(h1.Pt()!=0) {
       
-      hem2_pt  = h2.Pt();
-      hem2_eta = h2.Eta();
-      hem2_phi = h2.Phi();
-      hem2_M   = h2.M();
+      hem1_pt_up  = h1.Pt();
+      hem1_eta_up = h1.Eta();
+      hem1_phi_up = h1.Phi();
+      hem1_M_up   = h1.M();
       
-      MR = RazorVariables::CalcGammaMRstar(h1,h2);
-
+      hem2_pt_up  = h2.Pt();
+      hem2_eta_up = h2.Eta();
+      hem2_phi_up = h2.Phi();
+      hem2_M_up   = h2.M();
+      
+      MR_up = RazorVariables::CalcGammaMRstar(h1,h2);
+      
       double MTR = RazorVariables::CalcMTR(h1,h2,met);
       double t1MTR = RazorVariables::CalcMTR(h1,h2,t1met);
-
-      Rsq = MTR/MR;
-      Rsq=Rsq*Rsq; //square it!
-
-      t1Rsq = t1MTR/MR;
-      t1Rsq=t1Rsq*t1Rsq; //square it!
       
-    
-    }
-    
-    if(selectedJets_up.size()>=2) {
-      TLorentzVector h1(0,0,0,0),h2(0,0,0,0);
-      try{
-	RazorVariables::CombineJets(selectedJets_up,h1,h2);
-      }catch(TooManyJets& e) {
-	std::cout << "TOO MANY JETS IN EVENT" << std::endl;
-	return;
-      }catch(TooFewJets& e) {
-	std::cout << "shouldn't happen......" << std::endl;
-	throw e;
-      }
+      Rsq_up = MTR/MR_up;
+      Rsq_up=Rsq_up*Rsq_up; //square it!
       
-      if(h1.Pt()!=0) {
-	
-	hem1_pt_up  = h1.Pt();
-	hem1_eta_up = h1.Eta();
-	hem1_phi_up = h1.Phi();
-	hem1_M_up   = h1.M();
-	
-	hem2_pt_up  = h2.Pt();
-	hem2_eta_up = h2.Eta();
-	hem2_phi_up = h2.Phi();
-	hem2_M_up   = h2.M();
-	
-	MR_up = RazorVariables::CalcGammaMRstar(h1,h2);
-	
-	double MTR = RazorVariables::CalcMTR(h1,h2,met);
-	double t1MTR = RazorVariables::CalcMTR(h1,h2,t1met);
-	
-	Rsq_up = MTR/MR_up;
-	Rsq_up=Rsq_up*Rsq_up; //square it!
-	
-	t1Rsq_up = t1MTR/MR_up;
-	t1Rsq_up=t1Rsq_up*t1Rsq_up; //square it!
-      }else{
-	t1Rsq_up=-1;
-	Rsq_up=-1;
-	MR_up=-1;
-      }
+      t1Rsq_up = t1MTR/MR_up;
+      t1Rsq_up=t1Rsq_up*t1Rsq_up; //square it!
+    }else{
+      t1Rsq_up=-1;
+      Rsq_up=-1;
+      MR_up=-1;
     }
-    
-    if(selectedJets_down.size()>=2) {
-      TLorentzVector h1(0,0,0,0),h2(0,0,0,0);
-      try{
-	RazorVariables::CombineJets(selectedJets_down,h1,h2);
-      }catch(TooManyJets& e) {
-	std::cout << "TOO MANY JETS IN EVENT" << std::endl;
-	return;
-      }catch(TooFewJets& e) {
-       std::cout << "shouldn't happen......" << std::endl;
-       throw e;
-      }
-
-      if(h1.Pt()!=0) {
-
-	hem1_pt_down  = h1.Pt();
-	hem1_eta_down = h1.Eta();
-	hem1_phi_down = h1.Phi();
-	hem1_M_down   = h1.M();
-	
-	hem2_pt_down  = h2.Pt();
-	hem2_eta_down = h2.Eta();
-	hem2_phi_down = h2.Phi();
-	hem2_M_down   = h2.M();
-      
-	MR_down = RazorVariables::CalcGammaMRstar(h1,h2);
-	
-	double MTR = RazorVariables::CalcMTR(h1,h2,met);
-	double t1MTR = RazorVariables::CalcMTR(h1,h2,t1met);
-	
-	t1Rsq_down = t1MTR/MR_down;
-	t1Rsq_down=t1Rsq_down*t1Rsq_down; //square it!
-      }else{
-	t1Rsq_down=-1;
-	Rsq_down=-1;
-	MR_down=-1;
-      }
-    }
-
-    //remove the regression Higgs
-    selectedJets.pop_back();
-    selectedJets_up.pop_back();
-    selectedJets_down.pop_back();
-    
-  }else{
-    MR=0;
-    Rsq=0;
-    t1Rsq=0;
-    MR_up=0;
-    Rsq_up=0;
-    t1Rsq_up=0;
-    MR_down=0;
-    Rsq_down=0;
-    t1Rsq_down=0;
   }
-
-
-  if(gg_p4_def.M()>5) { //there is a non-regression pair
-    selectedJets.push_back(gg_p4_def); //ensure the 'Higgs' vector is in there explicitly
-    selectedJets_up.push_back(gg_p4_def); //ensure the 'Higgs' vector is in there explicitly
-    selectedJets_down.push_back(gg_p4_def); //ensure the 'Higgs' vector is in there explicitly
-    if(!optimize) {
-      if(selectedJets.size()<2) {
-	if(VERBOSE) std::cout << "NOT ENOUGH JETS" << std::endl;
-	return;
-      }
-    }
-
-    TLorentzVector top_b;
-    TLorentzVector second_b;
-
-    if(selectedJets.size()>=2) {
-      TLorentzVector h1(0,0,0,0),h2(0,0,0,0);
-      std::vector<int> hemAssign;
-      try{
-	RazorVariables::CombineJets(selectedJets,h1,h2,&hemAssign);
-      }catch(TooManyJets& e) {
-	std::cout << "TOO MANY JETS IN EVENT" << std::endl;
-	return;
-      }catch(TooFewJets& e) {
-	std::cout << "shouldn't happen......" << std::endl;
-	throw e;
-      }
-
-      for(int i=0;i<selectedJets.size();i++) {
-	//fill the jet info
-	indexJet[i] = i;
-	ptJet[i] = selectedJets[i].Pt();
-	etaJet[i] = selectedJets[i].Eta();
-	phiJet[i] = selectedJets[i].Phi();
-	energyJet[i] = selectedJets[i].E();      
-
-	try{
-	  corrUpJet[i] = jecReader.getCorrection(ptJet[i],etaJet[i],JECUReader::kUp);
-	  corrDownJet[i] = jecReader.getCorrection(ptJet[i],etaJet[i],JECUReader::kDown);
-	}catch(std::runtime_error& e){
-	  corrUpJet[i]=0;
-	  corrDownJet[i]=0;
-	}
-	hemJet_def[i] = hemAssign.at(i);
-      }
-
-      hemgg_def = hemAssign.at(hemAssign.size()-1);
-      if(h1.Pt()>0) {
-
-	hem1_def_pt  = h1.Pt();
-	hem1_def_eta = h1.Eta();
-	hem1_def_phi = h1.Phi();
-	hem1_def_M   = h1.M();
-      
-	hem2_def_pt  = h2.Pt();
-	hem2_def_eta = h2.Eta();
-	hem2_def_phi = h2.Phi();
-	hem2_def_M   = h2.M();
-      
-	MR_def = RazorVariables::CalcGammaMRstar(h1,h2);
-	
-	double MTR = RazorVariables::CalcMTR(h1,h2,met);
-	double t1MTR = RazorVariables::CalcMTR(h1,h2,t1met);
-	
-	Rsq_def = MTR/MR_def;
-	Rsq_def=Rsq_def*Rsq_def; //square it!
-	
-	t1Rsq_def = t1MTR/MR_def;
-	t1Rsq_def=t1Rsq_def*t1Rsq_def; //square it!
-      }else{
-	MR_def=0;
-	Rsq_def=0;
-	t1Rsq_def=0;
-      }
-    
-    }
-    
-    if(selectedJets_up.size()>=2) {
-      TLorentzVector h1(0,0,0,0),h2(0,0,0,0);
-      try{
-	RazorVariables::CombineJets(selectedJets_up,h1,h2);
-      }catch(TooManyJets& e) {
-	std::cout << "TOO MANY JETS IN EVENT" << std::endl;
-	return;
-      }catch(TooFewJets& e) {
-	std::cout << "shouldn't happen......" << std::endl;
-	throw e;
-      }
-      
-      if(h1.Pt()!=0) {
-	
-	hem1_def_pt_up  = h1.Pt();
-	hem1_def_eta_up = h1.Eta();
-	hem1_def_phi_up = h1.Phi();
-	hem1_def_M_up   = h1.M();
-	
-	hem2_def_pt_up  = h2.Pt();
-	hem2_def_eta_up = h2.Eta();
-	hem2_def_phi_up = h2.Phi();
-	hem2_def_M_up   = h2.M();
-	
-	MR_up_def = RazorVariables::CalcGammaMRstar(h1,h2);
-	
-	double MTR = RazorVariables::CalcMTR(h1,h2,met);
-	double t1MTR = RazorVariables::CalcMTR(h1,h2,t1met);
-	
-	Rsq_up_def = MTR/MR_up_def;
-	Rsq_up_def=Rsq_up_def*Rsq_up_def; //square it!
-	
-	t1Rsq_up_def = t1MTR/MR_up_def;
-	t1Rsq_up_def=t1Rsq_up_def*t1Rsq_up_def; //square it!
-      }else{
-	t1Rsq_up_def=-1;
-	Rsq_up_def=-1;
-	MR_up_def=-1;
-      }
-    }
-    
-    if(selectedJets_down.size()>=2) {
-      TLorentzVector h1(0,0,0,0),h2(0,0,0,0);
-      try{
-	RazorVariables::CombineJets(selectedJets_down,h1,h2);
-      }catch(TooManyJets& e) {
-	std::cout << "TOO MANY JETS IN EVENT" << std::endl;
-	return;
-      }catch(TooFewJets& e) {
-       std::cout << "shouldn't happen......" << std::endl;
+  
+  if(selectedJets_down.size()>=2) {
+    TLorentzVector h1(0,0,0,0),h2(0,0,0,0);
+    try{
+      RazorVariables::CombineJets(selectedJets_down,h1,h2);
+    }catch(TooManyJets& e) {
+      std::cout << "TOO MANY JETS IN EVENT" << std::endl;
+      return;
+    }catch(TooFewJets& e) {
+      std::cout << "shouldn't happen......" << std::endl;
        throw e;
-      }
-
-      if(h1.Pt()!=0) {
-
-	hem1_def_pt_down  = h1.Pt();
-	hem1_def_eta_down = h1.Eta();
-	hem1_def_phi_down = h1.Phi();
-	hem1_def_M_down   = h1.M();
-	
-	hem2_def_pt_down  = h2.Pt();
-	hem2_def_eta_down = h2.Eta();
-	hem2_def_phi_down = h2.Phi();
-	hem2_def_M_down   = h2.M();
-      
-	MR_down_def = RazorVariables::CalcGammaMRstar(h1,h2);
-	
-	double MTR = RazorVariables::CalcMTR(h1,h2,met);
-	double t1MTR = RazorVariables::CalcMTR(h1,h2,t1met);
-	
-	t1Rsq_down_def = t1MTR/MR_down_def;
-	t1Rsq_down_def=t1Rsq_down_def*t1Rsq_down_def; //square it!
-      }else{
-	t1Rsq_down_def=-1;
-	Rsq_down_def=-1;
-	MR_down_def=-1;
-      }
     }
-  }else{
-    MR_def=0;
-    Rsq_def=0;
-    t1Rsq_def=0;
-    MR_up_def=0;
-    Rsq_up_def=0;
-    t1Rsq_up_def=0;
-    MR_down_def=0;
-    Rsq_down_def=0;
-    t1Rsq_down_def=0;
+    
+    if(h1.Pt()!=0) {
+      
+      hem1_pt_down  = h1.Pt();
+      hem1_eta_down = h1.Eta();
+      hem1_phi_down = h1.Phi();
+      hem1_M_down   = h1.M();
+      
+      hem2_pt_down  = h2.Pt();
+      hem2_eta_down = h2.Eta();
+      hem2_phi_down = h2.Phi();
+      hem2_M_down   = h2.M();
+      
+      MR_down = RazorVariables::CalcGammaMRstar(h1,h2);
+      
+      double MTR = RazorVariables::CalcMTR(h1,h2,met);
+      double t1MTR = RazorVariables::CalcMTR(h1,h2,t1met);
+      
+      t1Rsq_down = t1MTR/MR_down;
+      t1Rsq_down=t1Rsq_down*t1Rsq_down; //square it!
+    }else{
+      t1Rsq_down=-1;
+      Rsq_down=-1;
+      MR_down=-1;
+    }
   }
+  
 
 
   //find leptons
@@ -795,13 +543,6 @@ void SusyHggSelector::setupOutputTree() {
   outTree->Branch("phigg",&phigg);
   outTree->Branch("hemgg",&hemgg,"hemgg/I");
 
-  outTree->Branch("mgg_def",&mgg_def,"mgg_def/F");
-  outTree->Branch("ptgg_def",&ptgg_def);
-  outTree->Branch("etagg_def",&etagg_def);
-  outTree->Branch("phigg_def",&phigg_def);
-  outTree->Branch("hemgg_def",&hemgg_def,"hemgg_def/I");
-
-
   outTree->Branch("pho1_pt",&pho1_pt,"pho1_pt/F");
   outTree->Branch("pho1_eta",&pho1_eta);
   outTree->Branch("pho1_sc_eta",&pho1_sc_eta);
@@ -820,25 +561,7 @@ void SusyHggSelector::setupOutputTree() {
   outTree->Branch("pho1_pass_id",&pho1_pass_id,"pho1_pass_id/B");
   outTree->Branch("pho1_pass_iso",&pho1_pass_iso,"pho1_pass_iso/B");
   
-  
-  outTree->Branch("pho1_def_pt",&pho1_def_pt,"pho1_def_pt/F");
-  outTree->Branch("pho1_def_eta",&pho1_def_eta);
-  outTree->Branch("pho1_def_sc_eta",&pho1_def_sc_eta);
-  outTree->Branch("pho1_def_phi",&pho1_def_phi);
-  outTree->Branch("pho1_def_r9",&pho1_def_r9);
-  outTree->Branch("pho1_def_sigEoE",&pho1_def_seoe);
-  outTree->Branch("pho1_def_energyGen",&pho1_def_energyGen);
-  outTree->Branch("pho1_def_genMatch",&pho1_def_genMatch,"pho1_def_genMatch/B");
-
-  outTree->Branch("pho1_def_sieie",&pho1_def_sieie,"pho1_def_sieie/F");
-  outTree->Branch("pho1_def_HE",&pho1_def_HE);
-  outTree->Branch("pho1_def_charged",&pho1_def_charged);
-  outTree->Branch("pho1_def_neutral",&pho1_def_neutral);
-  outTree->Branch("pho1_def_photon",&pho1_def_photon);
-  outTree->Branch("pho1_def_eleveto",&pho1_def_eleveto,"pho1_def_eleveto/B");
-  outTree->Branch("pho1_def_pass_id",&pho1_def_pass_id,"pho1_def_pass_id/B");
-  outTree->Branch("pho1_def_pass_iso",&pho1_def_pass_iso,"pho1_def_pass_iso/B");
-  
+   
   
   outTree->Branch("pho2_pt",&pho2_pt,"pho2_pt/F");
   outTree->Branch("pho2_eta",&pho2_eta);
@@ -857,25 +580,6 @@ void SusyHggSelector::setupOutputTree() {
   outTree->Branch("pho2_eleveto",&pho2_eleveto,"pho2_eleveto/B");
   outTree->Branch("pho2_pass_id",&pho2_pass_id,"pho2_pass_id/B");
   outTree->Branch("pho2_pass_iso",&pho2_pass_iso,"pho2_pass_iso/B");
-
-  
-  outTree->Branch("pho2_def_pt",&pho2_def_pt,"pho2_def_pt/F");
-  outTree->Branch("pho2_def_eta",&pho2_def_eta);
-  outTree->Branch("pho2_def_sc_eta",&pho2_def_sc_eta);
-  outTree->Branch("pho2_def_phi",&pho2_def_phi);
-  outTree->Branch("pho2_def_r9",&pho2_def_r9);
-  outTree->Branch("pho2_def_sigEoE",&pho2_def_seoe);
-  outTree->Branch("pho2_def_energyGen",&pho2_def_energyGen);
-  outTree->Branch("pho2_def_genMatch",&pho2_def_genMatch,"pho2_def_genMatch/B");
-
-  outTree->Branch("pho2_def_sieie",&pho2_def_sieie,"pho2_def_sieie/F");
-  outTree->Branch("pho2_def_HE",&pho2_def_HE);
-  outTree->Branch("pho2_def_charged",&pho2_def_charged);
-  outTree->Branch("pho2_def_neutral",&pho2_def_neutral);
-  outTree->Branch("pho2_def_photon",&pho2_def_photon);
-  outTree->Branch("pho2_def_eleveto",&pho2_def_eleveto,"pho2_def_eleveto/B");
-  outTree->Branch("pho2_def_pass_id",&pho2_def_pass_id,"pho2_def_pass_id/B");
-  outTree->Branch("pho2_def_pass_iso",&pho2_def_pass_iso,"pho2_def_pass_iso/B");
 
   
   outTree->Branch("ele1_pt",&ele1_pt,"ele1_pt/F");
@@ -959,37 +663,6 @@ void SusyHggSelector::setupOutputTree() {
   outTree->Branch("hem2_M_down",&hem2_M_down);
 
 
-
-  outTree->Branch("hem1_def_pt",&hem1_def_pt);
-  outTree->Branch("hem1_def_eta",&hem1_def_eta);
-  outTree->Branch("hem1_def_phi",&hem1_def_phi);
-  outTree->Branch("hem1_def_M",&hem1_def_M);
-
-  outTree->Branch("hem1_def_pt_up",&hem1_def_pt_up);
-  outTree->Branch("hem1_def_eta_up",&hem1_def_eta_up);
-  outTree->Branch("hem1_def_phi_up",&hem1_def_phi_up);
-  outTree->Branch("hem1_def_M_up",&hem1_def_M_up);
-
-  outTree->Branch("hem1_def_pt_down",&hem1_def_pt_down);
-  outTree->Branch("hem1_def_eta_down",&hem1_def_eta_down);
-  outTree->Branch("hem1_def_phi_down",&hem1_def_phi_down);
-  outTree->Branch("hem1_def_M_down",&hem1_def_M_down);
-
-  outTree->Branch("hem2_def_pt",&hem2_def_pt);
-  outTree->Branch("hem2_def_eta",&hem2_def_eta);
-  outTree->Branch("hem2_def_phi",&hem2_def_phi);
-  outTree->Branch("hem2_def_M",&hem2_def_M);
-
-  outTree->Branch("hem2_def_pt_up",&hem2_def_pt_up);
-  outTree->Branch("hem2_def_eta_up",&hem2_def_eta_up);
-  outTree->Branch("hem2_def_phi_up",&hem2_def_phi_up);
-  outTree->Branch("hem2_def_M_up",&hem2_def_M_up);
-
-  outTree->Branch("hem2_def_pt_down",&hem2_def_pt_down);
-  outTree->Branch("hem2_def_eta_down",&hem2_def_eta_down);
-  outTree->Branch("hem2_def_phi_down",&hem2_def_phi_down);
-  outTree->Branch("hem2_def_M_down",&hem2_def_M_down);
-
   outTree->Branch("MET",&MET);
   outTree->Branch("METPhi",&METphi);
 
@@ -1000,29 +673,15 @@ void SusyHggSelector::setupOutputTree() {
   outTree->Branch("Rsq",&Rsq);
   outTree->Branch("t1Rsq",&t1Rsq);
 
-  outTree->Branch("MR_def",&MR_def,"MR_def/F");
-  outTree->Branch("Rsq_def",&Rsq_def);
-  outTree->Branch("t1Rsq_def",&t1Rsq_def);
-
 
   outTree->Branch("Njets_up",&nJ_up,"nJets_up/I");
   outTree->Branch("MR_up",&MR_up,"MR_up/F");
   outTree->Branch("Rsq_up",&Rsq_up);
   outTree->Branch("t1Rsq_up",&t1Rsq_up);
 
-  outTree->Branch("MR_up_def",&MR_up_def,"MR_up_def/F");
-  outTree->Branch("Rsq_up_def",&Rsq_up_def);
-  outTree->Branch("t1Rsq_up_def",&t1Rsq_up_def);
-
-  outTree->Branch("Njets_down",&nJ_down,"nJets_down/I");
   outTree->Branch("MR_down",&MR_down,"MR_down/F");
   outTree->Branch("Rsq_down",&Rsq_down);
   outTree->Branch("t1Rsq_down",&t1Rsq_down);
-
-  outTree->Branch("MR_down_def",&MR_down_def,"MR_down_def/F");
-  outTree->Branch("Rsq_down_def",&Rsq_down_def);
-  outTree->Branch("t1Rsq_down_def",&t1Rsq_down_def);
-
 
   outTree->Branch("pileupWeight",&puWeight);
 
