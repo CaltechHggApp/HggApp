@@ -44,6 +44,8 @@ public:
 
   void Make();
 
+  void setIsFullSIM(bool b){isFullSIM=b;}
+
 protected:
   TString dataFilePath;
   std::map<TString,TString> smHiggsFilePaths; //map of process name --> filePath
@@ -57,6 +59,8 @@ protected:
   //if we do variable binning, use these parameters
   bool useVarBinning=false;
   bool externalBinning=false;
+
+  bool isFullSIM=true;
 
   std::map<TString,std::vector<int>> binningMap;
 
@@ -75,6 +79,9 @@ protected:
   std::map<TString,float> yields;
 
   TH1F* makeCategoryHistogram(TFile* file,TString histName, TString postfix,TString sms_pt="");
+  std::vector<TH1F*> makeUncorrPerBinCategoryHistogram(TFile* file,TString histName, TString postfix,TString nom_postfix,TString sms_pt="");
+
+  int hist_nBins; //store the total number of bins in each histogram (for the uncorrelated parts of the cards)
 };
 
 #endif

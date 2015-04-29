@@ -25,6 +25,9 @@ void MCBackgroundFitter::buildSidebandHistograms() {
 
     SidebandRegionHistograms[cat+"_bkgShape_Down"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeDown","",nXbins-1,xBins,nYbins-1,yBins);
 
+    SidebandRegionHistograms[cat+"_sfSyst_Up"] = new TH2F("data_"+cat+"_SidebandRegion_sfSystUp","",nXbins-1,xBins,nYbins-1,yBins);
+    SidebandRegionHistograms[cat+"_sfSyst_Down"] = new TH2F("data_"+cat+"_SidebandRegion_sfSystDown","",nXbins-1,xBins,nYbins-1,yBins);
+
     weightMap[cat]=0;
 
     TTree massTree("massTree","");

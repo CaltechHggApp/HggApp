@@ -9,7 +9,7 @@ SMSValidation::SMSValidation(TString inputFileName, TString outputFileName):
 {
   outputFile = new TFile(outputFileName,"RECREATE");
 
-  SMSFitter::getSMSPoints(&smsPoints);
+  SMSFitter::getSMSPoints(&smsPoints,false);
 }
 
 SMSValidation::~SMSValidation() {
@@ -44,7 +44,7 @@ void SMSValidation::processEntry() {
   p1.SetPtEtaPhiM(pho1_pt,pho1_eta,pho1_phi,0);
   p2.SetPtEtaPhiM(pho2_pt,pho2_eta,pho2_phi,0);
 
-  TString cat = Fitter::getCategory(p1,p2,pho1_sigEoE,pho2_sigEoE,highest_csv,mbb_NearH,mbb_NearZ,pho1_r9,pho2_r9);
+  TString cat = Fitter::getCategoryOrig(p1,p2,pho1_sigEoE,pho2_sigEoE,highest_csv,mbb_NearH,mbb_NearZ,pho1_r9,pho2_r9);
 
   float sf1 = getFastSIMScaleFactor(p1.Eta(),p1.Eta()).first;
   float sf2 = getFastSIMScaleFactor(p2.Eta(),p2.Eta()).first;

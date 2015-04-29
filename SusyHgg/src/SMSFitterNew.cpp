@@ -5,8 +5,9 @@
 
 SMSFitter::SMSFitter(TString inputFileName,TString outputFileName,bool useHT) :Fitter(inputFileName,outputFileName,useHT) 
 {
+  isFullSIM = (inputFileName.Contains("FSIM")==0);
   isSMS=false;
-  getSMSPoints(&sms_points);
+  getSMSPoints(&sms_points,isFullSIM);
   buildHistograms();
 }
 
@@ -16,7 +17,7 @@ void SMSFitter::Run() {
   while(fChain->GetEntry(++iEntry)) {
     int N_pt = nEntriesHist->GetBinContent( nEntriesHist->FindFixBin(m23,m22) );
     assert(N_pt!=0);
-    weight = pileupWeight * target_xsec*lumi*HggBR/N_pt;
+    weight = pileupWeight * target_xsec*lumi*HggBR/N_pt*getBTagSF()*triggerEff;
     if(!passBasicSelection()) continue;
     if(!isFullSIM) scalePhotons();
     processEntry();
@@ -28,23 +29,27 @@ void SMSFitter::Run() {
   outputFile->Close();
 }
 
-void SMSFitter::getSMSPoints(std::vector<TString>* pts) {
+void SMSFitter::getSMSPoints(std::vector<TString>* pts,bool fullSIM) {
 #if 0
-    for(int m_h=125;m_h<501;m_h+=25) {
-      for(int m_l=0;m_l<m_h-124;m_l+=25){
-	pts->push_back(Form("%d_%d",m_l,m_h));
-      }         
-    }
     for(int m_h=125;m_h<276;m_h+=25) {
       for(int m_l=0;m_l<1;m_l+=25){
 	pts->push_back(Form("%d_%d",m_l,m_h));
       }         
     }
 #endif
-    for(int m_h=125;m_h<201;m_h+=25) {
-      for(int m_l=0;m_l<m_h-124;m_l+=25){
-	pts->push_back(Form("%d_%d",m_l,m_h));
-      }         
+
+    if(fullSIM) {
+      for(int m_h=125;m_h<201;m_h+=25) {
+	for(int m_l=0;m_l<m_h-124;m_l+=25){
+	  pts->push_back(Form("%d_%d",m_l,m_h));
+	}         
+      }
+    } else { //FastSIM
+      for(int m_h=125;m_h<501;m_h+=25) {
+	for(int m_l=0;m_l<m_h-124;m_l+=25){
+	  pts->push_back(Form("%d_%d",m_l,m_h));
+	}         
+      }
     }
 
 }
@@ -82,7 +87,7 @@ void SMSFitter::buildHistograms() {
   }
 }
 
-void SMSFitter::processEntry() {
+void SMSFitter::processEntry(bool doSyst) {
   TString sms_pt = getSMSPoint(m22,m23);
     { //nominal 
     TLorentzVector pho1;
@@ -101,7 +106,8 @@ void SMSFitter::processEntry() {
     TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ,pho1_r9,pho2_r9);
     float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
     float thisMR = MR;
-    float thisRsq;
+    float thisRsq=Rsq;
+    float thisWeight=weight;
     if(useHT) {
       thisMR = HT;
       thisRsq = MET;
@@ -109,8 +115,8 @@ void SMSFitter::processEntry() {
 
     if(mgg > 125 - sigRegWidth && mgg < 126 + sigRegWidth) {
       //std::cout << sms_pt << std::endl;
-      SignalRegionHistograms[sms_pt+"_"+cat]->Fill(thisMR,thisRsq,weight);
-      SignalRegionHistogramsFineBin[sms_pt+"_"+cat]->Fill(thisMR,thisRsq,weight);
+      SignalRegionHistograms[sms_pt+"_"+cat]->Fill(thisMR,thisRsq,thisWeight);
+      SignalRegionHistogramsFineBin[sms_pt+"_"+cat]->Fill(thisMR,thisRsq,thisWeight);
     }
 
     
@@ -134,6 +140,7 @@ void SMSFitter::processEntry() {
  
       float thisMR = MR;
       float thisRsq = Rsq;
+      float thisWeight=weight;
       if(useHT) {
 	thisMR = HT;
 	thisRsq = MET;
@@ -185,31 +192,58 @@ void SMSFitter::processEntry() {
       }
 
       if(sys=="btag") {
-	float err =0;
-	if(highest_csv_pt > SFb_error.rbegin()->first) err = SFb_error.rbegin()->second;
-	else{
-	  auto SFBe = SFb_error.begin();
-	  for(;SFBe != SFb_error.end(); SFBe++) {
-	    if(SFBe->first > highest_csv_pt) {
-	      SFBe--;
-	      err = SFBe->second;
-	      break;
-	    }
+	float btagWeight = getBTagSF();
+	if(btagWeight!=1) {
+	  float ErrHighest=0;
+	  float ErrSecond=0;
+	  int iHighest=-1,iSecond=-1;
+	  for(int i=0;i<SFbErr_ptMax.size();i++){
+	    if(iHighest==-1 && highest_csv_pt < SFbErr_ptMax.at(i)) iHighest=i;
+	    if(iSecond==-1 && second_csv_pt < SFbErr_ptMax.at(i)) iSecond=i;	  
 	  }
-	} 
-	if(dir=="Up") {
-	  btag+=err;
-	}else{
-	  btag-=err;
+	  //error for the highest CSV 
+	  if(highest_csv>0.679) {
+	    if(iHighest==-1) {
+	      ErrHighest = SFbErr_CSVM.at(SFbErr_CSVM.size()-1)*2;
+	    }else{
+	      ErrHighest = SFbErr_CSVM.at(iHighest);
+	    }	 
+	  }else{
+	    if(iHighest==-1) {
+	      ErrHighest = SFbErr_CSVL.at(SFbErr_CSVL.size()-1)*2;
+	    }else{
+	      ErrHighest = SFbErr_CSVL.at(iHighest);
+	    }	 
+	  }
+
+	  //error for the second CSV 
+	  if(second_csv>0.679) {
+	    if(iSecond==-1) {
+	      ErrSecond = SFbErr_CSVM.at(SFbErr_CSVM.size()-1)*2;
+	    }else{
+	      ErrSecond = SFbErr_CSVM.at(iSecond);
+	    }	 
+	  }else{
+	    if(iSecond==-1) {
+	      ErrSecond = SFbErr_CSVL.at(SFbErr_CSVL.size()-1)*2;
+	    }else{
+	      ErrSecond = SFbErr_CSVL.at(iSecond);
+	    }	 
+	  }
+	
+	  if(dir=="Up") {
+	    thisWeight*=getBTagSF(ErrHighest,ErrSecond)/btagWeight;
+	  }else{
+	    thisWeight*=getBTagSF(-1*ErrHighest,-1*ErrSecond)/btagWeight;
+	  }
 	}
       }
-
 
       TString cat = getCategory(pho1,pho2,se1,se2,btag,mbbH,mbbZ,pho1_r9,pho2_r9);
       float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
 
       if(mass > 125- sigRegWidth && mass < 126 + sigRegWidth) {
-	SignalRegionHistograms[ sms_pt+"_"+cat+"_"+sys+"_"+dir ]->Fill(thisMR,thisRsq,weight);	
+	SignalRegionHistograms[ sms_pt+"_"+cat+"_"+sys+"_"+dir ]->Fill(thisMR,thisRsq,thisWeight);	
       }
     }
   }

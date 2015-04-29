@@ -33,6 +33,8 @@ protected:
   std::map<TString,TH2F*> SidebandRegionHistograms;
   std::map<TString,TH2F*> SidebandRegionHistogramsFineBin;
 
+  std::map<TString,TH3F*> SidebandRegions3D;
+
   std::vector<RooWorkspace*> mggFitWorkspaces;
 
   std::map<TString,float> scaleSys = {
@@ -48,6 +50,10 @@ protected:
   bool noiseBit=true;
 
   std::map<TString,int> nSideband;
+  std::map<TString,int> nSidebandLow;
+  std::map<TString,int> nSidebandHigh;
+
+  std::map<TString,float> sfSyst = { { "HighPt",0.04}, {"Hbb",0.08}, {"Zbb",0.08}, {"HighRes",0.08}, {"LowRes",0.04} };
 };
 
 #endif

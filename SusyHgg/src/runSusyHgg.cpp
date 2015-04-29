@@ -9,6 +9,7 @@ runs the whole susy hgg analysis
 #include <string>
 #include <vector>
 #include <sys/stat.h>
+#include <memory>
 
 #include "ArgParser.hh"
 #include "ReadConfig.hh"
@@ -20,6 +21,7 @@ runs the whole susy hgg analysis
 
 #include "CombinePrep.hh"
 
+#include "ReadBinningMap.cpp"
 
 #include "TH1D.h"
 #include "TFile.h"
@@ -41,6 +43,10 @@ int main(int argc,char** argv) {
   a.addLongOption("BigSignalRegion",ArgParser::noArg,"Use a large signal region [121,129] in each category");
   a.addLongOption("nSigEffs",ArgParser::reqArg,"# of signma effectives for the signal region in each box");
   a.addLongOption("UseVariableBinning",ArgParser::noArg,"use different binning in each box depending on statistics");
+  a.addLongOption("BinningMap",ArgParser::reqArg,"specify the binning map to use");
+
+
+  a.addLongOption("Alternate",ArgParser::noArg,"Do the alternate analysis");
 
   a.addLongOption("AN239",ArgParser::noArg,"use AN13/239-like photon selection");
   a.addLongOption("highPt",ArgParser::noArg,"use 40/25 photon pT cuts");
@@ -61,6 +67,12 @@ int main(int argc,char** argv) {
   bool bHT = a.longFlagPres("HT");
 
   bool v3Widths = a.longFlagPres("ForceV3Widths");
+
+  bool alternate = a.longFlagPres("Alternate");
+
+  bool externalBinning = a.longFlagPres("BinningMap");
+  std::string extBinMap = "";
+  if(externalBinning) extBinMap = a.getLongFlag("BinningMap");
 
   if(AN239 && highPt) {
     std::cout << "cannot specify both --AN239 and --highPt" << std::endl;
@@ -126,7 +138,7 @@ int main(int argc,char** argv) {
       fitter.setSelection(selection);
       if(metphi.size()>2) fitter.setMetPhiSF( metphi.c_str() );
 	
-
+      fitter.setDoAlternateAnalysis(alternate);
       fitter.Run();
     }
 
@@ -155,6 +167,7 @@ int main(int argc,char** argv) {
     //override widths for Hbb and Zbb categories
     sigEffs["Hbb"] = 2.;
     sigEffs["Zbb"] = 2.;
+    sigEffs["LowRes"] = 2.5;
     
     if(v3Widths) {
       sigEffs["HighPt"] = 1.77;
@@ -205,6 +218,7 @@ int main(int argc,char** argv) {
     datafitter->setUseHT(bHT);
 
     datafitter->setSelection(selection);
+    datafitter->setDoAlternateAnalysis(alternate);
 
     datafitter->Run();
     delete datafitter;
@@ -225,6 +239,7 @@ int main(int argc,char** argv) {
 
       smsFitter.setSelection(selection);
       smsFitter.setUseHT(bHT);
+      smsFitter.setDoAlternateAnalysis(alternate);
 
       smsFitter.Run();
     }
@@ -232,11 +247,21 @@ int main(int argc,char** argv) {
   }
 
 
+  combine.setIsFullSIM( (TString(cfg.getParameter(sms_list[0]+"_path").c_str()).Contains("FSIM")==0) );
   combine.setCatNames(&catNames);
   combine.setSysNames(Fitter::getSysNames());
 
   combine.setUseVarBinning( a.longFlagPres("UseVariableBinning") );
 
+  if(externalBinning) {
+    auto binMap = ReadBinningMap(extBinMap.c_str());
+    for( auto m: *binMap) {
+      combine.defineExternalBinning(m.first, m.second);
+    }
+
+ }
+
+  /*
   if(!isMCData) {
     if(bHT && AN239) {
       std::vector<int> HighPt_bins = {30,25,20,1};
@@ -284,7 +309,7 @@ int main(int argc,char** argv) {
       combine.defineExternalBinning("LowRes", LowRes_bins);
     }
   }
-
+  */
   combine.Make();
   
   return 0;
