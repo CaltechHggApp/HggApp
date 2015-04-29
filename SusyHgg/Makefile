@@ -47,7 +47,7 @@ OUTLIB	         = ./lib/
 .PREFIXES: ./lib/
 
 .PHONY: all
-all: CreateWorkspace CreateFits CreatePlots CountEntries MakeSignalInjection runSusyHgg runSignalInjectionNew runSMSValidation passMetFilters
+all: CountEntries MakeSignalInjection runSusyHgg passMetFilters
 
 .PHONY: clean
 clean: 
@@ -55,19 +55,19 @@ clean:
 	rm -f CreateWorkspace CreateFits CountEntries
 
 
-CreateWorkspace:	$(SRCDIR)CreateWorkspace.C \
-			$(HGGAPPLIB)ArgParser.o
-	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $^ $<	
+#CreateWorkspace:	$(SRCDIR)CreateWorkspace.C \
+#			$(HGGAPPLIB)ArgParser.o
+#	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $^ $<	
 
-CreateFits:		$(SRCDIR)CreateFits.C \
-			$(OUTLIB)Fitter.o \
-			$(HGGAPPLIB)ArgParser.o
-	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $(OUTLIB)*.o $<	
+#CreateFits:		$(SRCDIR)CreateFits.C \
+#			$(OUTLIB)Fitter.o \
+#			$(HGGAPPLIB)ArgParser.o
+#	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $(OUTLIB)*.o $<	
 
-CreatePlots:		$(SRCDIR)CreatePlots.C \
-			$(OUTLIB)Plotter.o \
-			$(HGGAPPLIB)ArgParser.o
-	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $(OUTLIB)*.o $<	
+#CreatePlots:		$(SRCDIR)CreatePlots.C \
+#			$(OUTLIB)Plotter.o \
+#			$(HGGAPPLIB)ArgParser.o
+#	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $(OUTLIB)*.o $<	
 
 CountEntries:		$(SRCDIR)CountEntries.C \
 			$(HGGAPPLIB)ArgParser.o
@@ -89,11 +89,11 @@ runSusyHgg:		$(SRCDIR)runSusyHgg.cpp\
 passMetFilters:		$(SRCDIR)passMetFilters.C
 	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $^	
 
-runSignalInjectionNew:	$(SRCDIR)runSignalInjectionNew.cpp \
-			$(OUTLIB)SignalInjectionNew.o \
-			$(OUTLIB)FitterNew.o \
-			$(OUTLIB)SusyHggTreeBase.o
-	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $^	
+#runSignalInjectionNew:	$(SRCDIR)runSignalInjectionNew.cpp \
+#			$(OUTLIB)SignalInjectionNew.o \
+#			$(OUTLIB)FitterNew.o \
+#			$(OUTLIB)SusyHggTreeBase.o
+#	$(CXX) $(CXXFLAGS) $(ROOFITLIBS) -I $(HGGAPPINC) -I $(INCLUDEDIR) -o $@ $(GLIBS) $(HGGAPPLIB)ArgParser.o $^	
 
 runSMSValidation:	$(SRCDIR)runSMSValidation.cpp \
 			$(OUTLIB)SMSValidation.o \
