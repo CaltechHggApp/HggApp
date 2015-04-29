@@ -14,6 +14,8 @@
 #include <cmath>
 #include "assert.h"
 
+
+
 std::map<int,TString> getCatNames() {
   std::map<int,TString> catNames = { {0,"HighPt"}, {1,"Hbb"}, {2,"Zbb"}, {3,"HighRes"}, {4, "LowRes"}};
   return catNames;
@@ -419,9 +421,10 @@ void makeSigRegionComparison(TFile* data_obs,TFile* data_bkg,TFile* smtot,TStrin
     std::pair<TH2F*,TH2F*> hist = sigRegionCompBox(data_obs,data_bkg,smtot,boxes[i]);
     hist.first->SetAxisRange(0.001,1,"Y");
     hist.first->Draw("COLZ");
+    cv.SetLogy(0);
     cv.SaveAs(outputDir+"/signalRegions_"+boxes[i]+"_obs_minus_exp.png");
     cv.SaveAs(outputDir+"/signalRegions_"+boxes[i]+"_obs_minus_exp.pdf");
-    cv.SetLogy();
+    cv.SetLogy(1);
     cv.SaveAs(outputDir+"/signalRegions_"+boxes[i]+"_obs_minus_exp_LOG.png");
     cv.SaveAs(outputDir+"/signalRegions_"+boxes[i]+"_obs_minus_exp_LOG.pdf");
   }
@@ -434,9 +437,10 @@ void makeSigRegionComparison(TFile* data_obs,TFile* data_bkg,TFile* smtot,TStrin
     hist.second->SetContour(999);
     hist.second->SetAxisRange(0.001,1,"Y");
     hist.second->Draw("COLZ");
+    cv.SetLogy(0);
     cv.SaveAs(outputDir+"/signalRegions_"+boxes[i]+"_obs_minus_exp_NSIG.png");
     cv.SaveAs(outputDir+"/signalRegions_"+boxes[i]+"_obs_minus_exp_NSIG.pdf");
-    cv.SetLogy();
+    cv.SetLogy(1);
     cv.SaveAs(outputDir+"/signalRegions_"+boxes[i]+"_obs_minus_exp_NSIG_LOG.png");
     cv.SaveAs(outputDir+"/signalRegions_"+boxes[i]+"_obs_minus_exp_NSIG_LOG.pdf");
 

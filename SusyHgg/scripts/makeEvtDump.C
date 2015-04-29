@@ -61,14 +61,14 @@ TTree* createCopy(TTree* orig, TTree** friends, TString* selections,int nFriends
 }
 
 void dumpAllBoxes() {
-  TFile *_file0 = TFile::Open("/home/amott/raid4/DoublePhoton_22Jan2013_Run2012ABCD_v7.root");
+  TFile *_file0 = TFile::Open("/home/amott/raid4/DoublePhoton_22Jan2013_Run2012ABCD_v9.root");
 
   TTree* all = ((TTree*)_file0->Get("SusyHggTree"));
   //all->AddFriend("SusyHggTriggerTree","/home/amott/raid4/DoublePhoton_22Jan2013_Run2012A_v7__HggTRIGGER.root");
   
-  TFile *_file1 = TFile::Open("/home/amott/raid4/DoublePhoton_22Jan2013_Run2012ABCD_v7__TRIGGER.root");
+  TFile *_file1 = TFile::Open("/home/amott/raid4/DoublePhoton_22Jan2013_Run2012ABCD_v9__TRIGGER.root");
   TTree* trigger = (TTree*)_file1->Get("SusyHggTriggerTree");
-  TFile *_file2 = TFile::Open("/home/amott/raid4/DoublePhoton_22Jan2013_Run2012ABCD_v7__Noise.root");
+  TFile *_file2 = TFile::Open("/home/amott/raid4/DoublePhoton_22Jan2013_Run2012ABCD_v9__Noise.root");
   TTree* noise = (TTree*)_file2->Get("SusyHggNoiseTree");
   //all->AddFriend("SusyHggTriggerTree","/home/amott/raid4/DoublePhoton_22Jan2013_Run2012A_v7__TRIGGER.root");
   //all->AddFriend("SusyHggNoiseTree","/home/amott/raid4/DoublePhoton_22Jan2013_Run2012A_v7__Noise.root");
@@ -118,19 +118,18 @@ void dumpAllBoxes() {
   f->Close();
 }
 
-
 void splitAllBoxes(bool invertIso=false) {
-  TFile *_file0 = TFile::Open("/home/amott/raid4/DoublePhoton_22Jan2013_Run2012ABCD_v7.root");
+  TFile *_file0 = TFile::Open("/home/amott/raid4/DoublePhoton_22Jan2013_Run2012ABCD_v9.root");
 
   TTree* all = ((TTree*)_file0->Get("SusyHggTree"));
-  //all->AddFriend("SusyHggTriggerTree","/home/amott/raid4/DoublePhoton_22Jan2013_Run2012A_v7__HggTRIGGER.root");
+  //all->AddFriend("SusyHggTriggerTree","/home/amott/raid4/DoublePhoton_22Jan2013_Run2012A_v9__HggTRIGGER.root");
   
-  TFile *_file1 = TFile::Open("/home/amott/raid4/DoublePhoton_22Jan2013_Run2012ABCD_v7__TRIGGER.root");
+  TFile *_file1 = TFile::Open("/home/amott/raid4/DoublePhoton_22Jan2013_Run2012ABCD_v9__TRIGGER.root");
   TTree* trigger = (TTree*)_file1->Get("SusyHggTriggerTree");
-  TFile *_file2 = TFile::Open("/home/amott/raid4/DoublePhoton_22Jan2013_Run2012ABCD_v7__Noise.root");
+  TFile *_file2 = TFile::Open("/home/amott/raid4/DoublePhoton_22Jan2013_Run2012ABCD_v9__Noise.root");
   TTree* noise = (TTree*)_file2->Get("SusyHggNoiseTree");
-  //all->AddFriend("SusyHggTriggerTree","/home/amott/raid4/DoublePhoton_22Jan2013_Run2012A_v7__TRIGGER.root");
-  //all->AddFriend("SusyHggNoiseTree","/home/amott/raid4/DoublePhoton_22Jan2013_Run2012A_v7__Noise.root");
+  //all->AddFriend("SusyHggTriggerTree","/home/amott/raid4/DoublePhoton_22Jan2013_Run2012A_v9__TRIGGER.root");
+  //all->AddFriend("SusyHggNoiseTree","/home/amott/raid4/DoublePhoton_22Jan2013_Run2012A_v9__Noise.root");
   TTree* friends[] = {trigger,noise};
   TString selections[] = {"passTrigger","passNoise"};
   TFile *f = new TFile("/wntmp/scratch/tmp_evtdump.root","RECREATE");
@@ -143,32 +142,91 @@ void splitAllBoxes(bool invertIso=false) {
   if(invertIso) {
     sel = passAll->CopyTree("pho1_pt>40 && pho2_pt>25 && !(pho1_pass_iso && pho2_pass_iso) && (pho1_pass_iso || pho2_pass_iso) && abs(pho1_eta)<1.5 && abs(pho2_eta)<1.5");
   } else {
-    sel = passAll->CopyTree("pho1_pt>40 && pho2_pt>25 && pho1_pass_iso && pho2_pass_iso && abs(pho1_eta)<1.5 && abs(pho2_eta)<1.5");
+    sel = passAll->CopyTree("pho1_pt>40 && pho2_pt>25 && pho1_pass_iso && ptgg>20 && pho2_pass_iso && abs(pho1_eta)<1.5 && abs(pho2_eta)<1.5");
   }
 
   TString tag = (invertIso? "_invertIso":"");
-  TFile *f1 = new TFile("./DoublePhoton_22Jan2013_Run2012ABCD_v7"+tag+"__HighPt.root","RECREATE");
+  TFile *f1 = new TFile("DATA/DoublePhoton_22Jan2013_Run2012ABCD_v9"+tag+"__HighPt.root","RECREATE");
   TTree *HighPt = sel->CopyTree("ptgg>=110");
   HighPt->Write();
   f1->Close();
 
-  TFile *f2 = new TFile("./DoublePhoton_22Jan2013_Run2012ABCD_v7"+tag+"__Hbb.root","RECREATE");
+  TFile *f2 = new TFile("DATA/DoublePhoton_22Jan2013_Run2012ABCD_v9"+tag+"__Hbb.root","RECREATE");
   TTree *Hbb = sel->CopyTree("ptgg < 110 && (abs(mbb_NearH-125)<15)");
   Hbb->Write();
   f2->Close();
 
-  TFile *f3 = new TFile("./DoublePhoton_22Jan2013_Run2012ABCD_v7"+tag+"__Zbb.root","RECREATE");
+  TFile *f3 = new TFile("DATA/DoublePhoton_22Jan2013_Run2012ABCD_v9"+tag+"__Zbb.root","RECREATE");
   TTree *Zbb = sel->CopyTree("ptgg < 110 && !(abs(mbb_NearH-125)<15) && (abs(mbb_NearZ-91.2)<15)");
   Zbb->Write();
   f3->Close();
 
-  TFile *f4 = new TFile("./DoublePhoton_22Jan2013_Run2012ABCD_v7"+tag+"__HighRes.root","RECREATE");
+  TFile *f4 = new TFile("DATA/DoublePhoton_22Jan2013_Run2012ABCD_v9"+tag+"__HighRes.root","RECREATE");
   TTree *HighRes = sel->CopyTree("ptgg < 110 && !(abs(mbb_NearH-125)<15) && !(abs(mbb_NearZ-91.2)<15) && (pho1_sigEoE<0.015 && pho2_sigEoE<0.015)");
   HighRes->Write();
   f4->Close();
 
-  TFile *f5 = new TFile("./DoublePhoton_22Jan2013_Run2012ABCD_v7"+tag+"__LowRes.root","RECREATE");
+  TFile *f5 = new TFile("DATA/DoublePhoton_22Jan2013_Run2012ABCD_v9"+tag+"__LowRes.root","RECREATE");
   TTree *LowRes = sel->CopyTree("ptgg < 110 && !(abs(mbb_NearH-125)<15) && !(abs(mbb_NearZ-91.2)<15) && !(pho1_sigEoE<0.015 && pho2_sigEoE<0.015)");
+  LowRes->Write();
+  f5->Close();
+
+  delete sel;
+  f->Close();
+}
+
+
+void splitAllBoxes_ALTERNATE(bool invertIso=false) {
+  TFile *_file0 = TFile::Open("/home/amott/raid4/DoublePhoton_22Jan2013_Run2012ABCD_v9.root");
+
+  TTree* all = ((TTree*)_file0->Get("SusyHggTree"));
+  //all->AddFriend("SusyHggTriggerTree","/home/amott/raid4/DoublePhoton_22Jan2013_Run2012A_v9__HggTRIGGER.root");
+  
+  TFile *_file1 = TFile::Open("/home/amott/raid4/DoublePhoton_22Jan2013_Run2012ABCD_v9__TRIGGER.root");
+  TTree* trigger = (TTree*)_file1->Get("SusyHggTriggerTree");
+  TFile *_file2 = TFile::Open("/home/amott/raid4/DoublePhoton_22Jan2013_Run2012ABCD_v9__Noise.root");
+  TTree* noise = (TTree*)_file2->Get("SusyHggNoiseTree");
+  //all->AddFriend("SusyHggTriggerTree","/home/amott/raid4/DoublePhoton_22Jan2013_Run2012A_v9__TRIGGER.root");
+  //all->AddFriend("SusyHggNoiseTree","/home/amott/raid4/DoublePhoton_22Jan2013_Run2012A_v9__Noise.root");
+  TTree* friends[] = {trigger,noise};
+  TString selections[] = {"passTrigger","passNoise"};
+  TFile *f = new TFile("/wntmp/scratch/tmp_evtdump.root","RECREATE");
+  TTree* passAll = createCopy(all,friends,selections,2);
+
+  assert(passAll->GetEntries() > 1);
+  
+  TFile *ff = new TFile("/wntmp/scratch/tmp_evtdump.root","RECREATE");
+  TTree *sel = 0;
+  if(invertIso) {
+    sel = passAll->CopyTree("pho1_pt>40 && pho2_pt>25 && !(pho1_pass_iso && pho2_pass_iso) && (pho1_pass_iso || pho2_pass_iso) && abs(pho1_eta)<1.5 && abs(pho2_eta)<1.5");
+  } else {
+    sel = passAll->CopyTree("pho1_pt>40 && pho2_pt>25 && pho1_pass_iso && ptgg>10 && pho2_pass_iso && abs(pho1_eta)<1.5 && abs(pho2_eta)<1.5");
+  }
+
+  TString tag = (invertIso? "_invertIso":"");
+  tag+="__ALTERNATE";
+  TFile *f1 = new TFile("DATA/DoublePhoton_22Jan2013_Run2012ABCD_v9"+tag+"__HighPt.root","RECREATE");
+  TTree *HighPt = sel->CopyTree("ptgg>=110");
+  HighPt->Write();
+  f1->Close();
+
+  TFile *f2 = new TFile("DATA/DoublePhoton_22Jan2013_Run2012ABCD_v9"+tag+"__Hbb.root","RECREATE");
+  TTree *Hbb = sel->CopyTree("ptgg < 110 && (mbb_NearH>108 && mbb_NearH<150)");
+  Hbb->Write();
+  f2->Close();
+
+  TFile *f3 = new TFile("DATA/DoublePhoton_22Jan2013_Run2012ABCD_v9"+tag+"__Zbb.root","RECREATE");
+  TTree *Zbb = sel->CopyTree("ptgg < 110 && !(mbb_NearH>108 && mbb_NearH<150) && (mbb_NearZ>66 && mbb_NearZ<108)");
+  Zbb->Write();
+  f3->Close();
+
+  TFile *f4 = new TFile("DATA/DoublePhoton_22Jan2013_Run2012ABCD_v9"+tag+"__HighRes.root","RECREATE");
+  TTree *HighRes = sel->CopyTree("ptgg < 110 && !(mbb_NearH>108 && mbb_NearH<150) && !(mbb_NearZ>66 && mbb_NearZ<108) && pho1_r9>0.94 && pho2_r9>0.94");
+  HighRes->Write();
+  f4->Close();
+
+  TFile *f5 = new TFile("DATA/DoublePhoton_22Jan2013_Run2012ABCD_v9"+tag+"__LowRes.root","RECREATE");
+  TTree *LowRes = sel->CopyTree("ptgg < 110 && !(mbb_NearH>108 && mbb_NearH<150) && !(mbb_NearZ>66 && mbb_NearZ<108) && !(pho1_r9>0.94 && pho2_r9>0.94)");
   LowRes->Write();
   f5->Close();
 
@@ -243,7 +301,7 @@ void splitAllBoxesGeneric(TString fileName, TString outputTag) {
   assert(passAll->GetEntries() > 1);
   
   TFile *ff = new TFile("/wntmp/scratch/tmp_evtdump.root","RECREATE");
-  TTree *sel = passAll->CopyTree("pho1_pt>40 && pho2_pt>25 && pho1_pass_iso && pho2_pass_iso && abs(pho1_eta)<1.5 && abs(pho2_eta)<1.5 && mgg>103 && mgg < 180");
+  TTree *sel = passAll->CopyTree("pho1_pt>40 && pho2_pt>25 && pho1_pass_iso && pho2_pass_iso && ptgg>20 && abs(pho1_eta)<1.5 && abs(pho2_eta)<1.5 && mgg>103 && mgg < 180 && ptgg>20");
 
   TFile *f1 = new TFile("./"+outputTag+"__HighPt.root","RECREATE");
   TTree *HighPt = sel->CopyTree("ptgg>=110");
