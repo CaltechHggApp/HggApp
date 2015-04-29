@@ -3,6 +3,7 @@
 
 #include "TString.h"
 #include "TH2F.h"
+#include "TH3F.h"
 #include "TFile.h"
 #include "TLorentzVector.h"
 
@@ -53,14 +54,18 @@ public:
 
   bool passBasicSelection(); //!< event passes the basic event selection
 
-  static TString getCategory(const TLorentzVector& pho1, const TLorentzVector&pho2,float se1, float se2,float btag,float mbbH, float mbbZ,float r9_1,float r9_2); //!< get the category for this event
+  TString getCategory(const TLorentzVector& pho1, const TLorentzVector&pho2,float se1, float se2,float btag,float mbbH, float mbbZ,float r9_1,float r9_2); //!< get the category for this event
+
+  static TString getCategoryOrig(const TLorentzVector& pho1, const TLorentzVector&pho2,float se1, float se2,float btag,float mbbH, float mbbZ,float r9_1,float r9_2); //!< get the category for this event
+  static TString getCategoryAlt(const TLorentzVector& pho1, const TLorentzVector&pho2,float se1, float se2,float btag,float mbbH, float mbbZ,float r9_1,float r9_2); //!< get the category for this event
+
 
   
   void setSigEff(TString cat, float se) { sigmaEffectives[cat] = se; }
 
   void setLumi(float l) {lumi=l;}
 
-  virtual void processEntry();
+  virtual void processEntry(bool doSyst=true);
 
   void setXSec(float x){target_xsec=x;}
   void setNTotal(int n){N_total=n;}
@@ -77,6 +82,8 @@ public:
 
   void setMetPhiSF(TString s) { MetPhiSF_file=s; }
 
+  void setDoAlternateAnalysis(bool b=true){ alternateAnalysis=b; }
+
 protected:
   TFile *outputFile;
 
@@ -84,12 +91,17 @@ protected:
 
   kSelectionSet basicSelection = kLoose;
 
-  float hggSigStrength = 1.11;
+  //do the blessed alternate analysis
+  bool alternateAnalysis= false;
+
+  float hggSigStrength = 1.00;
 
   float lumi = 1;
   //bool processData = true;
 
   float weight = 1.; //weight for this event
+
+  const float triggerEff=0.81;
 
   int N_total=1;  //total number of events in the sample (for normalization)
   float target_xsec=1; //target x-sec in pb
@@ -110,6 +122,8 @@ protected:
   std::map<TString, TH2F*> SignalRegionHistogramsHTMET;
   std::map<TString, TH2F*> SignalRegionHistogramsFineBinHTMET;
   std::map<TString, TH1D*> mgg_dists;
+
+  std::map<TString, TH3F*> SignalRegions3D;
   
   //sigma effectives per category
   std::map<TString, float> sigmaEffectives;
@@ -127,6 +141,8 @@ protected:
   double xBins[nXbins] = {150,200,250,300,350,400,450,500,600,700,800,900,1000,1200,1400,1600,1800,2000,2200,2400,2600,2800,3000};
   const static int nYbins =21;
   double yBins[nYbins] = {0,0.05,0.10,0.15,0.20,0.25,0.30,0.35,0.40,0.45,0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.95,1.00};
+  const static int nZbins =200;
+  double zBins[nZbins];
 
   //define systematics
   virtual float getSysErrPho(float eta,float r9);
@@ -135,14 +151,50 @@ protected:
     {"EELow_lowR9",0.0003},{"EELow_highR9",0.0007},{"EEHigh_lowR9",0.0004},{"EEHigh_highR9",0.0003}
   };
 
-  std::map<float,float> SFb_error = { //min_Pt --> error
-    {20,0.0484285},{30,0.0126178},{40,0.0120027},{50,0.0120027},{60,0.0145441},{60,0.0131145},{70,0.0168479},
-    {80,0.0160836},{100,0.0126209},{120,0.0136017},{160,0.019182},{210,0.0198805},{320,0.0386531},{400,0.0392831},
-    {500,0.0481008},{600,0.0474291}
-  };
+  std::vector<float> SFbErr_ptMax = {30, 40, 50, 60, 70, 80,100, 120, 160, 210, 260, 320, 400, 500, 600, 800};
 
+  std::vector<float> SFbErr_CSVL = {
+      0.033299,
+      0.0146768,
+      0.013803,
+      0.0170145,
+      0.0166976,
+      0.0137879,
+      0.0149072,
+      0.0153068,
+      0.0133077,
+      0.0123737,
+      0.0157152,
+      0.0175161,
+      0.0209241,
+      0.0278605,
+      0.0346928,
+      0.0350099 };
+
+  std::vector<float> SFbErr_CSVM = {
+    0.0415707,
+    0.0204209,
+    0.0223227,
+    0.0206655,
+    0.0199325,
+    0.0174121,
+    0.0202332,
+    0.0182446,
+    0.0159777,
+    0.0218531,
+    0.0204688,
+    0.0265191,
+    0.0313175,
+    0.0415417,
+    0.0740446,
+    0.0596716 
+  };
   std::map<TString,int> nSignal;
   std::map<TString,int> nTotal;
+
+  float getBTagSF(float errHigh=0, float errSec=0);
+
+  float getSFb(float pt, bool CSVL);
 };
 
 #endif
