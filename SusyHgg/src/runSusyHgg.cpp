@@ -10,6 +10,7 @@ runs the whole susy hgg analysis
 #include <vector>
 #include <sys/stat.h>
 #include <memory>
+#include <cstdlib>
 
 #include "ArgParser.hh"
 #include "ReadConfig.hh"
@@ -311,6 +312,13 @@ int main(int argc,char** argv) {
   }
   */
   combine.Make();
-  
+
+  system(Form("hadd -f %s/SMHiggs_SUM.root %s/ggH.root %s/vbfH.root %s/wzH.root %s/ttH.root", 
+	      outputFolder.c_str(),
+	      outputFolder.c_str(),
+	      outputFolder.c_str(),
+	      outputFolder.c_str(),
+	      outputFolder.c_str()
+	      ));  
   return 0;
 }
