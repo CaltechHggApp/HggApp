@@ -46,6 +46,12 @@ protected:
   bool triggerBit=true;
   bool hasNoise=false;
   bool noiseBit=true;
+
+  std::map<TString,int> nSideband;
+  std::map<TString,int> nSidebandLow;
+  std::map<TString,int> nSidebandHigh;
+
+  std::map<TString,float> sfSyst = { { "HighPt",0.04}, {"Hbb",0.08}, {"Zbb",0.08}, {"HighRes",0.08}, {"LowRes",0.04} };
 };
 
 #endif

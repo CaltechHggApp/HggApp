@@ -46,6 +46,12 @@
 ./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TCanvasImp.h
 ./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TLatex.h
 ./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TText.h
+./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TGraphErrors.h
+./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TGraph.h
+./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TVectorFfwd.h
+./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TVectorDfwd.h
+./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TFitResultPtr.h
+./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TBox.h
 ./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/roofit/5.34.07-cms/include/RooWorkspace.h
 ./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/roofit/5.34.07-cms/include/RooPrintable.h
 ./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/roofit/5.34.07-cms/include/RooArgSet.h
@@ -80,8 +86,6 @@
 ./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TMatrixTBase.h
 ./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TMatrixFBasefwd.h
 ./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TMatrixDBasefwd.h
-./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TVectorFfwd.h
-./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TVectorDfwd.h
 ./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TError.h
 ./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TMatrixTUtils.h
 ./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TMatrixDSymfwd.h
@@ -92,8 +96,6 @@
 ./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/roofit/5.34.07-cms/include/RooAbsRealLValue.h
 ./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/roofit/5.34.07-cms/include/RooAbsReal.h
 ./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/roofit/5.34.07-cms/include/RooCurve.h
-./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TGraph.h
-./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TFitResultPtr.h
 ./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/roofit/5.34.07-cms/include/RooPlotable.h
 ./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TMatrixDfwd.h
 ./../scripts/draw_data_mgg_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/roofit/5.34.07-cms/include/RooGlobalFunc.h

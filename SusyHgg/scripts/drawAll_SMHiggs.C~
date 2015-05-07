@@ -10,8 +10,8 @@
 #include <iostream>
 
 void drawAll_SMHiggs(TString folder) {
-  const int nProc = 3;
-  TString processes[nProc] = {"ggH","vbfH","wzH"};
+  const int nProc = 4;
+  TString processes[nProc] = {"ggH","vbfH","wzH","ttH"};
 
   std::map<TString,TH1*> hists;
   std::vector<TFile*> files;
@@ -67,6 +67,7 @@ void drawAll_SMHiggs(TString folder) {
     prelim.Draw("SAME");
     lumi.Draw("SAME");
     cv.SaveAs(folder+"/figs/"+h.first+"_SMTot.png");
+    cv.SaveAs(folder+"/figs/"+h.first+"_SMTot.pdf");
   }
 
 }

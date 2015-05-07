@@ -1,4 +1,59 @@
 
 # DO NOT DELETE
-./scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/cintdictversion.h /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/RVersion.h
-SigRegionBinning_h__ROOTBUILDVERSION= 5.34/07
+
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TRandom3.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TRandom.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TNamed.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TObject.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/Rtypes.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/RConfig.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/RVersion.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/DllImport.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/Rtypeinfo.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/snprintf.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/strlcpy.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TGenericClassInfo.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TSchemaHelper.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TStorage.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TVersionCheck.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/Riosfwd.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TBuffer.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TString.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TMathBase.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TH1D.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TH1.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TAxis.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TAttAxis.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TArrayD.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TArray.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TAttLine.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TAttFill.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TAttMarker.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TArrayC.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TArrayS.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TArrayI.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TArrayF.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/Foption.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TVectorFfwd.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TVectorDfwd.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TFitResultPtr.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TH2F.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TH2.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TMatrixFBasefwd.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TMatrixDBasefwd.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TMath.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TError.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TCanvas.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TPad.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TVirtualPad.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TAttPad.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TVirtualX.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TAttText.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/GuiTypes.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/Buttons.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TQObject.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TAttCanvas.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TCanvasImp.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/TLine.h
+./../scripts/SigRegionBinning_h.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/cintdictversion.h /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.03-cms4/include/RVersion.h
+SigRegionBinning_h__ROOTBUILDVERSION= 5.34/03

@@ -101,6 +101,15 @@ RooWorkspace* makeInvertedANFit(TTree* tree, TString weightFilename,float forceS
     bres->SetName(tag+"_b_fitres");
     ws->import(*bres);
 
+    //make blinded fit
+    RooPlot *fmgg_b = mgg.frame();
+    data.plotOn(fmgg_b,RooFit::Range("sideband_low,sideband_high"));
+    ws->pdf("b_"+tag+"_ext")->plotOn(fmgg_b,RooFit::LineColor(kRed),RooFit::Range("Full"),RooFit::NormRange("sideband_low,sideband_high"));
+    fmgg_b->SetName(tag+"_blinded_frame");
+    ws->import(*fmgg_b);
+    delete fmgg_b;
+    
+
     //set all the parameters constant
     RooArgSet* vars = ws->pdf("b_"+tag)->getVariables();
     RooFIter iter = vars->fwdIterator();
@@ -133,12 +142,15 @@ RooWorkspace* makeInvertedANFit(TTree* tree, TString weightFilename,float forceS
     RooAddPdf fitModel(tag+"_sb_model","",RooArgList( *ws->pdf("b_"+tag), sig ),RooArgList(Nbkg,Nsig));
 
     RooFitResult* sbres;
+    RooAbsReal *nll;
     if(constrainMu) {
       fitModel.fitTo(data,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::ExternalConstraints(RooArgSet(HiggsMassConstraint)));
       sbres = fitModel.fitTo(data,RooFit::Strategy(2),RooFit::Save(kTRUE),RooFit::Extended(kTRUE),RooFit::ExternalConstraints(RooArgSet(HiggsMassConstraint)));
+      nll = fitModel.createNLL(data,RooFit::NumCPU(4),RooFit::Extended(kTRUE),RooFit::ExternalConstraints(RooArgSet(HiggsMassConstraint)));
     } else {
       fitModel.fitTo(data,RooFit::Strategy(0),RooFit::Extended(kTRUE));
       sbres = fitModel.fitTo(data,RooFit::Strategy(2),RooFit::Save(kTRUE),RooFit::Extended(kTRUE));
+      nll = fitModel.createNLL(data,RooFit::NumCPU(4),RooFit::Extended(kTRUE));
     }
     sbres->SetName(tag+"_sb_fitres");
     ws->import(*sbres);
@@ -154,7 +166,6 @@ RooWorkspace* makeInvertedANFit(TTree* tree, TString weightFilename,float forceS
 
     RooPlot *fNs = Nsig.frame(0,25);
     fNs->SetName(tag+"_Nsig_pll_frame");
-    RooAbsReal *nll = fitModel.createNLL(data,RooFit::NumCPU(4));
     RooMinuit(*nll).migrad();
     RooAbsReal *pll = nll->createProfile(Nsig);
     nll->SetName(tag+"_Nsig_nll");
@@ -216,12 +227,15 @@ RooWorkspace* makeInvertedANFit(TTree* tree, TString weightFilename,float forceS
   RooAddPdf fitModel("AIC_sb_model","",RooArgList( b_AIC, sig ),RooArgList(Nbkg,Nsig));
 
   RooFitResult* sbres;
+  RooAbsReal *nll;
   if(constrainMu) {
     fitModel.fitTo(data,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::ExternalConstraints(RooArgSet(HiggsMassConstraint,weightConstraint)));
     sbres = fitModel.fitTo(data,RooFit::Strategy(2),RooFit::Save(kTRUE),RooFit::Extended(kTRUE),RooFit::ExternalConstraints(RooArgSet(HiggsMassConstraint,weightConstraint)));
+    nll = fitModel.createNLL(data,RooFit::NumCPU(4),RooFit::Extended(kTRUE),RooFit::ExternalConstraints(RooArgSet(HiggsMassConstraint,weightConstraint)));
   } else {
     fitModel.fitTo(data,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::ExternalConstraints(weightConstraint));
     sbres = fitModel.fitTo(data,RooFit::Strategy(2),RooFit::Save(kTRUE),RooFit::Extended(kTRUE),RooFit::ExternalConstraints(weightConstraint));
+    nll = fitModel.createNLL(data,RooFit::NumCPU(4),RooFit::Extended(kTRUE),RooFit::ExternalConstraints(RooArgSet(weightConstraint)));
   }
   
   sbres->SetName("AIC_sb_fitres");
@@ -238,7 +252,6 @@ RooWorkspace* makeInvertedANFit(TTree* tree, TString weightFilename,float forceS
   
   RooPlot *fNs = Nsig.frame(0,25);
   fNs->SetName("AIC_Nsig_pll_frame");
-  RooAbsReal *nll = fitModel.createNLL(data,RooFit::NumCPU(4));
   RooMinuit(*nll).migrad();
   RooAbsReal *pll = nll->createProfile(Nsig);
   nll->SetName("AIC_Nsig_nll");

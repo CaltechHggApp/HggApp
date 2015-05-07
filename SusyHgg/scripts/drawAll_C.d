@@ -57,5 +57,7 @@
 ./../scripts/drawAll_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TQObject.h
 ./../scripts/drawAll_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TAttCanvas.h
 ./../scripts/drawAll_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TCanvasImp.h
+./../scripts/drawAll_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/TRegexp.h
+./../scripts/drawAll_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/Match.h
 ./../scripts/drawAll_C.so: /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/cintdictversion.h /cvmfs/cms.cern.ch/slc5_amd64_gcc472/lcg/root/5.34.07-cms/include/RVersion.h
 drawAll_C__ROOTBUILDVERSION= 5.34/07

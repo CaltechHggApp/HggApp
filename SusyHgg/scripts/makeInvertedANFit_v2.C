@@ -26,6 +26,7 @@
 #include "TRandom3.h"
 #include "TLegend.h"
 #include "TMath.h"
+#include "TBox.h"
 
 #include <vector>
 
@@ -84,6 +85,7 @@ RooWorkspace* makeInvertedANFit(TTree* tree, float forceSigma=-1, bool constrain
 
   RooDataSet data("data","",tree,RooArgSet(mgg,MR,Rsq,hem1_M,hem2_M,ptgg));
 
+  RooDataSet* blind_data = (RooDataSet*)data.reduce("mgg<121 || mgg>130");
 
   std::vector<TString> tags;
   //fit many different background models
@@ -94,6 +96,18 @@ RooWorkspace* makeInvertedANFit(TTree* tree, float forceSigma=-1, bool constrain
     RooFitResult* bres = ws->pdf("b_"+tag+"_ext")->fitTo(data,RooFit::Strategy(2),RooFit::Save(kTRUE),RooFit::Extended(kTRUE),RooFit::Range("sideband_low,sideband_high"));
     bres->SetName(tag+"_b_fitres");
     ws->import(*bres);
+
+    //make blinded fit
+    RooPlot *fmgg_b = mgg.frame();
+    blind_data->plotOn(fmgg_b,RooFit::Range("sideband_low,sideband_high"));
+    TBox blindBox(121,fmgg_b->GetMinimum()-(fmgg_b->GetMaximum()-fmgg_b->GetMinimum())*0.015,130,fmgg_b->GetMaximum());
+    blindBox.SetFillColor(kGray);
+    fmgg_b->addObject(&blindBox);
+    ws->pdf("b_"+tag+"_ext")->plotOn(fmgg_b,RooFit::LineColor(kRed),RooFit::Range("Full"),RooFit::NormRange("sideband_low,sideband_high"));
+    fmgg_b->SetName(tag+"_blinded_frame");
+    ws->import(*fmgg_b);
+    delete fmgg_b;
+    
 
     //set all the parameters constant
     RooArgSet* vars = ws->pdf("b_"+tag)->getVariables();
@@ -192,6 +206,18 @@ RooWorkspace* makeInvertedANFit(TTree* tree, float forceSigma=-1, bool constrain
   RooFitResult* bres = b_AIC.fitTo(data,RooFit::Strategy(2),RooFit::Save(kTRUE),RooFit::Extended(kTRUE),RooFit::Range("sideband_low,sideband_high"));
   bres->SetName("AIC_b_fitres");
   ws->import(*bres);
+
+  //make blinded fit
+  RooPlot *fmgg_b = mgg.frame(RooFit::Range("sideband_low,sideband_high"));
+  blind_data->plotOn(fmgg_b,RooFit::Range("sideband_low,sideband_high"));
+  TBox blindBox(121,fmgg_b->GetMinimum()-(fmgg_b->GetMaximum()-fmgg_b->GetMinimum())*0.015,130,fmgg_b->GetMaximum());
+  blindBox.SetFillColor(kGray);
+  fmgg_b->addObject(&blindBox);
+  b_AIC.plotOn(fmgg_b,RooFit::LineColor(kRed),RooFit::Range("Full"),RooFit::NormRange("sideband_low,sideband_high"));
+  fmgg_b->SetName("AIC_blinded_frame");
+  ws->import(*fmgg_b);
+  delete fmgg_b;
+    
   
 
   RooRealVar sigma("AIC_s_sigma","",5,0,100);
@@ -311,7 +337,7 @@ TString makeTripleExp(TString tag, RooRealVar& mgg,RooWorkspace& w) {
 
   RooFormulaVar *asq1 = new RooFormulaVar(tag+"_texp_asq1","","-1*@0^2",*alpha1);
   RooFormulaVar *asq2 = new RooFormulaVar(tag+"_texp_asq2","","-1*@0^2",*alpha2);
-  RooFormulaVar *asq3 = new RooFormulaVar(tag+"_texp_asq2","","-1*@0^2",*alpha2);
+  RooFormulaVar *asq3 = new RooFormulaVar(tag+"_texp_asq2","","-1*@0^2",*alpha3);
 
   RooRealVar *f1      = new RooRealVar(tag+"_texp_f1","f1",0.3,0.001,0.999);
   RooRealVar *f2      = new RooRealVar(tag+"_texp_f2","f2",0.01,0.001,0.999);

@@ -389,7 +389,7 @@ TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc,TString xNam
   KS = TMath::Log(KS);
   std::cout << "KS: " << KS << std::endl;
 
-
+  data_total->SetMaximum( TMath::Max( mc_stack.getTotal()->GetMaximum(), data_total->GetMaximum() )*1.4 );
   //if(data_total->GetMaximum() > mc_stack.GetMaximum()) data_total->SetAxisRange(1e-2,data_total->GetMaximum()*1.2,"Y");
   //else data_total->SetAxisRange(1e-2,mc_stack.GetMaximum()*1.2,"Y");
   data_total->SetMarkerStyle(8);
@@ -413,9 +413,9 @@ TCanvas *makeCanvas(std::array<TH1F*,3> data,std::array<TH1F*,3> mc,TString xNam
   KSval->SetTextSize(0.045);
   KSval->SetTextColor(kBlack);
 
-  lbl->Draw();
-  var->Draw();
-  KSval->Draw();
+  //lbl->Draw();
+  //var->Draw();
+  //KSval->Draw();
 
   TLegend *leg = new TLegend(0.6,0.7,0.85,0.9);
   leg->SetFillColor(0);
