@@ -247,7 +247,11 @@ int main(int argc,char** argv) {
   }
 
 
+<<<<<<< HEAD
   combine.setIsFullSIM( (TString(sms_list[0].c_str()).Contains("FSIM")==0) );
+=======
+  combine.setIsFullSIM( (TString(cfg.getParameter(sms_list[0]+"_path").c_str()).Contains("FSIM")==0) );
+>>>>>>> d2c0429c4e859f04608f4304038a33a29b740441
   combine.setCatNames(&catNames);
   combine.setSysNames(Fitter::getSysNames());
 
