@@ -1,6 +1,0 @@
-#include "TTree.h"
-#include "TFile.h"
-
-void data_mc_comp(TFile* data_file, TFile* mc_file) {
-  
-}

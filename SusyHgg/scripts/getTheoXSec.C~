@@ -1,7 +1,0 @@
-#include "TGraphErrors.h"
-
-
-enum smsType{kChargNeut}
-TGraphErrors* getTheoXSec(smsType type) {
-  
-}
