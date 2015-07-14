@@ -106,7 +106,9 @@ void make1DLimit(TString combine_dir,TString type= "WH",bool blind=true){
     lbl.SetTextSize(0.045);
     lbl.Draw();
 
-    cv.SaveAs(combine_dir+"/expected_exclusion_"+type+"_1D.png");
+    TString infix=(blind ? "" : "_OBS");
+    cv.SaveAs(combine_dir+"/expected_exclusion_"+type+"_1D"+infix+".png");
+    cv.SaveAs(combine_dir+"/expected_exclusion_"+type+"_1D"+infix+".pdf");
 
     error_r.SetMaximum(1e2);
     error_r.SetMinimum(1e-2);
@@ -134,7 +136,8 @@ void make1DLimit(TString combine_dir,TString type= "WH",bool blind=true){
     prelim.Draw();
     lbl.Draw();
     
-    cv.SaveAs(combine_dir+"/expected_exclusion_ratio_"+type+"_1D.png");
+    cv.SaveAs(combine_dir+"/expected_exclusion_ratio_"+type+"_1D"+infix+".png");
+    cv.SaveAs(combine_dir+"/expected_exclusion_ratio_"+type+"_1D"+infix+".pdf");
 }
 
 

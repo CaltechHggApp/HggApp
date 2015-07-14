@@ -14,6 +14,8 @@
 #include "RooFormulaVar.h"
 #include "RooBernstein.h"
 #include "RooMinuit.h"
+#include "RooCurve.h"
+
 
 #include "TLatex.h"
 #include "TString.h"
@@ -29,6 +31,7 @@
 #include "TBox.h"
 
 #include <vector>
+#include <math.h>
 
 TString makeDoubleExp(TString tag, RooRealVar& mgg,RooWorkspace& w);
 TString makeSingleExp(TString tag, RooRealVar& mgg,RooWorkspace& w);
@@ -39,25 +42,32 @@ TString makeDoublePow(TString tag, RooRealVar& mgg,RooWorkspace& w);
 TString makePoly2(TString tag, RooRealVar& mgg,RooWorkspace& w);
 TString makePoly3(TString tag, RooRealVar& mgg,RooWorkspace& w);
 
-const int nTags=8;
-TString alltags[nTags] = {"dexp","sexp","texp","mexp","spow","dpow","pol2","pol3"};
-
 #define DEBUG 0
+
+#if DEBUG==0
+//const int nTags=7;
+//TString alltags[nTags] = {"dexp","sexp","mexp","spow","dpow","pol2","pol3"};
+const int nTags=5;
+TString alltags[nTags] = {"dexp","sexp","mexp","spow","dpow"};
+#else
+const int nTags=2;
+TString alltags[nTags] = {"dexp","sexp"};
+#endif
 
 RooWorkspace* makeInvertedANFit(TTree* tree, float forceSigma=-1, bool constrainMu=false, float forceMu=-1) {
   RooWorkspace *ws = new RooWorkspace("ws","");
 
   std::vector< TString (*)(TString, RooRealVar&, RooWorkspace&) > bkgPdfList;
+  bkgPdfList.push_back(makeSingleExp);
   bkgPdfList.push_back(makeDoubleExp);
 #if DEBUG==0
-  bkgPdfList.push_back(makeSingleExp);
-  bkgPdfList.push_back(makeTripleExp);
+  //bkgPdfList.push_back(makeTripleExp);
   bkgPdfList.push_back(makeModExp);
   bkgPdfList.push_back(makeSinglePow);
   bkgPdfList.push_back(makeDoublePow);
   bkgPdfList.push_back(makePoly2);
-#endif
   bkgPdfList.push_back(makePoly3);
+#endif
 
 
 
@@ -90,11 +100,11 @@ RooWorkspace* makeInvertedANFit(TTree* tree, float forceSigma=-1, bool constrain
   std::vector<TString> tags;
   //fit many different background models
   for(auto func = bkgPdfList.begin(); func != bkgPdfList.end(); func++) {
-    TString tag = (*func)("b",mgg,*ws);
+    TString tag = (*func)("bonly",mgg,*ws);
     tags.push_back(tag);
-    ws->pdf("b_"+tag+"_ext")->fitTo(data,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::Range("sideband_low,sideband_high"));
-    RooFitResult* bres = ws->pdf("b_"+tag+"_ext")->fitTo(data,RooFit::Strategy(2),RooFit::Save(kTRUE),RooFit::Extended(kTRUE),RooFit::Range("sideband_low,sideband_high"));
-    bres->SetName(tag+"_b_fitres");
+    ws->pdf("bonly_"+tag+"_ext")->fitTo(data,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::Range("sideband_low,sideband_high"));
+    RooFitResult* bres = ws->pdf("bonly_"+tag+"_ext")->fitTo(data,RooFit::Strategy(2),RooFit::Save(kTRUE),RooFit::Extended(kTRUE),RooFit::Range("sideband_low,sideband_high"));
+    bres->SetName(tag+"_bonly_fitres");
     ws->import(*bres);
 
     //make blinded fit
@@ -103,14 +113,14 @@ RooWorkspace* makeInvertedANFit(TTree* tree, float forceSigma=-1, bool constrain
     TBox blindBox(121,fmgg_b->GetMinimum()-(fmgg_b->GetMaximum()-fmgg_b->GetMinimum())*0.015,130,fmgg_b->GetMaximum());
     blindBox.SetFillColor(kGray);
     fmgg_b->addObject(&blindBox);
-    ws->pdf("b_"+tag+"_ext")->plotOn(fmgg_b,RooFit::LineColor(kRed),RooFit::Range("Full"),RooFit::NormRange("sideband_low,sideband_high"));
+    ws->pdf("bonly_"+tag+"_ext")->plotOn(fmgg_b,RooFit::LineColor(kRed),RooFit::Range("Full"),RooFit::NormRange("sideband_low,sideband_high"));
     fmgg_b->SetName(tag+"_blinded_frame");
     ws->import(*fmgg_b);
     delete fmgg_b;
     
 
     //set all the parameters constant
-    RooArgSet* vars = ws->pdf("b_"+tag)->getVariables();
+    RooArgSet* vars = ws->pdf("bonly_"+tag)->getVariables();
     RooFIter iter = vars->fwdIterator();
     RooAbsArg* a;
     while( (a = iter.next()) ){
@@ -118,12 +128,15 @@ RooWorkspace* makeInvertedANFit(TTree* tree, float forceSigma=-1, bool constrain
       static_cast<RooRealVar*>(a)->setConstant(kTRUE);
     }
 
+    //make the background portion of the s+b fit
+    (*func)("b",mgg,*ws);
+
     RooRealVar sigma(tag+"_s_sigma","",5,0,100);
     if(forceSigma!=-1) {
       sigma.setVal(forceSigma);
       sigma.setConstant(true);
     }
-    RooRealVar mu(tag+"_s_mu","",126,120,130);
+    RooRealVar mu(tag+"_s_mu","",126,120,132);
     if(forceMu!=-1) {
       mu.setVal(forceMu);
       mu.setConstant(true);
@@ -133,20 +146,23 @@ RooWorkspace* makeInvertedANFit(TTree* tree, float forceSigma=-1, bool constrain
     RooRealVar Nbkg(tag+"_sb_Nb","",100,0,100000);
     
 
-    RooRealVar HiggsMass("HiggsMass","",125.7);
-    RooRealVar HiggsMassError("HiggsMassError","",0.4);
+    RooRealVar HiggsMass("HiggsMass","",125.1);
+    RooRealVar HiggsMassError("HiggsMassError","",0.24);
     RooGaussian HiggsMassConstraint("HiggsMassConstraint","",mu,HiggsMass,HiggsMassError);
 
 
     RooAddPdf fitModel(tag+"_sb_model","",RooArgList( *ws->pdf("b_"+tag), sig ),RooArgList(Nbkg,Nsig));
 
     RooFitResult* sbres;
+    RooAbsReal* nll;
     if(constrainMu) {
       fitModel.fitTo(data,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::ExternalConstraints(RooArgSet(HiggsMassConstraint)));
       sbres = fitModel.fitTo(data,RooFit::Strategy(2),RooFit::Save(kTRUE),RooFit::Extended(kTRUE),RooFit::ExternalConstraints(RooArgSet(HiggsMassConstraint)));
+      nll = fitModel.createNLL(data,RooFit::NumCPU(4),RooFit::Extended(kTRUE),RooFit::ExternalConstraints(RooArgSet(HiggsMassConstraint)));
     } else {
       fitModel.fitTo(data,RooFit::Strategy(0),RooFit::Extended(kTRUE));
       sbres = fitModel.fitTo(data,RooFit::Strategy(2),RooFit::Save(kTRUE),RooFit::Extended(kTRUE));
+      nll = fitModel.createNLL(data,RooFit::NumCPU(4),RooFit::Extended(kTRUE));
     }
     sbres->SetName(tag+"_sb_fitres");
     ws->import(*sbres);
@@ -160,52 +176,74 @@ RooWorkspace* makeInvertedANFit(TTree* tree, float forceSigma=-1, bool constrain
     ws->import(*fmgg);
     delete fmgg;
 
+
+    RooMinuit(*nll).migrad();
+
     RooPlot *fNs = Nsig.frame(0,25);
     fNs->SetName(tag+"_Nsig_pll");
-    RooAbsReal *nll = fitModel.createNLL(data,RooFit::NumCPU(4));
-    RooMinuit(*nll).migrad();
     RooAbsReal *pll = nll->createProfile(Nsig);
     //nll->plotOn(fNs,RooFit::ShiftToZero(),RooFit::LineColor(kRed));
     pll->plotOn(fNs);
     ws->import(*fNs);
+
     delete fNs;
+
+    RooPlot *fmu = mu.frame(125,132);
+    fmu->SetName(tag+"_mu_pll");
+    RooAbsReal *pll_mu = nll->createProfile(mu);
+    pll_mu->plotOn(fmu);
+    ws->import(*fmu);
+
+    delete fmu;
+
   }
 
   RooArgSet weights("weights");
-  RooArgSet pdfs("pdfs");
+  RooArgSet pdfs_bonly("pdfs_bonly");
+  RooArgSet pdfs_b("pdfs_b");
 
   RooRealVar minAIC("minAIC","",1E10);
-  float aicExpSum=0;
   //compute AIC stuff
   for(auto t = tags.begin(); t!=tags.end(); t++) {
-    RooAbsPdf *p = ws->pdf("b_"+*t);
-    RooFitResult *sb = (RooFitResult*)ws->obj(*t+"_b_fitres");
-    RooRealVar k(*t+"_b_k","",p->getParameters(RooArgSet(mgg))->getSize());
+    RooAbsPdf *p_bonly = ws->pdf("bonly_"+*t);
+    RooAbsPdf *p_b = ws->pdf("b_"+*t);
+    RooFitResult *sb = (RooFitResult*)ws->obj(*t+"_bonly_fitres");
+    RooRealVar k(*t+"_b_k","",p_bonly->getParameters(RooArgSet(mgg))->getSize());
     RooRealVar nll(*t+"_b_minNll","",sb->minNll());
-    RooFormulaVar AIC(*t+"_b_AIC","2*@0+2*@1",RooArgSet(nll,k));
+    RooRealVar Npts(*t+"_b_N","",blind_data->sumEntries());
+    RooFormulaVar AIC(*t+"_b_AIC","2*@0+2*@1+2*@1*(@1+1)/(@2-@1-1)",RooArgSet(nll,k,Npts));
     ws->import(AIC);
     if(AIC.getVal() < minAIC.getVal()) {
       minAIC.setVal(AIC.getVal());
     }
-    aicExpSum+=TMath::Exp(-0.5*AIC.getVal()); //we will need this precomputed  for the next step
-    pdfs.add(*p);
+    //aicExpSum+=TMath::Exp(-0.5*AIC.getVal()); //we will need this precomputed  for the next step
+    pdfs_bonly.add(*p_bonly);
+    pdfs_b.add(*p_b);
   }
   ws->import(minAIC);
   //compute the AIC weight
+  float aicExpSum=0;
+  for(auto t = tags.begin(); t!=tags.end(); t++) {
+    RooFormulaVar *AIC = (RooFormulaVar*)ws->obj(*t+"_b_AIC");
+    aicExpSum+=TMath::Exp(-0.5*(AIC->getVal()-minAIC.getVal())); //we will need this precomputed  for the next step    
+  }
+  std::cout << "aicExpSum: " << aicExpSum << std::endl;
 
   for(auto t = tags.begin(); t!=tags.end(); t++) {
     RooFormulaVar *AIC = (RooFormulaVar*)ws->obj(*t+"_b_AIC");
-    RooRealVar *AICw = new RooRealVar(*t+"_b_AICWeight","",TMath::Exp(-0.5*(AIC->getVal()-minAIC.getVal()))/aicExpSum/TMath::Exp(0.5*minAIC.getVal()));
+    RooRealVar *AICw = new RooRealVar(*t+"_b_AICWeight","",TMath::Exp(-0.5*(AIC->getVal()-minAIC.getVal()))/aicExpSum);
+    if( TMath::IsNaN(AICw->getVal()) ) {AICw->setVal(0);}
     ws->import(*AICw);
     std::cout << *t << ":  " << AIC->getVal()-minAIC.getVal() << "    " << AICw->getVal() << std::endl;
     weights.add(*AICw);
   }
-  RooAddPdf b_AIC("b_AIC","",pdfs,weights);
+  RooAddPdf bonly_AIC("bonly_AIC","",pdfs_bonly,weights);
+  RooAddPdf b_AIC("b_AIC","",pdfs_b,weights);
 
-  b_AIC.fitTo(data,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::Range("sideband_low,sideband_high"));
-  RooFitResult* bres = b_AIC.fitTo(data,RooFit::Strategy(2),RooFit::Save(kTRUE),RooFit::Extended(kTRUE),RooFit::Range("sideband_low,sideband_high"));
-  bres->SetName("AIC_b_fitres");
-  ws->import(*bres);
+  //b_AIC.fitTo(data,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::Range("sideband_low,sideband_high"));
+  //RooFitResult* bres = b_AIC.fitTo(data,RooFit::Strategy(2),RooFit::Save(kTRUE),RooFit::Extended(kTRUE),RooFit::Range("sideband_low,sideband_high"));
+  //bres->SetName("AIC_b_fitres");
+  //ws->import(*bres);
 
   //make blinded fit
   RooPlot *fmgg_b = mgg.frame(RooFit::Range("sideband_low,sideband_high"));
@@ -213,19 +251,19 @@ RooWorkspace* makeInvertedANFit(TTree* tree, float forceSigma=-1, bool constrain
   TBox blindBox(121,fmgg_b->GetMinimum()-(fmgg_b->GetMaximum()-fmgg_b->GetMinimum())*0.015,130,fmgg_b->GetMaximum());
   blindBox.SetFillColor(kGray);
   fmgg_b->addObject(&blindBox);
-  b_AIC.plotOn(fmgg_b,RooFit::LineColor(kRed),RooFit::Range("Full"),RooFit::NormRange("sideband_low,sideband_high"));
+  bonly_AIC.plotOn(fmgg_b,RooFit::LineColor(kRed),RooFit::Range("Full"),RooFit::NormRange("sideband_low,sideband_high"));
   fmgg_b->SetName("AIC_blinded_frame");
   ws->import(*fmgg_b);
   delete fmgg_b;
     
-  
+#if 1
 
   RooRealVar sigma("AIC_s_sigma","",5,0,100);
   if(forceSigma!=-1) {
     sigma.setVal(forceSigma);
     sigma.setConstant(true);
   }
-  RooRealVar mu("AIC_s_mu","",126,120,130);
+  RooRealVar mu("AIC_s_mu","",126,120,132);
   if(forceMu!=-1) {
     mu.setVal(forceMu);
     mu.setConstant(true);
@@ -235,21 +273,27 @@ RooWorkspace* makeInvertedANFit(TTree* tree, float forceSigma=-1, bool constrain
   RooRealVar Nbkg("AIC_sb_Nb","",100,0,100000);
   
   
-  RooRealVar HiggsMass("HiggsMass","",125.7);
-  RooRealVar HiggsMassError("HiggsMassError","",0.4);
+  RooRealVar HiggsMass("HiggsMass","",125.1);
+  RooRealVar HiggsMassError("HiggsMassError","",0.24);
   RooGaussian HiggsMassConstraint("HiggsMassConstraint","",mu,HiggsMass,HiggsMassError);
   
   
   RooAddPdf fitModel("AIC_sb_model","",RooArgList( b_AIC, sig ),RooArgList(Nbkg,Nsig));
 
   RooFitResult* sbres;
+  RooAbsReal *nll;
+
   if(constrainMu) {
     fitModel.fitTo(data,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::ExternalConstraints(RooArgSet(HiggsMassConstraint)));
     sbres = fitModel.fitTo(data,RooFit::Strategy(2),RooFit::Save(kTRUE),RooFit::Extended(kTRUE),RooFit::ExternalConstraints(RooArgSet(HiggsMassConstraint)));
+    nll = fitModel.createNLL(data,RooFit::NumCPU(4),RooFit::Extended(kTRUE),RooFit::ExternalConstraints(RooArgSet(HiggsMassConstraint)));
   } else {
     fitModel.fitTo(data,RooFit::Strategy(0),RooFit::Extended(kTRUE));
     sbres = fitModel.fitTo(data,RooFit::Strategy(2),RooFit::Save(kTRUE),RooFit::Extended(kTRUE));
+    nll = fitModel.createNLL(data,RooFit::NumCPU(4),RooFit::Extended(kTRUE));
   }
+
+  assert(nll!=0);
   
   sbres->SetName("AIC_sb_fitres");
   ws->import(*sbres);
@@ -262,16 +306,25 @@ RooWorkspace* makeInvertedANFit(TTree* tree, float forceSigma=-1, bool constrain
   fmgg->SetName("AIC_frame");
   ws->import(*fmgg);
   delete fmgg;
+
+  RooMinuit(*nll).migrad();
   
   RooPlot *fNs = Nsig.frame(0,25);
   fNs->SetName("AIC_Nsig_pll");
-  RooAbsReal *nll = fitModel.createNLL(data,RooFit::NumCPU(4));
-  RooMinuit(*nll).migrad();
   RooAbsReal *pll = nll->createProfile(Nsig);
   //nll->plotOn(fNs,RooFit::ShiftToZero(),RooFit::LineColor(kRed));
   pll->plotOn(fNs);
   ws->import(*fNs);
   delete fNs;
+
+
+  RooPlot *fmu = mu.frame(125,132);
+  fmu->SetName("AIC_mu_pll");
+  RooAbsReal *pll_mu = nll->createProfile(mu);
+  pll_mu->plotOn(fmu);
+  ws->import(*fmu);
+
+  delete fmu;
 
   std::cout << "min AIC: " << minAIC.getVal() << std::endl;
   for(auto t = tags.begin(); t!=tags.end(); t++) {
@@ -281,9 +334,11 @@ RooWorkspace* makeInvertedANFit(TTree* tree, float forceSigma=-1, bool constrain
     printf("%s & %0.0f & %0.2f & %0.2f \\\\\n",t->Data(),k->getVal(),AIC->getVal()-minAIC.getVal(),AICw->getVal());
     //std::cout << k->getVal() << " " << AIC->getVal()-minAIC.getVal() << " " << AICw->getVal() << std::endl;
   }
-
+#endif
   return ws;
 }
+
+
 
 float getDLL(RooWorkspace* w, TString tag) {
   //RooFitResult::sexp_b_fitres
@@ -301,8 +356,10 @@ TString makeDoubleExp(TString tag, RooRealVar& mgg,RooWorkspace& w) {
   RooFormulaVar *asq1 = new RooFormulaVar(tag+"_dexp_asq1","","-1*@0^2",*alpha1);
   RooFormulaVar *asq2 = new RooFormulaVar(tag+"_dexp_asq2","","-1*@0^2",*alpha2);
 
-  RooRealVar *f      = new RooRealVar(tag+"_dexp_f","f",0.3,0.001,0.999);
+  RooRealVar *f      = new RooRealVar(tag+"_dexp_f","f",0.3,-1,1);
   RooRealVar *Nbkg   = new RooRealVar(tag+"_dexp_Nbkg","N_{bkg}",10,0.001,1E9);
+
+  RooFormulaVar* fsq = new RooFormulaVar(tag+"_dexp_fsq","@0*@0",*f);
 
   //RooFormulaVar *fn = new RooFormulaVar(tag+"_dexp_fn","","0.5*(tanh(@0)+1)",*f);
 
@@ -312,7 +369,7 @@ TString makeDoubleExp(TString tag, RooRealVar& mgg,RooWorkspace& w) {
   RooExponential *exp1 = new RooExponential(tag+"_dexp_exp1","",mgg,*asq1);
   RooExponential *exp2 = new RooExponential(tag+"_dexp_exp2","",mgg,*asq2);
 
-  RooAddPdf *add       = new RooAddPdf(tag+"_dexp","",*exp1,*exp2,*f);
+  RooAddPdf *add       = new RooAddPdf(tag+"_dexp","",*exp1,*exp2,*fsq);
 
   w.import(*(new RooExtendPdf(tag+"_dexp_ext","",*add,*Nbkg)));;
 
@@ -337,7 +394,7 @@ TString makeTripleExp(TString tag, RooRealVar& mgg,RooWorkspace& w) {
 
   RooFormulaVar *asq1 = new RooFormulaVar(tag+"_texp_asq1","","-1*@0^2",*alpha1);
   RooFormulaVar *asq2 = new RooFormulaVar(tag+"_texp_asq2","","-1*@0^2",*alpha2);
-  RooFormulaVar *asq3 = new RooFormulaVar(tag+"_texp_asq2","","-1*@0^2",*alpha3);
+  RooFormulaVar *asq3 = new RooFormulaVar(tag+"_texp_asq3","","-1*@0^2",*alpha3);
 
   RooRealVar *f1      = new RooRealVar(tag+"_texp_f1","f1",0.3,0.001,0.999);
   RooRealVar *f2      = new RooRealVar(tag+"_texp_f2","f2",0.01,0.001,0.999);

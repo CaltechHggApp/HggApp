@@ -39,6 +39,8 @@ void Fitter::buildHistograms() {
     if(useHT) {
       SignalRegionHistograms[cat] = new TH2F("data_"+cat+"_SignalRegion","",47,150,2500,12,0,300);
       SignalRegionHistogramsFineBin[cat] = new TH2F("data_"+cat+"_SignalRegion_FineBin","",500,0,2500,100,0,300);
+      //SignalRegionHistograms[cat+"_statistics"] = new TH2F("data_"+cat+"_SignalRegion_statistics","",47,150,2500,12,0,300);
+
       for(auto dir: systematicDir) {
 	for(auto sys: systematicNames) {
 	  SignalRegionHistograms[cat+"_"+sys+"_"+dir] = new TH2F("data_"+cat+"_SignalRegion_"+sys+"_"+dir,"",47,150,2500,12,0,300);

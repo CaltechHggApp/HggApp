@@ -279,8 +279,30 @@ void CombinePrep::makeRootFile() {
   yields["bkg"] = bkgHist->Integral();
   TH1F* bkgUpHist = makeCategoryHistogram(dataFile.get(),"bkg_fitUp","SidebandRegion_fitUp");
   TH1F* bkgDownHist = makeCategoryHistogram(dataFile.get(),"bkg_fitDown","SidebandRegion_fitDown");
-  std::vector<TH1F*> sidestatUp = makeUncorrPerBinCategoryHistogram(dataFile.get(),"bkg_sidebandStatistics_bin%dUp","SidebandRegion_statisticsUp","SidebandRegion");
-  std::vector<TH1F*> sidestatDown = makeUncorrPerBinCategoryHistogram(dataFile.get(),"bkg_sidebandStatistics_bin%dDown","SidebandRegion_statisticsDown","SidebandRegion");
+
+  TH1F* statistics = makeCategoryHistogram(dataFile.get(),"bkg_statistics","SidebandRegion_statistics");
+
+  //compute the per-bin scale factors
+  TH1F* scaleFactors = (TH1F*)bkgHist->Clone("scaleFactors");
+  scaleFactors->Divide(statistics);
+  
+  TH1F* statisticsUp = (TH1F*)statistics->Clone("statisticsUp");
+  TH1F* statisticsDown = (TH1F*)statistics->Clone("statisticsDown");
+
+  for(int i=1;i<=statistics->GetNbinsX();i++) {
+    float N = statistics->GetBinContent(i);
+    statisticsUp->SetBinContent(i,(N+sqrt(N))*scaleFactors->GetBinContent(i));
+    statisticsDown->SetBinContent(i,(N-sqrt(N))*scaleFactors->GetBinContent(i));
+  }
+
+  std::vector<TH1F*> sidestatUp   = uncorrelateHistogram(statisticsUp,bkgHist,"bkg_sidebandStatistics_bin%dUp"); 
+  std::vector<TH1F*> sidestatDown = uncorrelateHistogram(statisticsDown,bkgHist,"bkg_sidebandStatistics_bin%dDown"); 
+
+
+  //std::vector<TH1F*> sidestatUp = makeUncorrPerBinCategoryHistogram(dataFile.get(),"bkg_sidebandStatistics_bin%dUp","SidebandRegion_statisticsUp","SidebandRegion");
+  //std::vector<TH1F*> sidestatDown = makeUncorrPerBinCategoryHistogram(dataFile.get(),"bkg_sidebandStatistics_bin%dDown","SidebandRegion_statisticsDown","SidebandRegion");
+
+  scaleFactors->Write();
 
   for(auto h: sidestatUp) h->Write();
   for(auto h: sidestatDown) h->Write();
@@ -313,8 +335,6 @@ void CombinePrep::makeRootFile() {
   std::cout << "Adding SM Higgs" << std::endl;
   for(auto sm = smHiggsFiles.begin(); sm !=smHiggsFiles.end(); sm++) {
     TH1F* h = makeCategoryHistogram(sm->second.get(),sm->first,"SignalRegion");
-    // trigger efficiency
-    h->Scale(triggerEff);
 
     yields[sm->first] = h->Integral();
     h->Write();
@@ -342,8 +362,6 @@ void CombinePrep::makeRootFile() {
   for(auto sms = smsFiles.begin(); sms !=smsFiles.end(); sms++) {
     for(auto pt : sms_points) {
       TH1F* h = makeCategoryHistogram(sms->second.get(),sms->first+"_"+pt,"SignalRegion",pt);
-      // trigger efficiency
-      h->Scale(triggerEff);
       yields[sms->first+"_"+pt] = h->Integral();
       h->Write();
       for(auto sys: *sysNames) {
@@ -424,6 +442,7 @@ TH1F* CombinePrep::makeCategoryHistogram(TFile *file,TString histName,TString po
 
   TH2F* dummy = (TH2F*)file->Get( "data_"+sms_pt+*(catNames->begin())+"_"+postfix );
 
+  std::cout << "data_"+sms_pt+*(catNames->begin())+"_"+postfix << std::endl;
   assert(dummy != 0 && "could not get histogram from file to make categories");
 
   int nX=dummy->GetNbinsX();
@@ -458,6 +477,14 @@ TH1F* CombinePrep::makeCategoryHistogram(TFile *file,TString histName,TString po
 }
 
 std::vector<TH1F*> CombinePrep::makeUncorrPerBinCategoryHistogram(TFile *file,TString histName,TString postfix,TString nom_postfix, TString sms_pt) {
+
+  TH1F* correlated = makeCategoryHistogram(file,"TMP",postfix,sms_pt);
+  TH1F* nominal    = makeCategoryHistogram(file,"TMPNOM",nom_postfix,sms_pt);
+
+  std::vector<TH1F*> uncorr =  uncorrelateHistogram(correlated,nominal,histName);
+
+  delete correlated;
+  return uncorr;
   
   if(sms_pt!="")sms_pt+="_";
 
@@ -466,6 +493,7 @@ std::vector<TH1F*> CombinePrep::makeUncorrPerBinCategoryHistogram(TFile *file,TS
 
   TH2F* dummy = (TH2F*)file->Get( "data_"+sms_pt+*(catNames->begin())+"_"+postfix );
 
+  std::cout << "data_"+sms_pt+*(catNames->begin())+"_"+postfix << std::endl;
   assert(dummy != 0 && "could not get histogram from file to make categories");
 
   int nX=dummy->GetNbinsX();
@@ -573,4 +601,21 @@ void CombinePrep::defineExternalBinning(TString catName,std::vector<int>& xBinEd
     binningMap.insert( std::pair<TString,std::vector<int>>(catName,{}) ); //setup the binning map
   }
   binningMap[catName].assign(xBinEdges.begin(),xBinEdges.end());
+}
+
+
+//takes in a single TH1F with correlated changes and returns a vector of single bin fluctuations.
+//This allows easy conversion from a correlated to uncorrelated systematic
+//histName should contain a %d where the index of the fluctuating bin will be placed 
+std::vector<TH1F*> CombinePrep::uncorrelateHistogram(TH1F* fluc, TH1F* nom, TString histName) {
+
+  std::vector<TH1F*> output;
+
+  for(int i=0; i<= fluc->GetNbinsX(); i++) {
+    TH1F* thisHist = (TH1F*)nom->Clone( Form(histName.Data(),i) );
+    
+    thisHist->SetBinContent(i, fluc->GetBinContent(i));
+    output.push_back(thisHist);
+  }
+  return output;
 }

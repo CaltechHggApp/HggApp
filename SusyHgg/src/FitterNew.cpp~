@@ -37,14 +37,14 @@ Fitter::~Fitter() {
 void Fitter::buildHistograms() {
   for(auto cat: catNames) {
     if(useHT) {
-      SignalRegionHistograms[cat] = new TH2F("data_"+cat+"_SignalRegion","",50,0,2500,12,0,300);
+      SignalRegionHistograms[cat] = new TH2F("data_"+cat+"_SignalRegion","",47,150,2500,12,0,300);
       SignalRegionHistogramsFineBin[cat] = new TH2F("data_"+cat+"_SignalRegion_FineBin","",500,0,2500,100,0,300);
       for(auto dir: systematicDir) {
 	for(auto sys: systematicNames) {
-	  SignalRegionHistograms[cat+"_"+sys+"_"+dir] = new TH2F("data_"+cat+"_SignalRegion_"+sys+"_"+dir,"",50,0,2500,12,0,300);
+	  SignalRegionHistograms[cat+"_"+sys+"_"+dir] = new TH2F("data_"+cat+"_SignalRegion_"+sys+"_"+dir,"",47,150,2500,12,0,300);
 	}
       }
-      SignalRegions3D[cat] = new TH3F("data_"+cat+"_SignalRegion_3D","",50,0,2500,12,0,300,200,100,200);
+      SignalRegions3D[cat] = new TH3F("data_"+cat+"_SignalRegion_3D","",47,150,2500,12,0,300,200,100,200);
     } else {
       SignalRegionHistograms[cat] = new TH2F("data_"+cat+"_SignalRegion","",nXbins-1,xBins,nYbins-1,yBins);
       SignalRegionHistogramsFineBin[cat] = new TH2F("data_"+cat+"_SignalRegion_FineBin","",250,0,2500,100,0,1);

@@ -279,25 +279,71 @@ void CombinePrep::makeRootFile() {
   yields["bkg"] = bkgHist->Integral();
   TH1F* bkgUpHist = makeCategoryHistogram(dataFile.get(),"bkg_fitUp","SidebandRegion_fitUp");
   TH1F* bkgDownHist = makeCategoryHistogram(dataFile.get(),"bkg_fitDown","SidebandRegion_fitDown");
-  std::vector<TH1F*> sidestatUp = makeUncorrPerBinCategoryHistogram(dataFile.get(),"bkg_sidebandStatistics_bin%dUp","SidebandRegion_statisticsUp","SidebandRegion");
-  std::vector<TH1F*> sidestatDown = makeUncorrPerBinCategoryHistogram(dataFile.get(),"bkg_sidebandStatistics_bin%dDown","SidebandRegion_statisticsDown","SidebandRegion");
+
+  TH1F* statistics = makeCategoryHistogram(dataFile.get(),"bkg_statistics","SidebandRegion_statistics");
+
+  //compute the per-bin scale factors
+  TH1F* scaleFactors = (TH1F*)bkgHist->Clone("scaleFactors");
+  scaleFactors->Divide(statistics);
+  
+  TH1F* statisticsUp = (TH1F*)statistics->Clone("statisticsUp");
+  TH1F* statisticsDown = (TH1F*)statistics->Clone("statisticsDown");
+
+  for(int i=1;i<=statistics->GetNbinsX();i++) {
+    float N = statistics->GetBinContent(i);
+    statisticsUp->SetBinContent(i,(N+sqrt(N))*scaleFactors->GetBinContent(i));
+    statisticsDown->SetBinContent(i,(N-sqrt(N))*scaleFactors->GetBinContent(i));
+  }
+
+  std::vector<TH1F*> sidestatUp   = uncorrelateHistogram(statisticsUp,bkgHist,"bkg_sidebandStatistics_bin%dUp"); 
+  std::vector<TH1F*> sidestatDown = uncorrelateHistogram(statisticsDown,bkgHist,"bkg_sidebandStatistics_bin%dDown"); 
+
+
+  //std::vector<TH1F*> sidestatUp = makeUncorrPerBinCategoryHistogram(dataFile.get(),"bkg_sidebandStatistics_bin%dUp","SidebandRegion_statisticsUp","SidebandRegion");
+  //std::vector<TH1F*> sidestatDown = makeUncorrPerBinCategoryHistogram(dataFile.get(),"bkg_sidebandStatistics_bin%dDown","SidebandRegion_statisticsDown","SidebandRegion");
+
+  scaleFactors->Write();
 
   for(auto h: sidestatUp) h->Write();
   for(auto h: sidestatDown) h->Write();
 
 
 #if UNCORR_DIFF
-  std::vector<TH1F*> bkgShapeUp = makeUncorrPerBinCategoryHistogram(dataFile.get(),"bkg_bkgShape_bin%dUp","SidebandRegion_bkgShapeUp","SidebandRegion");
-  std::vector<TH1F*> bkgShapeDown = makeUncorrPerBinCategoryHistogram(dataFile.get(),"bkg_bkgShape_bin%dDown","SidebandRegion_bkgShapeDown","SidebandRegion");
+  TH1F* statistics_High = makeCategoryHistogram(dataFile.get(),"bkg_bkgShapeHigh","SidebandRegion_statistics_High");
+  TH1F* statistics_Low = makeCategoryHistogram(dataFile.get(),"bkg_bkgShapeLow","SidebandRegion_statistics_Low");
 
-  //make sure the systematic is no smaller than the statistical error
-  for(int i=0;i<bkgShapeUp.size(); i++) {
-    bkgShapeUp[i]->SetBinContent(i+1,MAX(bkgShapeUp[i]->GetBinContent(i+1),sidestatUp[i]->GetBinContent(i+1)));
-    bkgShapeDown[i]->SetBinContent(i+1,MAX(bkgShapeDown[i]->GetBinContent(i+1),sidestatDown[i]->GetBinContent(i+1)));
+  TH1F* bkgShapeUp = (TH1F*)statistics_High->Clone("bkgShapeUp");
+  TH1F* bkgShapeDown = (TH1F*)statistics_Low->Clone("bkgShapeDown");
+
+  for(int i=1;i<=statistics->GetNbinsX();i++) {
+    float N = statistics->GetBinContent(i);    
+    float N_Low = statistics_Low->GetBinContent(i);
+    float N_High = statistics_High->GetBinContent(i);
+    if(N_High<N_Low) std::swap(N_High,N_Low);
+
+    //if the difference is small we are limited by the statistical error
+    if(N_High-N_Low<sqrt(N)) {
+      bkgShapeUp->SetBinContent(i,(N+sqrt(N))*scaleFactors->GetBinContent(i));
+      bkgShapeDown->SetBinContent(i,(N-sqrt(N))*scaleFactors->GetBinContent(i));
+    } else {
+      float sf_up   = scaleFactors->GetBinContent(i)*N/N_High;
+      bkgShapeUp->SetBinContent(i,N*scaleFactors->GetBinContent(i) + sqrt(N_High)*sf_up);
+      if(N_Low>0) {
+	float sf_down = scaleFactors->GetBinContent(i)*N/N_Low;
+	bkgShapeDown->SetBinContent(i,N*scaleFactors->GetBinContent(i) + sqrt(N_Low)*sf_down);
+      } else {
+	bkgShapeDown->SetBinContent(i,0);
+      }
+    }
   }
 
-  for(auto h: bkgShapeUp) h->Write();
-  for(auto h: bkgShapeDown) h->Write();
+  std::vector<TH1F*> ucBkgShapeUp   = uncorrelateHistogram(bkgShapeUp,bkgHist,"bkg_bkgShape_bin%dUp"); 
+  std::vector<TH1F*> ucBkgShapeDown = uncorrelateHistogram(bkgShapeDown,bkgHist,"bkg_bkgShape_bin%dDown"); 
+  //std::vector<TH1F*> bkgShapeUp = makeUncorrPerBinCategoryHistogram(dataFile.get(),"bkg_bkgShape_bin%dUp","SidebandRegion_bkgShapeUp","SidebandRegion");
+  //std::vector<TH1F*> bkgShapeDown = makeUncorrPerBinCategoryHistogram(dataFile.get(),"bkg_bkgShape_bin%dDown","SidebandRegion_bkgShapeDown","SidebandRegion");
+
+  for(auto h: ucBkgShapeUp) h->Write();
+  for(auto h: ucBkgShapeDown) h->Write();
 #else
   makeCategoryHistogram(dataFile.get(),"bkg_bkgShapeUp","SidebandRegion_bkgShapeUp")->Write();
   makeCategoryHistogram(dataFile.get(),"bkg_bkgShapeDown","SidebandRegion_bkgShapeDown")->Write();
@@ -420,6 +466,7 @@ TH1F* CombinePrep::makeCategoryHistogram(TFile *file,TString histName,TString po
 
   TH2F* dummy = (TH2F*)file->Get( "data_"+sms_pt+*(catNames->begin())+"_"+postfix );
 
+  std::cout << "data_"+sms_pt+*(catNames->begin())+"_"+postfix << std::endl;
   assert(dummy != 0 && "could not get histogram from file to make categories");
 
   int nX=dummy->GetNbinsX();
@@ -454,6 +501,14 @@ TH1F* CombinePrep::makeCategoryHistogram(TFile *file,TString histName,TString po
 }
 
 std::vector<TH1F*> CombinePrep::makeUncorrPerBinCategoryHistogram(TFile *file,TString histName,TString postfix,TString nom_postfix, TString sms_pt) {
+
+  TH1F* correlated = makeCategoryHistogram(file,"TMP",postfix,sms_pt);
+  TH1F* nominal    = makeCategoryHistogram(file,"TMPNOM",nom_postfix,sms_pt);
+
+  std::vector<TH1F*> uncorr =  uncorrelateHistogram(correlated,nominal,histName);
+
+  delete correlated;
+  return uncorr;
   
   if(sms_pt!="")sms_pt+="_";
 
@@ -462,6 +517,7 @@ std::vector<TH1F*> CombinePrep::makeUncorrPerBinCategoryHistogram(TFile *file,TS
 
   TH2F* dummy = (TH2F*)file->Get( "data_"+sms_pt+*(catNames->begin())+"_"+postfix );
 
+  std::cout << "data_"+sms_pt+*(catNames->begin())+"_"+postfix << std::endl;
   assert(dummy != 0 && "could not get histogram from file to make categories");
 
   int nX=dummy->GetNbinsX();
@@ -569,4 +625,21 @@ void CombinePrep::defineExternalBinning(TString catName,std::vector<int>& xBinEd
     binningMap.insert( std::pair<TString,std::vector<int>>(catName,{}) ); //setup the binning map
   }
   binningMap[catName].assign(xBinEdges.begin(),xBinEdges.end());
+}
+
+
+//takes in a single TH1F with correlated changes and returns a vector of single bin fluctuations.
+//This allows easy conversion from a correlated to uncorrelated systematic
+//histName should contain a %d where the index of the fluctuating bin will be placed 
+std::vector<TH1F*> CombinePrep::uncorrelateHistogram(TH1F* fluc, TH1F* nom, TString histName) {
+
+  std::vector<TH1F*> output;
+
+  for(int i=0; i<= fluc->GetNbinsX(); i++) {
+    TH1F* thisHist = (TH1F*)nom->Clone( Form(histName.Data(),i) );
+    
+    thisHist->SetBinContent(i, fluc->GetBinContent(i));
+    output.push_back(thisHist);
+  }
+  return output;
 }

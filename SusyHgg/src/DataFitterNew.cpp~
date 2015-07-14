@@ -100,25 +100,31 @@ RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool 
 void DataFitter::buildSidebandHistograms() {
   for(auto cat: catNames) {
     if(useHT) {
-      SidebandRegionHistograms[cat] = new TH2F("data_"+cat+"_SidebandRegion","",50,0,2500,12,0,300);
+      SidebandRegionHistograms[cat] = new TH2F("data_"+cat+"_SidebandRegion","",47,150,2500,12,0,300);
       SidebandRegionHistogramsFineBin[cat] = new TH2F("data_"+cat+"_SidebandRegion_FineBin","",500,0,2500,100,0,300);
-      SidebandRegionHistograms[cat+"_statistics_Up"] = new TH2F("data_"+cat+"_SidebandRegion_statisticsUp","",50,0,2500,12,0,300);
-      SidebandRegionHistograms[cat+"_statistics_Down"] = new TH2F("data_"+cat+"_SidebandRegion_statisticsDown","",50,0,2500,12,0,300);
-      SidebandRegionHistograms[cat+"_fit_Up"] = new TH2F("data_"+cat+"_SidebandRegion_fitUp","",50,0,2500,12,0,300);
-      SidebandRegionHistograms[cat+"_fit_Down"] = new TH2F("data_"+cat+"_SidebandRegion_fitDown","",50,0,2500,12,0,300);
-      SidebandRegionHistograms[cat+"_sfSyst_Up"] = new TH2F("data_"+cat+"_SidebandRegion_sfSystUp","",50,0,2500,12,0,300);
-      SidebandRegionHistograms[cat+"_sfSyst_Down"] = new TH2F("data_"+cat+"_SidebandRegion_sfSystDown","",50,0,2500,12,0,300);
-      SidebandRegionHistograms[cat+"_bkgShapeReal_Up"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeRealUp","",50,0,2500,12,0,300);
-      SidebandRegionHistograms[cat+"_bkgShapeReal_Down"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeRealDown","",50,0,2500,12,0,300);
-      SidebandRegionHistograms[cat+"_bkgShape_Up"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeUp","",50,0,2500,12,0,300);
-      SidebandRegionHistograms[cat+"_bkgShape_Down"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeDown","",50,0,2500,12,0,300);
+      SidebandRegionHistograms[cat+"_statistics_Up"] = new TH2F("data_"+cat+"_SidebandRegion_statisticsUp","",47,150,2500,12,0,300);
+      SidebandRegionHistograms[cat+"_statistics_Down"] = new TH2F("data_"+cat+"_SidebandRegion_statisticsDown","",47,150,2500,12,0,300);
+      SidebandRegionHistograms[cat+"_statistics"] = new TH2F("data_"+cat+"_SidebandRegion","",47,150,2500,12,0,300);
+      SidebandRegionHistograms[cat+"_statistics_High"] = new TH2F("data_"+cat+"_SidebandRegion","",47,150,2500,12,0,300);
+      SidebandRegionHistograms[cat+"_statistics_Low"] = new TH2F("data_"+cat+"_SidebandRegion","",47,150,2500,12,0,300);
+      SidebandRegionHistograms[cat+"_fit_Up"] = new TH2F("data_"+cat+"_SidebandRegion_fitUp","",47,150,2500,12,0,300);
+      SidebandRegionHistograms[cat+"_fit_Down"] = new TH2F("data_"+cat+"_SidebandRegion_fitDown","",47,150,2500,12,0,300);
+      SidebandRegionHistograms[cat+"_sfSyst_Up"] = new TH2F("data_"+cat+"_SidebandRegion_sfSystUp","",47,150,2500,12,0,300);
+      SidebandRegionHistograms[cat+"_sfSyst_Down"] = new TH2F("data_"+cat+"_SidebandRegion_sfSystDown","",47,150,2500,12,0,300);
+      SidebandRegionHistograms[cat+"_bkgShapeReal_Up"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeRealUp","",47,150,2500,12,0,300);
+      SidebandRegionHistograms[cat+"_bkgShapeReal_Down"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeRealDown","",47,150,2500,12,0,300);
+      SidebandRegionHistograms[cat+"_bkgShape_Up"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeUp","",47,150,2500,12,0,300);
+      SidebandRegionHistograms[cat+"_bkgShape_Down"] = new TH2F("data_"+cat+"_SidebandRegion_bkgShapeDown","",47,150,2500,12,0,300);
 
-      SidebandRegions3D[cat] = new TH3F("data_"+cat+"_SidebandRegion_3D","",50,0,2500,12,0,300,200,100,200);
+      SidebandRegions3D[cat] = new TH3F("data_"+cat+"_SidebandRegion_3D","",47,150,2500,12,0,300,200,100,200);
     }else{
       SidebandRegionHistograms[cat] = new TH2F("data_"+cat+"_SidebandRegion","",nXbins-1,xBins,nYbins-1,yBins);
       SidebandRegionHistogramsFineBin[cat] = new TH2F("data_"+cat+"_SidebandRegion_FineBin","",250,0,2500,100,0,1);
       SidebandRegionHistograms[cat+"_statistics_Up"] = new TH2F("data_"+cat+"_SidebandRegion_statisticsUp","",nXbins-1,xBins,nYbins-1,yBins);
       SidebandRegionHistograms[cat+"_statistics_Down"] = new TH2F("data_"+cat+"_SidebandRegion_statisticsDown","",nXbins-1,xBins,nYbins-1,yBins);
+      SidebandRegionHistograms[cat+"_statistics"] = new TH2F("data_"+cat+"_SidebandRegion","",nXbins-1,xBins,nYbins-1,yBins);
+      SidebandRegionHistograms[cat+"_statistics_High"] = new TH2F("data_"+cat+"_SidebandRegion","",nXbins-1,xBins,nYbins-1,yBins);
+      SidebandRegionHistograms[cat+"_statistics_Low"] = new TH2F("data_"+cat+"_SidebandRegion","",nXbins-1,xBins,nYbins-1,yBins);
       SidebandRegionHistograms[cat+"_fit_Up"] = new TH2F("data_"+cat+"_SidebandRegion_fitUp","",nXbins-1,xBins,nYbins-1,yBins);
       SidebandRegionHistograms[cat+"_fit_Down"] = new TH2F("data_"+cat+"_SidebandRegion_fitDown","",nXbins-1,xBins,nYbins-1,yBins);
       SidebandRegionHistograms[cat+"_sfSyst_Up"] = new TH2F("data_"+cat+"_SidebandRegion_sfSystUp","",nXbins-1,xBins,nYbins-1,yBins);
@@ -203,11 +209,11 @@ void DataFitter::Run() {
   
   for(auto cat: catNames) {
     assert(nSideband[cat]!=0);
-    float scale = nSideband[cat]/SidebandRegionHistograms[cat]->Integral(); //scale up to full statistics
+    //float scale = nSideband[cat]/SidebandRegionHistograms[cat]->Integral(); //scale up to full statistics
     for(int xBin=0; xBin<SidebandRegionHistograms[cat]->GetNbinsX()+1; xBin++) {
       for(int yBin=0; yBin<SidebandRegionHistograms[cat]->GetNbinsY()+1; yBin++) {
 	float content = SidebandRegionHistograms[cat]->GetBinContent(xBin,yBin);
-	float error = TMath::Sqrt(content/scale);
+	float error = TMath::Sqrt(content*scales[cat].val);
 	assert(!isnan(error));
 	SidebandRegionHistograms[ cat+"_statistics_Up" ]->SetBinContent(xBin,yBin,content+error);
 	SidebandRegionHistograms[ cat+"_statistics_Down" ]->SetBinContent(xBin,yBin,content-error);      
@@ -278,6 +284,7 @@ void DataFitter::processEntrySidebands() {
     assert(!isnan(weight));
     if((mgg>minMgg && mgg<120) || (mgg>131 && mgg<maxMgg)){
       SidebandRegionHistograms[cat]->Fill(thisMR,thisRsq,scales[cat].val*weight);
+      SidebandRegionHistograms[cat+"_statistics"]->Fill(thisMR,thisRsq,weight*weight);
       SidebandRegions3D[cat]->Fill(thisMR,thisRsq,mgg,scales[cat].val*weight);
       SidebandRegionHistograms[cat+"_fit_Up"]->Fill(thisMR,thisRsq,(scales[cat].val+scales[cat].error)*weight);
       SidebandRegionHistograms[cat+"_fit_Down"]->Fill(thisMR,thisRsq,(scales[cat].val-scales[cat].error)*weight);
@@ -289,10 +296,12 @@ void DataFitter::processEntrySidebands() {
     if(mgg > 131 && mgg < maxMgg) {
       SidebandRegionHistograms[cat+"_bkgShapeReal_Up"]->Fill(thisMR,thisRsq,scales[cat].val*weight);
       nSidebandHigh[cat]++;
+      SidebandRegionHistograms[cat+"_statistics_High"]->Fill(thisMR,thisRsq,weight*weight);
     }
     if(mgg > minMgg && mgg < 120) {
       SidebandRegionHistograms[cat+"_bkgShapeReal_Down"]->Fill(thisMR,thisRsq,scales[cat].val*weight);
       nSidebandLow[cat]++;
+      SidebandRegionHistograms[cat+"_statistics_Low"]->Fill(thisMR,thisRsq,weight*weight);
     }
 }
 

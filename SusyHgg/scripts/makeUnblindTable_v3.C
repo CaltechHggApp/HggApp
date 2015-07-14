@@ -58,6 +58,11 @@ void makeUnblindTable_v2(TString dir="./", bool BLIND=true,bool fullTex=false) {
     obs = (TH1F*)dataFile.Get("data_obs");
   }
 
+  TH1F* scaleFactorHist = (TH1F*)dataFile.Get("scaleFactors");
+  if(scaleFactorHist==0) {
+    std::cout << "OLD DATA FORMAT DETECTED!!!\nABORTING" << std::endl;
+    return;
+  }
 
 
     if(obs==0) {
@@ -65,22 +70,31 @@ void makeUnblindTable_v2(TString dir="./", bool BLIND=true,bool fullTex=false) {
       return;
     }
 
-  const int Nbkg=5;
-  TString bkgNames[Nbkg] = {"bkg","ggH", "vbfH", "wzH", "ttH"};
+    //const int Nbkg=5;
+    //TString bkgNames[Nbkg] = {"bkg","ggH", "vbfH", "wzH", "ttH"};
+    const int Nbkg=1;
+    TString bkgNames[Nbkg] = {"bkg"};
 
   TList * keys = dataFile.GetListOfKeys();
 
   //bin
   vector<float> obsVec;
   convertHistVector(obs,obsVec);
+
+  vector<float>   scaleFactors;
+  convertHistVector(scaleFactorHist,scaleFactors);
+
+  vector<float>   bkgStatistics;
   //bin<bkg>
   vector<vector<float> >   bkgNominal(obsVec.size());
   //bin<bkg<systematic>>
   vector<systMap>          bkgSyst(obsVec.size(),systMap(Nbkg));
   vector<vector<vector<TString> > > bkgSystNames(obsVec.size(),vector<vector<TString> >(Nbkg));
+
+
   //per signal region bin
   for(int iBin=0; iBin<obsVec.size(); iBin++) { 
-    
+    float thisSF = scaleFactors.at(iBin);
     
     //per background component
     for(int iBkg=0; iBkg<Nbkg; iBkg++) {
@@ -89,7 +103,7 @@ void makeUnblindTable_v2(TString dir="./", bool BLIND=true,bool fullTex=false) {
 	std::cout << "cannot find histogram " << bkgNames[iBkg] << std::endl;
 	return;
       }
-      bkgNominal.at(iBin).push_back(nomH->GetBinContent(iBin+1));
+      bkgNominal.at(iBin).push_back(nomH->GetBinContent(iBin+1)+thisSF);
 
       //bkgSyst.at(iBin).reserve(Nbkg);
 
@@ -125,8 +139,19 @@ void makeUnblindTable_v2(TString dir="./", bool BLIND=true,bool fullTex=false) {
 	  return;
 	}
 	if(up->GetBinContent(iBin+1)==down->GetBinContent(iBin+1)) continue;
-	bkgSyst.at(iBin).at(iBkg).push_back( make_pair(up->GetBinContent(iBin+1),down->GetBinContent(iBin+1)));
-	bkgSystNames.at(iBin).at(iBkg).push_back(tsName);
+	//deal with the sideband statistcs systematic differently
+	if(tsName.Contains("sidebandStatistics")) {
+	  float N = TMath::Power(1./(up->GetBinContent(iBin+1)/bkgNominal.at(iBin).at(iBkg)-1),2); //compute the statistics out of the card
+	  float sf = (up->GetBinContent(iBin+1)-bkgNominal.at(iBin).at(iBkg))/sqrt(N);
+	  bkgStatistics.push_back( N );
+	  //scaleFactors.push_back( sf);
+	  std::cout << obsVec.at(iBin) << "  " << bkgNominal.at(iBin).at(iBkg) << "   " << up->GetBinContent(iBin+1) << "  " << N << "  " << (up->GetBinContent(iBin+1)-bkgNominal.at(iBin).at(iBkg))/sqrt(N) << std::endl;
+	  bkgSyst.at(iBin).at(iBkg).push_back( make_pair(bkgNominal.at(iBin).at(iBkg)+sqrt(N+1)*sf+thisSF,bkgNominal.at(iBin).at(iBkg)-sqrt(N+1)*sf+thisSF) );
+	  bkgSystNames.at(iBin).at(iBkg).push_back(tsName);
+	}else{
+	  bkgSyst.at(iBin).at(iBkg).push_back( make_pair(up->GetBinContent(iBin+1)+thisSF,down->GetBinContent(iBin+1)+thisSF));
+	  bkgSystNames.at(iBin).at(iBkg).push_back(tsName);
+	}
       }
     }
   }
@@ -147,7 +172,7 @@ void makeUnblindTable_v2(TString dir="./", bool BLIND=true,bool fullTex=false) {
       float bkgTot=0;
       for(int iBkg=0; iBkg < Nbkg; iBkg++) bkgTot+=bkgNominal.at(i).at(iBkg);
       
-      if(obsVec.at(i)==5 && false) {
+      if(obsVec.at(i)==357 && false) {
 	for(int iBkg=0; iBkg<Nbkg; iBkg++) {
 	  std::cout << bkgNames[iBkg] << ":  " << bkgNominal.at(i).at(iBkg) << std::endl;
 	  for(int iSyst=0; iSyst< bkgSyst.at(i).at(iBkg).size(); iSyst++) {
@@ -162,14 +187,26 @@ void makeUnblindTable_v2(TString dir="./", bool BLIND=true,bool fullTex=false) {
 	err.first+=thisErr.first;
 	err.second+=thisErr.second;
       }
+      //err.first+=(bkgStatistics.at(i)+1)*scaleFactors.at(i)*scaleFactors.at(i);
+      //err.second+=(bkgStatistics.at(i)+1)*scaleFactors.at(i)*scaleFactors.at(i);
 
-      printf( "% 6.0f - % 6.0f & %0.2f - %0.2f & % 4.0f & $% 4.2f^{+%0.3f}_{-%0.3f}$ ",
-	      region.at(iC).MR_min, region.at(iC).MR_max,
-	      region.at(iC).Rsq_min, region.at(iC).Rsq_max,	    
-	      obsVec.at(i), bkgTot,sqrt(err.first),sqrt(err.second)); 
+      // print \pm if the up/down errors are the same
+      if( fabs(sqrt(err.first) - sqrt(err.second)) < 0.01 ) {
+	printf( "% 6.0f - % 6.0f & %0.2f - %0.2f & % 4.0f & $% 4.1f \\pm %0.2f$ ",
+		region.at(iC).MR_min, region.at(iC).MR_max,
+		region.at(iC).Rsq_min, region.at(iC).Rsq_max,	    
+		obsVec.at(i), bkgTot,sqrt(err.first)); 
+      }else{
+	printf( "% 6.0f - % 6.0f & %0.2f - %0.2f & % 4.0f & $% 4.1f^{+%0.2f}_{-%0.2f}$ ",
+		region.at(iC).MR_min, region.at(iC).MR_max,
+		region.at(iC).Rsq_min, region.at(iC).Rsq_max,	    
+		obsVec.at(i), bkgTot,sqrt(err.first),sqrt(err.second)); 
+      }
       cout << flush;
       float pv = pval(obsVec.at(i),bkgNominal.at(i),bkgSyst.at(i));
-      printf("& %0.6f & %0.2f \\\\\n",pv, -1*TMath::NormQuantile(pv/2));
+      float sig = fabs(TMath::NormQuantile(pv/2));
+      if(obsVec.at(i) < bkgTot && fabs(sig)>0.005) sig*=-1;
+      printf("& %0.3f & %0.1f \\\\\n",pv, sig);
     }
     if(fullTex) {
       std::cout << "\\hline\n\\end{tabular}" << std::endl
@@ -220,7 +257,7 @@ float pval(float obs, vector<float> mean_exp, systMap& systs) {
   float diff = fabs(obs-totalBkg);
 
   size_t nToy=100;
-  while(count<100) {
+  while(count<1000) {
     nToy*=10;
     count=0;
     for(size_t i=0; i<nToy; i++) {

@@ -81,6 +81,8 @@ protected:
   TH1F* makeCategoryHistogram(TFile* file,TString histName, TString postfix,TString sms_pt="");
   std::vector<TH1F*> makeUncorrPerBinCategoryHistogram(TFile* file,TString histName, TString postfix,TString nom_postfix,TString sms_pt="");
 
+  std::vector<TH1F*> uncorrelateHistogram(TH1F* fluc,TH1F* nom,TString histName);
+
   int hist_nBins; //store the total number of bins in each histogram (for the uncorrelated parts of the cards)
 };
 

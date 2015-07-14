@@ -26,8 +26,8 @@ void make1DLimit(TString combine_dir,TString type= "WH",bool blind=true){
   
   TGraphErrors* theo = 0;
   if(type=="WH") theo = getTheoXSec("/home/amott/HggApp/SusyHgg/xsecs/CharginoNeutralino.txt");
-  //else theo = getTheoXSec("/home/amott/HggApp/SusyHgg/xsecs/Higgsino_ElectroHiggs.txt");
-  else theo = getTheoXSec("/home/amott/HggApp/SusyHgg/xsecs/Higgsino.txt");
+  else theo = getTheoXSec("/home/amott/HggApp/SusyHgg/xsecs/Higgsino_ElectroHiggs.txt");
+  //else theo = getTheoXSec("/home/amott/HggApp/SusyHgg/xsecs/Higgsino.txt");
 
   for(int m=125;m<=200;m+=25) {
     int i=(m-125)/25;

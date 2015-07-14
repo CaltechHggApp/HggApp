@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-void drawAll_Better(TString folder,TString name,bool isData=true) {
+void drawAll_Better(TString folder,TString name,bool isData=true,TString smslbl="") {
 
   TFile file(folder+"/"+name+".root");
 
@@ -23,10 +23,14 @@ void drawAll_Better(TString folder,TString name,bool isData=true) {
   TCanvas cv;
   cv.SetLogz();
 
+  if(smslbl!="") {
+    smslbl+="_";
+  }
+
   for(int iCat=0; iCat<nCats; iCat++) {
     for(int iHist=0; iHist<nHists; iHist++) {
       if(!isData && iHist>1) break;
-      TH2F* hist = (TH2F*)file.Get( Form("data_%s_%s",cats[iCat].Data(),hists[iHist].Data()));
+      TH2F* hist = (TH2F*)file.Get( Form("data_%s%s_%s",smslbl.Data(),cats[iCat].Data(),hists[iHist].Data()));
       hist->SetXTitle("M_{R} (GeV)");
       hist->SetYTitle("R^{2}");
       hist->Draw("COLZ");
