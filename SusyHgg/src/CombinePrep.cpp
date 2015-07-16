@@ -303,7 +303,7 @@ void CombinePrep::makeRootFile() {
   //std::vector<TH1F*> sidestatDown = makeUncorrPerBinCategoryHistogram(dataFile.get(),"bkg_sidebandStatistics_bin%dDown","SidebandRegion_statisticsDown","SidebandRegion");
 
   scaleFactors->Write();
-
+  statistics->Write();
   for(auto h: sidestatUp) h->Write();
   for(auto h: sidestatDown) h->Write();
 
@@ -341,7 +341,8 @@ void CombinePrep::makeRootFile() {
   std::vector<TH1F*> ucBkgShapeDown = uncorrelateHistogram(bkgShapeDown,bkgHist,"bkg_bkgShape_bin%dDown"); 
   //std::vector<TH1F*> bkgShapeUp = makeUncorrPerBinCategoryHistogram(dataFile.get(),"bkg_bkgShape_bin%dUp","SidebandRegion_bkgShapeUp","SidebandRegion");
   //std::vector<TH1F*> bkgShapeDown = makeUncorrPerBinCategoryHistogram(dataFile.get(),"bkg_bkgShape_bin%dDown","SidebandRegion_bkgShapeDown","SidebandRegion");
-
+  statistics_High->Write();
+  statistics_Low->Write();
   for(auto h: ucBkgShapeUp) h->Write();
   for(auto h: ucBkgShapeDown) h->Write();
 #else
