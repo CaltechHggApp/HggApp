@@ -184,6 +184,7 @@ int main(int argc,char** argv) {
     DataFitter *datafitter = 0;
     if(isMCData) datafitter = new MCBackgroundFitter(dataFileName,outputFolder+"/data.root",bHT);
     else {
+      std::cout << "[INFO]: ENTERING FIT..." << std::endl;
       datafitter = new DataFitter(dataFileName,outputFolder+"/data.root",bHT);
       datafitter->SetTriggerPath(triggerFileName.c_str());
       datafitter->SetNoisePath(noiseFileName.c_str());

@@ -55,15 +55,17 @@ RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool 
   //pdf_FULL->fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE));
   //pdf_FULL->fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE));
 
-  pdf.fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE));
-  pdf.fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE));
-  pdf.fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE));
-  RooFitResult* res = pdf.fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE));
+  //pdf.fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE));
+  //pdf.fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE));
+  
+  //pdf.fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE));
+  //RooFitResult* res = pdf.fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE));
+  
   //pdf->fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::Minimizer("Minuit2"));
   //RooFitResult* res = pdf->fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE),RooFit::Minimizer("Minuit2"));
   
-  //pdf->fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::Range("low,high"));
-  //RooFitResult* res = pdf->fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE),RooFit::Range("low,high"));
+  pdf.fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::Range("low,high"));
+  RooFitResult* res = pdf.fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE),RooFit::Range("low,high"));
   
   mgg.setRange("sig",125-width,126+width);
 
