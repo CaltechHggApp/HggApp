@@ -18,7 +18,7 @@
 using namespace std;
 using namespace SigRegionBinning;
 
-
+#define NEWPROC 0
 
 #define MAX(a,b) ((a)>(b) ? (a) : (b))
 
@@ -94,7 +94,8 @@ void makeUnblindTable_v2(TString dir="./", bool BLIND=true,bool fullTex=false) {
 
   //per signal region bin
   for(int iBin=0; iBin<obsVec.size(); iBin++) { 
-    float thisSF = scaleFactors.at(iBin);
+    float shift = (NEWPROC?scaleFactors.at(iBin):0);
+    
     
     //per background component
     for(int iBkg=0; iBkg<Nbkg; iBkg++) {
@@ -103,7 +104,7 @@ void makeUnblindTable_v2(TString dir="./", bool BLIND=true,bool fullTex=false) {
 	std::cout << "cannot find histogram " << bkgNames[iBkg] << std::endl;
 	return;
       }
-      bkgNominal.at(iBin).push_back(nomH->GetBinContent(iBin+1)+thisSF);
+      bkgNominal.at(iBin).push_back(nomH->GetBinContent(iBin+1)+shift);
 
       //bkgSyst.at(iBin).reserve(Nbkg);
 
@@ -143,15 +144,15 @@ void makeUnblindTable_v2(TString dir="./", bool BLIND=true,bool fullTex=false) {
 	if(tsName.Contains("sidebandStatistics")) {
 	  float N;
 	  if( up->GetBinContent(iBin+1)/bkgNominal.at(iBin).at(iBkg)==1 ) N=1;
-	  else N = TMath::Power(1./(up->GetBinContent(iBin+1)/bkgNominal.at(iBin).at(iBkg)-1),2); //compute the statistics out of the card
-	  float sf = (up->GetBinContent(iBin+1)-bkgNominal.at(iBin).at(iBkg))/sqrt(N);
+	  else N = TMath::Power(1./(up->GetBinContent(iBin+1)/(bkgNominal.at(iBin).at(iBkg)-shift)-1),2); //compute the statistics out of the card
+	  float sf = (up->GetBinContent(iBin+1)+shift-bkgNominal.at(iBin).at(iBkg))/sqrt(N);
 	  bkgStatistics.push_back( N );
 	  //scaleFactors.push_back( sf);
-	  std::cout << obsVec.at(iBin) << "  " << bkgNominal.at(iBin).at(iBkg) << "   " << up->GetBinContent(iBin+1) << "  " << N << "  " << (up->GetBinContent(iBin+1)-bkgNominal.at(iBin).at(iBkg))/sqrt(N) << std::endl;
-	  bkgSyst.at(iBin).at(iBkg).push_back( make_pair(bkgNominal.at(iBin).at(iBkg)+sqrt(N+0.76)*sf+thisSF,bkgNominal.at(iBin).at(iBkg)-sqrt(N+0.76)*sf+thisSF) );
+	  std::cout << obsVec.at(iBin) << "  " << bkgNominal.at(iBin).at(iBkg) << "   " << up->GetBinContent(iBin+1) << "  " << N << "  " << sf << std::endl;
+	  bkgSyst.at(iBin).at(iBkg).push_back( make_pair(bkgNominal.at(iBin).at(iBkg)+sqrt(N+0.76)*sf+shift,bkgNominal.at(iBin).at(iBkg)-sqrt(N+0.76)*sf+shift) );
 	  bkgSystNames.at(iBin).at(iBkg).push_back(tsName);
 	}else{
-	  bkgSyst.at(iBin).at(iBkg).push_back( make_pair(up->GetBinContent(iBin+1)+thisSF,down->GetBinContent(iBin+1)+thisSF));
+	  bkgSyst.at(iBin).at(iBkg).push_back( make_pair(up->GetBinContent(iBin+1)+shift,down->GetBinContent(iBin+1)+shift));
 	  bkgSystNames.at(iBin).at(iBkg).push_back(tsName);
 	}
       }
