@@ -141,12 +141,14 @@ void makeUnblindTable_v2(TString dir="./", bool BLIND=true,bool fullTex=false) {
 	if(up->GetBinContent(iBin+1)==down->GetBinContent(iBin+1)) continue;
 	//deal with the sideband statistcs systematic differently
 	if(tsName.Contains("sidebandStatistics")) {
-	  float N = TMath::Power(1./(up->GetBinContent(iBin+1)/bkgNominal.at(iBin).at(iBkg)-1),2); //compute the statistics out of the card
+	  float N;
+	  if( up->GetBinContent(iBin+1)/bkgNominal.at(iBin).at(iBkg)==1 ) N=1;
+	  else N = TMath::Power(1./(up->GetBinContent(iBin+1)/bkgNominal.at(iBin).at(iBkg)-1),2); //compute the statistics out of the card
 	  float sf = (up->GetBinContent(iBin+1)-bkgNominal.at(iBin).at(iBkg))/sqrt(N);
 	  bkgStatistics.push_back( N );
 	  //scaleFactors.push_back( sf);
 	  std::cout << obsVec.at(iBin) << "  " << bkgNominal.at(iBin).at(iBkg) << "   " << up->GetBinContent(iBin+1) << "  " << N << "  " << (up->GetBinContent(iBin+1)-bkgNominal.at(iBin).at(iBkg))/sqrt(N) << std::endl;
-	  bkgSyst.at(iBin).at(iBkg).push_back( make_pair(bkgNominal.at(iBin).at(iBkg)+sqrt(N+1)*sf+thisSF,bkgNominal.at(iBin).at(iBkg)-sqrt(N+1)*sf+thisSF) );
+	  bkgSyst.at(iBin).at(iBkg).push_back( make_pair(bkgNominal.at(iBin).at(iBkg)+sqrt(N+0.76)*sf+thisSF,bkgNominal.at(iBin).at(iBkg)-sqrt(N+0.76)*sf+thisSF) );
 	  bkgSystNames.at(iBin).at(iBkg).push_back(tsName);
 	}else{
 	  bkgSyst.at(iBin).at(iBkg).push_back( make_pair(up->GetBinContent(iBin+1)+thisSF,down->GetBinContent(iBin+1)+thisSF));
