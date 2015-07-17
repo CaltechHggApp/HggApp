@@ -42,7 +42,7 @@ void negLikelihood(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t fla
 }
 
 
-TH1D* profileMinuit() {
+TH1D* profileMinuit(float max) {
   const int nPar=4;
 
   TMinuit min(nPar);
@@ -65,7 +65,9 @@ TH1D* profileMinuit() {
 
   min.SetPrintLevel(-1);
 
-  TH1D* output = new TH1D("output","",1000,0,10);
+
+
+  TH1D* output = new TH1D("output","",max/100,0,max);
   for(int i=0;i<output->GetNbinsX(); i++) {
     min.mnparm(0,"UpperSF",pStart[0],pStep[0],0,0,ierflg);
     min.mnparm(1,"LowerSF",pStart[1],pStep[1],0,0,ierflg);
@@ -88,7 +90,7 @@ TH1D* profileMinuit() {
        if(ierflg!=0) {
 	 std::cout << "ERROR: " << ierflg << std::endl;
 	 std::cout << "S: " << params.S << std::endl;
-	 min.SetPrintLevel(1);
+	 //min.SetPrintLevel(1);
 	 min.mnexcm("MIGRAD",arglist,2,ierflg);
 	continue;
        }
@@ -115,9 +117,9 @@ TH1D* profileMinuit() {
   double maximum = output->GetMaximum();
   params.S = 9.3;
   //params.S = output->GetBinLowEdge(output->GetMaximumBin());
-  std::cout << "S: " << params.S << std::endl;
-  min.SetPrintLevel(1);
-  min.mnexcm("MIGRAD",arglist,2,ierflg);
+  //std::cout << "S: " << params.S << std::endl;
+  //min.SetPrintLevel(1);
+  //min.mnexcm("MIGRAD",arglist,2,ierflg);
   
   for(int i=1;i<=output->GetNbinsX();i++) {
     //std::cout << 2*(TMath::Log(maximum)-TMath::Log(output->GetBinContent(i))) << std::endl;
