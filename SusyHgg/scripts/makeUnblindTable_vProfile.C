@@ -15,7 +15,7 @@
 #include "SigRegionBinning.h"
 #include "assert.h"
 
-#include "profileMinuit.C"
+#include "profileNoHistMinuit.C"
 
 using namespace std;
 using namespace SigRegionBinning;
@@ -85,10 +85,10 @@ void makeUnblindTable_vProfile(TString dir="./", bool BLIND=true,bool fullTex=fa
     float totalHigh = bkgStatHighHist->Integral();
     float totalLow = bkgStatLowHist->Integral();
 
-    //const int Nbkg=5;
-    //TString bkgNames[Nbkg] = {"bkg","ggH", "vbfH", "wzH", "ttH"};
-    const int Nbkg=1;
-    TString bkgNames[Nbkg] = {"bkg"};
+    const int Nbkg=5;
+    TString bkgNames[Nbkg] = {"bkg","ggH", "vbfH", "wzH", "ttH"};
+    //const int Nbkg=1;
+    //TString bkgNames[Nbkg] = {"bkg"};
 
   TList * keys = dataFile.GetListOfKeys();
 
@@ -258,9 +258,10 @@ void makeUnblindTable_vProfile(TString dir="./", bool BLIND=true,bool fullTex=fa
 	}
       }
       
-      float higgsTot;
+      float higgsTot=0;
       pair<float,float> err = make_pair(0,0);
       for(int iBkg=1; iBkg < Nbkg; iBkg++) { 
+	//std::cout << bkgNominal.at(i).at(iBkg);
 	higgsTot+=bkgNominal.at(i).at(iBkg);
 	pair<float,float> thisErr = addSystsQuad(bkgNominal.at(i).at(iBkg),bkgSyst.at(i).at(iBkg));
 	err.first+=thisErr.first;
@@ -287,7 +288,7 @@ void makeUnblindTable_vProfile(TString dir="./", bool BLIND=true,bool fullTex=fa
       std::pair<float,float> sideband = bkgStatisticsHighLow.at(i);
       std::pair<float,float> SFHigh   = scaleFactorHigh.at(i);
       std::pair<float,float> SFLow   = scaleFactorLow.at(i);
-      std::pair<float,float> higgs = make_pair(higgsTot,err.first-higgsTot);
+      std::pair<float,float> higgs = make_pair(higgsTot,sqrt(err.first));
 
       
 
@@ -385,7 +386,6 @@ float getSigMinuit(float obs, std::pair<float,float> sideband, std::pair<float,f
 		   std::pair<float,float> higgsBkg) {
 
 
-  if( fabs(obs-sideband.first*SFHigh.first)<1 || fabs(obs-sideband.second*SFLow.first)<1 ) return 0;
   params.obs = obs;
   params.Nupper = sideband.first;
   params.Nlower = sideband.second;
@@ -396,24 +396,7 @@ float getSigMinuit(float obs, std::pair<float,float> sideband, std::pair<float,f
   params.Higgs = higgsBkg.first;
   params.HiggsErr = higgsBkg.second;
 
-  float rangeU = params.obs - params.UpperSF*params.Nupper;
-  float rangeL = params.obs - params.LowerSF*params.Nlower;
-  float range;
+  std::pair<float,float> prof = profileNoHistMinuit();
 
-  if(rangeU*rangeL<0) { //obs is between the upper and lower prediction
-    return 0;
-  } else {
-    if(rangeU<0) {
-      return 0; //only p-val for excesses for now
-    }else{
-      range = (rangeU>rangeL ? rangeU:rangeL);
-    }
-  }
-  
-
-
-
-  TH1D* prof = profileMinuit(2*range);
-
-  return sqrt(prof->GetBinContent(1));
+  return sqrt(prof.first);
 }
