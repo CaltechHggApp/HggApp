@@ -50,8 +50,9 @@ float getR(TMinuit& m);
 //just return the -2delta LL , best S
 
 std::pair<float,float> profileNoHistMinuit(float step=0.01) {
+  //std::cout << std::endl;
   //std::cout << params.obs << " " << params.Nupper << " " << params.Nlower << " " << params.UpperSF << " " << params.UpperSFe << " " << std::endl;
-  //std::cout << params.LowerSF << " " << params.LowerSFe << " " << params.Higgs << " " << params.HiggsErr << " " << params.UpperSFe << " " << std::endl;
+  //std::cout << params.LowerSF << " " << params.LowerSFe << " " << params.Higgs << " " << params.HiggsErr << " " <<  std::endl;
   
 
   const int nPar=4;
