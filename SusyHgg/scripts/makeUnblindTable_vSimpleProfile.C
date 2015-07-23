@@ -282,14 +282,22 @@ void makeUnblindTable_vSimpleProfile(TString dir="./", bool BLIND=true,bool full
 
       float bkgShapeErr=0;
 
-      if( fabs(sideband.first-sideband.second) < sqrt(bkgStatistics.at(i)) ) {
+      //ratio of the Lower to Upper Scale Factors
+      float sfRatio = scaleFactorLow.at(i).first/scaleFactorHigh.at(i).first;
+
+      //compare the prediction, properly normalized
+      float statdiff = sideband.second - sideband.first*sfRatio;
+      //uncertainty on the difference
+      float statdiffErr = sqrt(sideband.second + sideband.first*sfRatio*sfRatio);
+
+      if( fabs(statdiffErr) < sqrt(bkgStatistics.at(i)) ) {
 	//sideband error small, use statistical error
 	bkgShapeErr = 0.5/sqrt(bkgStatistics.at(i));
       } else {	
-	float diff = fabs(sideband.first-sideband.second);
-	bkgShapeErr = 0.5*diff/bkgStatistics.at(i);
+	//treat the error as a systematic (the factor 0.5 comes from the fact that this will be used as the sigma of a Gaussian so it should be halved now).
+	bkgShapeErr = 0.5*statdiff/bkgStatistics.at(i);
       }
-
+      //std::cout <<"\t\t"<< bkgShapeErr << std::endl;
       // print \pm if the up/down errors are the same
       if( fabs(sqrt(dispErr.first) - sqrt(dispErr.second)) < 0.01 ) {
 	printf( "% 6.0f - % 6.0f & %0.2f - %0.2f & % 4.0f & $% 4.1f \\pm %0.2f$ ",
