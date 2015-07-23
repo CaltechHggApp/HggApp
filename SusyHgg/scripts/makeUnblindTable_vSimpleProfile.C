@@ -4,6 +4,7 @@
 #include "TList.h"
 #include "TRandom3.h"
 #include "TMath.h"
+#include "RooStats/HypoTestCalculator.h"
 #include "RooStats/RooStatsUtils.h"
 
 #include <vector>
@@ -16,7 +17,9 @@
 #include "SigRegionBinning.h"
 #include "assert.h"
 #include <stdio.h>
-#include "profileNoHistMinuit.C"
+#include "profileSimpleNoHistMinuit.C"
+
+
 
 using namespace std;
 using namespace SigRegionBinning;
@@ -41,10 +44,9 @@ pair<float,float> addSystsQuad(float nom, vector<pair<float,float> >& systs);
 
 float throwToyMean(TRandom3& rng, float nom, vector<pair<float,float> >& systs);
 
-float getSigMinuit(float obs, std::pair<float,float> sideband, std::pair<float,float> SFHigh, std::pair<float,float> SFLow,
-	   std::pair<float,float> higgsBkg);
+float getSigMinuit(float obs, float sideband, std::pair<float,float> SF, std::pair<float,float> higgsBkg,float bkgShapeErr);
 
-void makeUnblindTable_vProfile(TString dir="./", bool BLIND=true,bool fullTex=false) {
+void makeUnblindTable_vSimpleProfile(TString dir="./", bool BLIND=true,bool fullTex=false) {
   TFile dataFile(dir+"/data/data.root");
   if(!dataFile.IsOpen()) {
     cout << "Cannot open " << dir+"/data.root" << endl;
@@ -278,14 +280,14 @@ void makeUnblindTable_vProfile(TString dir="./", bool BLIND=true,bool fullTex=fa
 
       std::pair<float,float> sideband = bkgStatisticsHighLow.at(i);
 
+      float bkgShapeErr=0;
+
       if( fabs(sideband.first-sideband.second) < sqrt(bkgStatistics.at(i)) ) {
 	//sideband error small, use statistical error
-	dispErr.first = dispErr.first + 0.5*scaleFactors.at(i)*scaleFactors.at(i)*bkgStatistics.at(i); //add in the background stat error (in quadrature)
-	dispErr.second = dispErr.second + 0.5*scaleFactors.at(i)*scaleFactors.at(i)*bkgStatistics.at(i); //add in the background stat error (in quadrature)
-      } else {
+	bkgShapeErr = 0.5/sqrt(bkgStatistics.at(i));
+      } else {	
 	float diff = fabs(sideband.first-sideband.second);
-	dispErr.first = dispErr.first + 0.5*scaleFactors.at(i)*scaleFactors.at(i)*diff; //add in the background shape systematics
-	dispErr.second = dispErr.second + 0.5*scaleFactors.at(i)*scaleFactors.at(i)*diff;
+	bkgShapeErr = 0.5*diff/bkgStatistics.at(i);
       }
 
       // print \pm if the up/down errors are the same
@@ -303,17 +305,14 @@ void makeUnblindTable_vProfile(TString dir="./", bool BLIND=true,bool fullTex=fa
       cout << flush;
 
       float obs = obsVec.at(i);
-      std::pair<float,float> SFHigh   = scaleFactorHigh.at(i);
-      std::pair<float,float> SFLow   = scaleFactorLow.at(i);
+      std::pair<float,float> SF   =  make_pair(scaleFactors.at(i),scaleFactorsError.at(i));
       std::pair<float,float> higgs = make_pair(higgsTot,sqrt(err.first));
 
-      
-
-      float sig = getSigMinuit(obs,sideband,SFHigh,SFLow,higgs);
+      float sig = getSigMinuit(obs,sideband.first+sideband.second,SF,higgs,bkgShapeErr);
       if(isinf(sig)) return;
 
-      float pv = RooStats::SignificanceToPValue(sig);//pval(obsVec.at(i),bkgNominal.at(i),bkgSyst.at(i));
-      //float sig = fabs(TMath::NormQuantile(pv/2));
+      float pv = RooStats::SignificanceToPValue(sig);
+
       if(obsVec.at(i) < bkgTot && fabs(sig)>0.005) sig*=-1;
       printf("& %0.3f & %0.1f \\\\\n",pv, sig);
     }
@@ -400,23 +399,18 @@ void pruneSystematics(float nom, vector<pair<float,float> >& systs, float thresh
   }
 }
 
-float getSigMinuit(float obs, std::pair<float,float> sideband, std::pair<float,float> SFHigh, std::pair<float,float> SFLow,
-		   std::pair<float,float> higgsBkg) {
-
+float getSigMinuit(float obs, float sideband, std::pair<float,float> SF, std::pair<float,float> higgsBkg,float bkgShapeErr){
+  
 
   params.obs = obs;
-  params.Nupper = sideband.second;
-  params.Nlower = sideband.first;
-  //params.Nupper = sideband.first;
-  //params.Nlower = sideband.second;
-  params.UpperSF = SFHigh.first;
-  params.UpperSFe = SFHigh.second;
-  params.LowerSF = SFLow.first;
-  params.LowerSFe = SFLow.second;
+  params.Nside = sideband;
+  params.sf = SF.first;
+  params.sfe = SF.second;
   params.Higgs = higgsBkg.first;
   params.HiggsErr = higgsBkg.second;
+  params.combAddErr = bkgShapeErr;
 
-  std::pair<float,float> prof = profileNoHistMinuit();
+  std::pair<float,float> prof = profileSimpleNoHistMinuit();
 
   return sqrt(prof.first);
 }
