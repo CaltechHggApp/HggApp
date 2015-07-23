@@ -110,7 +110,7 @@ int main(int argc,char** argv) {
   vector<string> sms_list = cfg.tokenizeString(sms_list_string,",");
 
   int isMCData = atoi( cfg.getParameter("isMCData").c_str() );
-
+  std::cout << "[INFO]: isMCData: " << isMCData << std::endl;
   string metphi = cfg.getParameter("METPhiCorrection");
   std::cout << "METPhi:  " << metphi << std::endl;
 
@@ -142,7 +142,7 @@ int main(int argc,char** argv) {
       fitter.setDoAlternateAnalysis(alternate);
       fitter.Run();
     }
-
+    
     combine.addSMHiggsFilePath(sm_name,outputFolder+"/"+sm_name+".root");
   }
 
@@ -158,7 +158,8 @@ int main(int argc,char** argv) {
       sigEffs[cat] = getSigEff(SMTot,125.);
       SMTot.Rebin(10);
       std::pair<float,float> width = getFWHM(SMTot);
-      cout << cat << "  " << sigEffs[cat] << "  " << width.second-width.first << std::endl;    
+      cout << "[INFO]: " << cat << " sigmaEff: " << sigEffs[cat] 
+	   << "  wsecond-wfirst: " << width.second-width.first << std::endl;    
       SMTotFile.cd();
       SMTot.Write();
     }
@@ -175,8 +176,8 @@ int main(int argc,char** argv) {
       sigEffs["HighRes"] = 1.68;
       sigEffs["LowRes"] = 2.5;
     }
-      
-
+    
+    
   std::string dataFileName = cfg.getParameter("data_path"); 
   std::string triggerFileName = cfg.getParameter("trigger_path"); 
   std::string noiseFileName = cfg.getParameter("noise_path"); 
@@ -225,6 +226,11 @@ int main(int argc,char** argv) {
     datafitter->Run();
     delete datafitter;
   }
+  
+  std::cout << "========================================" << std::endl;
+  std::cout << "================Leaving Fit=============" << std::endl;
+  std::cout << "========================================" << std::endl;
+
   if(sigInjName != "")   combine.addDataFilePath(outputFolder+"/"+sigInjName);
   else combine.addDataFilePath(outputFolder+"/data.root");
 
@@ -233,6 +239,9 @@ int main(int argc,char** argv) {
     std::string normPath = cfg.getParameter("norm_"+sms_name);
 
     if(!combineOnly) {
+      std::cout << "========================================" << std::endl;
+      std::cout << "================Entering smsFitter=============" << std::endl;
+      std::cout << "========================================" << std::endl;
       SMSFitter smsFitter(fileName,outputFolder+"/"+sms_name+".root",bHT);
       smsFitter.setXSec( 1 );
       smsFitter.setLumi( lumi );
@@ -245,6 +254,7 @@ int main(int argc,char** argv) {
 
       smsFitter.Run();
     }
+    std::cout << "sms_name-> " << outputFolder+"/"+sms_name+".root" << std::endl;
     combine.addSMSFilePath(sms_name,outputFolder+"/"+sms_name+".root");
   }
 

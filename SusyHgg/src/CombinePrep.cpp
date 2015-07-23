@@ -11,6 +11,7 @@
 
 void CombinePrep::openFiles() {
   dataFile = std::unique_ptr<TFile>(new TFile(dataFilePath));
+  std::cout << "data file: " << dataFilePath << std::endl;
   assert(dataFile->IsOpen() && Form("could not open data file %s",dataFilePath.Data()));
 
   for(auto smHiggs: smHiggsFilePaths) {

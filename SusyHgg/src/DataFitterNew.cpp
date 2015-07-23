@@ -50,32 +50,62 @@ RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool 
   RooAddPdf pdf("pdf","",RooArgSet(e1,e2),RooArgSet(NBkg1Sq,NBkg2Sq));
 
   RooDataSet rdata("data","",data,mgg);
-    
-
+  rdata.Print();
   //pdf_FULL->fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE));
   //pdf_FULL->fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE));
 
   //pdf.fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE));
   //pdf.fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE));
   
-  //pdf.fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE));
-  //RooFitResult* res = pdf.fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE));
+  //full fit
+  pdf.fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE));
+  RooFitResult* res = pdf.fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE));
   
   //pdf->fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::Minimizer("Minuit2"));
   //RooFitResult* res = pdf->fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE),RooFit::Minimizer("Minuit2"));
   
-  pdf.fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::Range("low,high"));
-  RooFitResult* res = pdf.fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE),RooFit::Range("low,high"));
+  //sideband fit mgg in (103-120, 131-160) GeV
+  //pdf.fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::Range("low,high"));
+  //RooFitResult* res = pdf.fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE),RooFit::Range("low,high"));
   
+  
+  std::cout << "======================================" << std::endl;
+  std::cout << "======================================" << std::endl;
+  std::cout << "[INFO] mgg width: " << width << " GeV " << std::endl;
+  std::cout << "======================================" << std::endl;
+  std::cout << "======================================" << std::endl;
+
   mgg.setRange("sig",125-width,126+width);
 
   RooAbsReal *sig_int = pdf.createIntegral(mgg,RooFit::NormSet(mgg),RooFit::Range("sig"));
   sig_int->SetName("signal_integral");
 
+  RooAbsReal *total_int = pdf.createIntegral(mgg);
+  total_int->SetName("total_integral");
+  
+  RooAbsReal *sig_unorm_int = pdf.createIntegral( mgg, RooFit::Range("sig") );
+  sig_unorm_int->SetName("sig_unorm_int");
 
+  /*
+  std::cout << "======================================" << std::endl;
+  std::cout << "======================================" << std::endl;
+  std::cout << "signal_integral: " << sig_int->getVal() << std::endl;
+  std::cout << "total_integral: "  << total_int->getVal() << std::endl;
+  std::cout << "signal_unorm_integral: "  << sig_unorm_int->getVal() << std::endl;
+  std::cout << "======================================" << std::endl;
+  std::cout << "======================================" << std::endl;
+  */
   float N_sideband = rdata.sumEntries(Form("(mgg>%0.2f && mgg <120) || (mgg>131 && mgg<%0.2f)",minMgg,maxMgg));  
 
   RealVar scale;
+
+  /*
+  std::cout << "======================================" << std::endl;
+  std::cout << "======================================" << std::endl;
+  std::cout << "fitted norm: " << NBkg1Sq.getVal()+NBkg2Sq.getVal() << std::endl;
+  std::cout << "======================================" << std::endl;
+  std::cout << "======================================" << std::endl;
+  */
   scale.val = (NBkg1Sq.getVal()+NBkg2Sq.getVal())*sig_int->getVal()/N_sideband;
   scale.error = scale.val*sqrt( 1/N_sideband + pow(sig_int->getPropagatedError(*res)/sig_int->getVal(),2) );
 
@@ -96,6 +126,13 @@ RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool 
     delete res;
     delete sig_int;
   }
+
+  std::cout << "=================================" << std::endl;
+  std::cout << "=================================" << std::endl;
+  std::cout << "[INFO] scaleFactor: " << scale.val << std::endl;
+  std::cout << "=================================" << std::endl;
+  std::cout << "=================================" << std::endl;
+  
   return scale;
 }
 
@@ -272,7 +309,8 @@ void DataFitter::processEntrySidebands() {
     float sigRegWidth = nSigEffSignalRegion*sigmaEffectives[cat];
 
     float thisMR = MR;
-    float thisRsq = Rsq;
+    float thisRsq = Rsq;//Rsq points to t1Rsq, see L493 @ SusyHggTreeBase.h
+
     if(useHT) {
       thisMR = HT;
       thisRsq = MET;
@@ -282,6 +320,13 @@ void DataFitter::processEntrySidebands() {
       std::cerr << "DATA has weight: " << weight << std::endl;
       assert(weight==1);
     }
+    
+    /*
+    std::cout << "[INFO]: scaleFactor: " << scales[cat].val << std::endl;
+    std::cout << "[INFO]: weight: " << weight << std::endl;
+    std::cout << "[INFO]: cat: " << cat << std::endl;
+    std::cout << "[INFO]: minMgg: " << minMgg << " maxMgg: " << maxMgg << std::endl;
+    */
 
     assert(!isnan(weight));
     if((mgg>minMgg && mgg<120) || (mgg>131 && mgg<maxMgg)){
