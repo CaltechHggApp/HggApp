@@ -50,9 +50,9 @@ float getR(TMinuit& m);
 //just return the -2delta LL , best S
 
 std::pair<float,float> profileNoHistMinuit(float step=0.01) {
-  //std::cout << std::endl;
-  //std::cout << params.obs << " " << params.Nupper << " " << params.Nlower << " " << params.UpperSF << " " << params.UpperSFe << " " << std::endl;
-  //std::cout << params.LowerSF << " " << params.LowerSFe << " " << params.Higgs << " " << params.HiggsErr << " " <<  std::endl;
+//    std::cout << std::endl;
+//    std::cout << params.obs << " " << params.Nupper << " " << params.Nlower << " " << params.UpperSF << " " << params.UpperSFe << " " << std::endl;
+//    std::cout << params.LowerSF << " " << params.LowerSFe << " " << params.Higgs << " " << params.HiggsErr << " " <<  std::endl;
   
 
   const int nPar=4;
@@ -62,7 +62,7 @@ std::pair<float,float> profileNoHistMinuit(float step=0.01) {
 
   min.SetFCN(negLikelihood);
 
-  double pStart[nPar]={params.UpperSF,params.LowerSF,params.Nupper,params.Higgs};
+  double pStart[nPar]={params.UpperSF,params.LowerSF,0.5*(params.Nupper+params.Nlower),params.Higgs};
   double pStep [nPar]={0.0001,0.0001,0.0001,0.0001};
   
 
@@ -94,6 +94,8 @@ std::pair<float,float> profileNoHistMinuit(float step=0.01) {
   min.mnparm(2,"UpperB",pStart[2],pStep[2],0,0,ierflg);
   min.mnparm(3,"HiggsB",pStart[3],pStep[3],0,0,ierflg);
 
+  //min.SetPrintLevel(1);
+
   min.mnexcm("MIGRAD",arglistS0,2,ierflg);
   min.mnexcm("MIGRAD",arglist,2,ierflg);
 
@@ -102,6 +104,8 @@ std::pair<float,float> profileNoHistMinuit(float step=0.01) {
     std::cout << "FATAL ERROR: S=0 likelihood is NaN" << std::endl;
     return std::make_pair(0.,0.);
   }
+  min.SetPrintLevel(-1);
+
   curMin = likeS0;
 
   //scan S
@@ -210,10 +214,10 @@ std::pair<float,float> profileNoHistMinuit(float step=0.01) {
 
   //transform to a -2 Delta LL
   
-  //std::cout << curMin << std::endl;
-  //std::cout << likeS0 << std::endl;
+//   std::cout << curMin << std::endl;
+//   std::cout << likeS0 << std::endl;
   
-  //std::cout << sqrt(2*(TMath::Log(-1*curMin)-TMath::Log(-1*likeS0))) << "  " << bestS << std::endl;
+//   std::cout << sqrt(2*(TMath::Log(-1*curMin)-TMath::Log(-1*likeS0))) << "  " << bestS << std::endl;
   return std::make_pair(2*(TMath::Log(-1*curMin)-TMath::Log(-1*likeS0)) , bestS );
 
 };

@@ -14,7 +14,7 @@
 
 #include "SigRegionBinning.h"
 #include "assert.h"
-
+#include <stdio.h>
 #include "profileNoHistMinuit.C"
 
 using namespace std;
@@ -272,23 +272,23 @@ void makeUnblindTable_vProfile(TString dir="./", bool BLIND=true,bool fullTex=fa
 
       pair<float,float> dispErr = err; // the error to display (add in the statistical and sideband errors)
 
-      dispErr.first = dispErr.first + scaleFactors.at(i)*bkgStatistics.at(i); //add in the background stat error (in quadrature)
-      dispErr.second = dispErr.second + scaleFactors.at(i)*bkgStatistics.at(i); //add in the background stat error (in quadrature)
+      dispErr.first = dispErr.first + scaleFactors.at(i)*scaleFactors.at(i)*bkgStatistics.at(i); //add in the background stat error (in quadrature)
+      dispErr.second = dispErr.second + scaleFactors.at(i)*scaleFactors.at(i)*bkgStatistics.at(i); //add in the background stat error (in quadrature)
 
       std::pair<float,float> sideband = bkgStatisticsHighLow.at(i);
 
       if( fabs(sideband.first-sideband.second) < sqrt(bkgStatistics.at(i)) ) {
 	//sideband error small, use statistical error
-	dispErr.first = dispErr.first + 0.5*scaleFactors.at(i)*bkgStatistics.at(i); //add in the background stat error (in quadrature)
-	dispErr.second = dispErr.second + 0.5*scaleFactors.at(i)*bkgStatistics.at(i); //add in the background stat error (in quadrature)
+	dispErr.first = dispErr.first + 0.5*scaleFactors.at(i)*scaleFactors.at(i)*bkgStatistics.at(i); //add in the background stat error (in quadrature)
+	dispErr.second = dispErr.second + 0.5*scaleFactors.at(i)*scaleFactors.at(i)*bkgStatistics.at(i); //add in the background stat error (in quadrature)
       } else {
 	float diff = fabs(sideband.first-sideband.second);
-	dispErr.first = dispErr.first + 0.5*scaleFactors.at(i)*diff; //add in the background shape systematics
-	dispErr.second = dispErr.second + 0.5*scaleFactors.at(i)*diff;
+	dispErr.first = dispErr.first + 0.5*scaleFactors.at(i)*scaleFactors.at(i)*diff; //add in the background shape systematics
+	dispErr.second = dispErr.second + 0.5*scaleFactors.at(i)*scaleFactors.at(i)*diff;
       }
 
       // print \pm if the up/down errors are the same
-      if( fabs(sqrt(err.first) - sqrt(err.second)) < 0.01 ) {
+      if( fabs(sqrt(dispErr.first) - sqrt(dispErr.second)) < 0.01 ) {
 	printf( "% 6.0f - % 6.0f & %0.2f - %0.2f & % 4.0f & $% 4.1f \\pm %0.2f$ ",
 		region.at(iC).MR_min, region.at(iC).MR_max,
 	region.at(iC).Rsq_min, region.at(iC).Rsq_max,	    
@@ -309,6 +309,7 @@ void makeUnblindTable_vProfile(TString dir="./", bool BLIND=true,bool fullTex=fa
       
 
       float sig = getSigMinuit(obs,sideband,SFHigh,SFLow,higgs);
+      if(isinf(sig)) return;
 
       float pv = 0;//pval(obsVec.at(i),bkgNominal.at(i),bkgSyst.at(i));
       //float sig = fabs(TMath::NormQuantile(pv/2));
