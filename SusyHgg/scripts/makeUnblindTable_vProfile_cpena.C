@@ -429,6 +429,15 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
                 obsVec.at(i), bkgTot, bkg_total_err.second, bkg_total_err.first,
 		pv, sig
 		);
+
+	if( fullTex ) 
+	  {
+	    std::cout << "\\hline\n\\end{tabular}" << std::endl
+		      << "\\caption{Number of Events observed in the signal region compared to expected" 
+		      << " background in the {\\bf " << getRegionName( (BinningRegion)iReg ) << "} box.}\n"
+		      << "\\label{tab:ObsPV_" << getRegionName( (BinningRegion)iReg ) << "}\n"
+		      << "\\end{table}" << std::endl;
+	  }
 	
 	/*
 	std::cout << "====> iBin: " << i << std::endl;
