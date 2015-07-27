@@ -334,8 +334,8 @@ pair<float,float> addSystsQuad(float nom, vector<pair<float,float> >& systs) {
   pair<float,float> sumQuad = make_pair(0.0,0.0);
 
   for(int i=0; i<systs.size(); i++) {
-    sumQuad.first  += TMath::Power(nom-systs.at(i).first,2);
-    sumQuad.second += TMath::Power(nom-systs.at(i).second,2);
+    sumQuad.first  += TMath::Power(nom - systs.at(i).first,2);
+    sumQuad.second += TMath::Power(nom - systs.at(i).second,2);
   }
   return sumQuad;
 }

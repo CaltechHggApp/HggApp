@@ -16,7 +16,7 @@
 #include "SigRegionBinning.h"
 #include "assert.h"
 #include <stdio.h>
-#include "profileNoHistMinuit.C"
+#include "profileSimpleNoHistMinuit.C"
 
 using namespace std;
 using namespace SigRegionBinning;
@@ -41,8 +41,13 @@ pair<float,float> addSystsQuad(float nom, vector<pair<float,float> >& systs);
 
 float throwToyMean(TRandom3& rng, float nom, vector<pair<float,float> >& systs);
 
-float getSigMinuit(float obs, std::pair<float,float> sideband, std::pair<float,float> SFHigh,
-		   std::pair<float,float> SFLow,std::pair<float,float> higgsBkg);
+float getSigMinuit( float obs, float sideband, std::pair<float,float> SF,
+		    std::pair<float,float> higgsBkg, float bkgShapeErr );
+
+TH1D* getDeltaLogLikelihood(float obs, float sideband, std::pair<float,float> SF,
+			    std::pair<float,float> higgsBkg,float bkgShapeErr, bool _profileNobs = false );
+
+pair<float, float> findOneSigma( TH1D* _nll );
 
 void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=false ) 
 {
@@ -118,13 +123,13 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
   TList * keys = dataFile.GetListOfKeys();
 
   //-----------------------------------------------------------
-  //converting histos (46 MR-Rsq bins) into a vector for obs
+  //converting histo (46 MR-Rsq bins) into a vector for obs
   //-----------------------------------------------------------
   vector<float> obsVec;
   convertHistVector(obs,obsVec);
 
   //--------------------------------------------------------------------
-  //converting histos (46 MR-Rsq bins) into a vecor of pairs<SF,SFerror>
+  //converting histo (46 MR-Rsq bins) into a vecor of SFs
   //--------------------------------------------------------------------
   vector<float>   scaleFactors;
   vector<float>   scaleFactorsError;
@@ -142,13 +147,21 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
   vector<float>   bkgStatistics;
   convertHistVector(bkgStatHist,bkgStatistics);
 
-  //-------------------------------------------------------
-  //creating vector of pairs<Nsideband_high, Nsideband_low>
-  //-------------------------------------------------------
+  //--------------------------------------------------------------------------------------
+  //creating vector of pairs<Nsideband_high, Nsideband_low> for each of the 46 MR-Rsq bins
+  //--------------------------------------------------------------------------------------
   vector<std::pair<float,float>>   bkgStatisticsHighLow;
   for(int i=1;i<=bkgStatHighHist->GetNbinsX();i++) {
     bkgStatisticsHighLow.push_back(std::make_pair(bkgStatHighHist->GetBinContent(i),bkgStatLowHist->GetBinContent(i)));
   }
+
+  for ( int k = 0; k < bkgStatistics.size(); k++ )
+    {
+      std::cout << "[DEBUG]: Nsideband: " << bkgStatistics.at(k) 
+		<< " Nsideband-high: " << bkgStatisticsHighLow.at(k).first
+		<< " Nsideband-low: " << bkgStatisticsHighLow.at(k).second
+		<< std::endl;
+    }
 
   //wow, this is ugly...
   vector<float> totalStatistics; // the total statistics of the box this bin belongs to
@@ -165,8 +178,10 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
       for( int i = 0; i < region.size(); i++ ) 
 	{
 	  int iC = ConvertToCombineBin((BinningRegion)iReg,i);
-	  tot.first  += bkgStatisticsHighLow.at(i).first;
-	  tot.second += bkgStatisticsHighLow.at(i).second;
+	  std::cout << "[DEBUG]: iC->" << iC << " bkgStatisticsHighLow: " << bkgStatisticsHighLow.at(iC).first
+		    << ", " << bkgStatisticsHighLow.at(iC).second << std::endl;
+	  tot.first  += bkgStatisticsHighLow.at(iC).first;
+	  tot.second += bkgStatisticsHighLow.at(iC).second;
 	}
       std::cout << "nsideband high: " << tot.first 
 		<< " , nsideband low: " << tot.second 
@@ -178,21 +193,33 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	}
     }
   
+  for ( int k = 0; k < totalStatisticsHighLow.size(); k++ )
+    {
+      std::cout << "[DEBUG]: i->" << k << " HighLow Statistics: (" 
+		<< totalStatisticsHighLow.at(k).first << "," << totalStatisticsHighLow.at(k).second 
+		<< "); Full Statistics: " << totalStatistics.at(k) << std::endl;
+    }
+
   //bin<bkg>
   vector<vector<float> >   bkgNominal(obsVec.size());
+  std::cout << "[DEBUG]: bkgNominal size: " << bkgNominal.size() 
+	    << " subvector size: " << bkgNominal.at(0).size() << std::endl;
   //bin<bkg<systematic>>
   vector<systMap>          bkgSyst(obsVec.size(),systMap(Nbkg));
   vector<vector<vector<TString> > > bkgSystNames(obsVec.size(),vector<vector<TString> >(Nbkg));
 
   
-
-  //per signal region bin
+  //-----------------------------------------
+  //looping over 46 MR-Rsq bins
+  //-----------------------------------------
   for( int iBin = 0; iBin < obsVec.size(); iBin++ ) 
     { 
-      float shift = (NEWPROC?scaleFactors.at(iBin):0);
+      float shift = (NEWPROC?scaleFactors.at(iBin):0);//in this case shift is always zero if NEWPROC is zero
       TH1F* SFErrHist = (TH1F*)dataFile.Get("bkg_fitUp");
       
-      //per background component
+      //--------------------------
+      //loop over bkg types (non-resonant, ggH, vbfH, wzH, ttH)
+      //--------------------------
       for( int iBkg = 0; iBkg < Nbkg; iBkg++ )
 	{
 	  TH1F* nomH = (TH1F*)dataFile.Get(bkgNames[iBkg]);
@@ -206,173 +233,217 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	  if( iBkg == 0 ) {
 	    scaleFactorsError.push_back( scaleFactors.at(iBin)* (SFErrHist->GetBinContent(iBin+1)/bkgNominal.at(iBin).at(0)-1) );
 	    //std::cout << scaleFactors.at(iBin) << " +- " << scaleFactorsError.at(iBin) << std::endl;
-	    
-	    
 	    float sfH = scaleFactors.at(iBin)/totalStatisticsHighLow.at(iBin).first*totalStatistics.at(iBin);
 	    float sfL = scaleFactors.at(iBin)/totalStatisticsHighLow.at(iBin).second*totalStatistics.at(iBin);
 	    
 	    float sfHE = sfH/scaleFactors.at(iBin)*TMath::Sqrt( TMath::Power(scaleFactorsError.at(iBin),2)
 								- 1/(totalStatistics.at(iBin))
-								+ 1/totalStatisticsHighLow.at(iBin).first);
+								+ 1/totalStatisticsHighLow.at(iBin).first 
+								);
+	    float sfHE_v2 = sfH*TMath::Sqrt( TMath::Power(scaleFactorsError.at(iBin)/scaleFactors.at(iBin),2)
+					     + 1/(totalStatistics.at(iBin))
+					     + 1/totalStatisticsHighLow.at(iBin).first
+					     );
+
 	    float sfLE = sfL/scaleFactors.at(iBin)*TMath::Sqrt( TMath::Power(scaleFactorsError.at(iBin),2)
 								- 1/(totalStatistics.at(iBin))
 								+ 1/totalStatisticsHighLow.at(iBin).second);
-	    
-	    //std::cout << sfH << " +- " << sfHE << std::endl;
-	    //std::cout << sfL << " +- " << sfLE << std::endl;
-	    //std::cout << std::endl;
+	    std::cout << "iBin: " << iBin << std::endl;
+	    std::cout << sfH << " +- " << sfHE << std::endl;
+	    std::cout << sfH << " +- " << sfHE_v2 << std::endl;
+	    std::cout << sfL << " +- " << sfLE << std::endl;
+	    std::cout << std::endl;
 	    
 	    scaleFactorHigh.push_back(std::make_pair(sfH,sfHE));
 	    scaleFactorLow.push_back(std::make_pair(sfL,sfLE));
 	  }
-	  
-	  //bkgSyst.at(iBin).reserve(Nbkg);
-	  
-	  
-	  //per systematic
-	  for(int iSyst=0; iSyst<keys->GetEntries(); iSyst++) {
-	    const char* name = keys->At(iSyst)->GetName();
-	    //no match or its just the nominal
-	    if(strncmp(bkgNames[iBkg].Data(),name,bkgNames[iBkg].Length())!=0 
-	       || bkgNames[iBkg].Length()==strlen(name)) {
+	  //-----------------------------------------------------
+	  //not clear what this does, besides add some systematic
+	  //-----------------------------------------------------
+	  //per systematic                             
+	  for(int iSyst=0; iSyst<keys->GetEntries(); iSyst++) 
+	    {
+	      const char* name = keys->At(iSyst)->GetName();
+	      //no match or its just the nominal
+	      if( strncmp(bkgNames[iBkg].Data(), name,bkgNames[iBkg].Length()) != 0
+		  || bkgNames[iBkg].Length() == strlen(name) ) 
+		{
+		  //delete name;                                
+		  continue;
+		}
+	      TString tsName(name);
 	      //delete name;
-	      continue;
+	      //only run for the Up systematic, we'll process both together to form the pair                                                          
+	      if( !tsName.EndsWith("Up") ) 
+		{
+		  continue;
+		}
+	      
+	      systMap systematics;
+	      
+	      TH1F* up   = (TH1F*)dataFile.Get(tsName);
+	      TH1F* down = (TH1F*)dataFile.Get(tsName(0,tsName.Length()-2)+"Down");
+	      if( up == 0 ) 
+		{
+		  std::cout << "could not find histogram named " << tsName << std::endl;
+		  return;
+		}
+	      if( down == 0 )
+		{
+		  std::cout << "could not find histogram named " << tsName(0,tsName.Length()-2)+"Down" << std::endl;
+		  return;
+		}
+	      
+	      if( up->GetBinContent(iBin+1) == down->GetBinContent(iBin+1) ) continue;
+	      //deal with the sideband statistcs systematic differently            
+	      if( tsName.Contains("sidebandStatistics") || tsName.Contains("bkgShape") || tsName.Contains("bkg_fitUp") ) 
+		{
+		  continue;
+		  float N;
+		  //compute the statistics out of the card
+		  if( up->GetBinContent(iBin+1)/bkgNominal.at(iBin).at(iBkg) == 1 ) N = 1;
+		  else N = TMath::Power(1./(up->GetBinContent(iBin+1)/(bkgNominal.at(iBin).at(iBkg)-shift)-1),2);
+		  float sf = (up->GetBinContent(iBin+1)+shift-bkgNominal.at(iBin).at(iBkg))/sqrt(N);
+		  bkgStatistics.push_back( N );
+		  //scaleFactors.push_back( sf);                        
+		  std::cout << obsVec.at(iBin) << "  " << bkgNominal.at(iBin).at(iBkg) 
+			    << "   " << up->GetBinContent(iBin+1) << "  " << N << "  " 
+			    << sf << std::endl;
+		  bkgSyst.at(iBin).at(iBkg).push_back( make_pair(bkgNominal.at(iBin).at(iBkg)+sqrt(N+0.76)*sf+shift,bkgNominal.at(iBin).at(iBkg)-sqrt(N	+0.76)*sf+shift) );
+		  bkgSystNames.at(iBin).at(iBkg).push_back(tsName);
+		}else
+		{
+		  bkgSyst.at(iBin).at(iBkg).push_back( make_pair(up->GetBinContent(iBin+1)+shift,down->GetBinContent(iBin+1)+shift));
+		  bkgSystNames.at(iBin).at(iBkg).push_back(tsName);
+		}
 	    }
-	    
-	    TString tsName(name);
-	    //delete name;      
-	    
-	    //only run for the Up systematic, we'll process both together to form the pair
-	    if(! tsName.EndsWith("Up")) {
-	      continue;
-	    }
-	    
-	    systMap systematics;
-	    
-	    TH1F* up   = (TH1F*)dataFile.Get(tsName);
-	    TH1F* down = (TH1F*)dataFile.Get(tsName(0,tsName.Length()-2)+"Down");
-	    if(up==0) {
-	      cout << "could not find histogram named " << tsName << endl;
-	      return;
-	    }
-	    if(down==0) {
-	      cout << "could not find histogram named " << tsName(0,tsName.Length()-2)+"Down" << endl;
-	      return;
-	    }
-	    if(up->GetBinContent(iBin+1)==down->GetBinContent(iBin+1)) continue;
-	    //deal with the sideband statistcs systematic differently
-	    if(tsName.Contains("sidebandStatistics") || tsName.Contains("bkgShape") || tsName.Contains("bkg_fitUp")) {
-	      continue;
-	      float N;
-	      if( up->GetBinContent(iBin+1)/bkgNominal.at(iBin).at(iBkg)==1 ) N=1;
-	      else N = TMath::Power(1./(up->GetBinContent(iBin+1)/(bkgNominal.at(iBin).at(iBkg)-shift)-1),2); //compute the statistics out of the card
-	      float sf = (up->GetBinContent(iBin+1)+shift-bkgNominal.at(iBin).at(iBkg))/sqrt(N);
-	      bkgStatistics.push_back( N );
-	      //scaleFactors.push_back( sf);
-	      std::cout << obsVec.at(iBin) << "  " << bkgNominal.at(iBin).at(iBkg) << "   " << up->GetBinContent(iBin+1) << "  " << N << "  " << sf << std::endl;
-	      bkgSyst.at(iBin).at(iBkg).push_back( make_pair(bkgNominal.at(iBin).at(iBkg)+sqrt(N+0.76)*sf+shift,bkgNominal.at(iBin).at(iBkg)-sqrt(N+0.76)*sf+shift) );
-	      bkgSystNames.at(iBin).at(iBkg).push_back(tsName);
-	    }else{
-	      bkgSyst.at(iBin).at(iBkg).push_back( make_pair(up->GetBinContent(iBin+1)+shift,down->GetBinContent(iBin+1)+shift));
-	      bkgSystNames.at(iBin).at(iBkg).push_back(tsName);
-	    }
+	}//end Bkg Loop
+    }//end MR-Rsq bins loop
+
+  TFile* _fout = new TFile("_profile_likelihood.root", "recreate");
+  
+  for( int iReg = 0; iReg < nBoxes; iReg++ )
+    {
+      vector<region> region = getSigRegions((BinningRegion)iReg);
+      cout << endl <<endl << getRegionName( (BinningRegion)iReg ) << endl << endl;
+      
+      if(fullTex) 
+	{
+	  std::cout << "\\begin{table}\n\\begin{tabular}{|cc|c|c|cc|}" << std::endl
+		    << "\\hline\n"
+		    << "$M_R$ region & $R^2$ region & observed events & expected background & p-value & significance ($\\sigma$) \\\\\n" 
+		    << "\\hline" << std::endl;
+	}
+      
+    for( int iC = 0; iC < region.size(); iC++ ) 
+      {
+	int i = ConvertToCombineBin((BinningRegion)iReg,iC);
+	float bkgTot = 0;
+	for( int iBkg = 0; iBkg < Nbkg; iBkg++ ) bkgTot += bkgNominal.at(i).at(iBkg);
+      
+	float higgsTot = 0;
+	pair<float,float> err = make_pair(0,0);
+	for( int iBkg = 1; iBkg < Nbkg; iBkg++ ) //avoids non-resonant
+	  { 
+	    higgsTot += bkgNominal.at(i).at(iBkg);
+	    pair<float,float> thisErr = addSystsQuad(bkgNominal.at(i).at(iBkg),bkgSyst.at(i).at(iBkg));
+	    err.first  += thisErr.first;
+	    err.second += thisErr.second;
 	  }
-	}
-    }
-  
-  for(int iReg=0; iReg<nBoxes; iReg++) {
-    vector<region> region = getSigRegions((BinningRegion)iReg);
-    cout << endl <<endl << getRegionName( (BinningRegion)iReg ) << endl << endl;
-    
-    if(fullTex) {
-      std::cout << "\\begin{table}\n\\begin{tabular}{|cc|c|c|cc|}" << std::endl
-		<< "\\hline\n"
-		<< "$M_R$ region & $R^2$ region & observed events & expected background & p-value & significance ($\\sigma$) \\\\\n" 
-		<< "\\hline" << std::endl;
-	}
-    
-    for( int iC = 0; iC < region.size(); iC++ ) {
-      int i = ConvertToCombineBin((BinningRegion)iReg,iC);
-      float bkgTot=0;
-      for(int iBkg=0; iBkg < Nbkg; iBkg++) bkgTot+=bkgNominal.at(i).at(iBkg);
-      
-      if(obsVec.at(i)==5 && false) {
-	for(int iBkg=0; iBkg<Nbkg; iBkg++) {
-	  std::cout << bkgNames[iBkg] << ":  " << bkgNominal.at(i).at(iBkg) << std::endl;
-	  for(int iSyst=0; iSyst< bkgSyst.at(i).at(iBkg).size(); iSyst++) {
-	    std::cout << "\t" << bkgSystNames.at(i).at(iBkg).at(iSyst) << "\t:" << bkgSyst.at(i).at(iBkg).at(iSyst).second << " -- " << bkgSyst.at(i).at(iBkg).at(iSyst).first << std::endl;
+	//----------------------------------------
+	//total SM higgs bkg and its uncertainty
+	//----------------------------------------
+	std::pair<float,float> higgs = make_pair(higgsTot,sqrt(err.first));
+	
+	//----------------------------------------
+	//nominal sideband non-resonant prediction
+	//----------------------------------------
+	double non_res_nominal_pred = scaleFactors.at(i)*bkgStatistics.at(i);
+	//---------------------------------------------------------------------
+	// non-resonant prediction statistical uncertainty = sf*sqrt(Nsideband)
+	//---------------------------------------------------------------------
+	double non_res_stat_err = scaleFactors.at(i)*TMath::Sqrt( bkgStatistics.at(i) );
+	
+	//----------------------------------------------------------
+	//uppper and lower sideband non-resonant predictions
+	//----------------------------------------------------------
+	double non_res_upper_pred = scaleFactorHigh.at(i).first*bkgStatisticsHighLow.at(i).first;
+	double non_res_lower_pred = scaleFactorLow.at(i).first*bkgStatisticsHighLow.at(i).second; 
+	
+	//---------------------------------------------------------------------------------------------
+	//estimate the size of the deviation between uppper and lower sideband non-resonant predictions
+	//---------------------------------------------------------------------------------------------
+	double sideband_deviation_size = fabs( non_res_upper_pred - non_res_lower_pred );
+
+
+	//-----------------------------------------------------------
+	//compare size of the stat. uncertainty to sideband_deviation
+	//extra_err is the size of an extra shape sytematic uncer.
+	//-----------------------------------------------------------
+	double extra_err = 0.0;
+	if ( sideband_deviation_size > non_res_stat_err )
+	  {
+	    double plus_sigma  = fabs( max( non_res_upper_pred, non_res_lower_pred ) - non_res_nominal_pred );
+	    double minus_sigma = fabs( non_res_nominal_pred - min( non_res_upper_pred, non_res_lower_pred ) );
+	    extra_err = max( plus_sigma, minus_sigma );
+	  }else
+	  {
+	    extra_err = non_res_stat_err;
 	  }
-	}
+
+	extra_err = 0.5*extra_err;
+	//-----------------------------------------
+	//prepare input to minuit minimization
+	//-----------------------------------------
+	float obs = obsVec.at(i);
+	std::pair<float,float> SF   =  make_pair(scaleFactors.at(i),scaleFactorsError.at(i));
+	float n_sideband = bkgStatistics.at(i);
+
+
+	//----------------------------------------
+	//getting significance
+	//----------------------------------------
+	float sig = getSigMinuit(obs, n_sideband, SF, higgs, extra_err);
+	if(isinf(sig)) return;
+	float pv = RooStats::SignificanceToPValue(sig);
+
+	//----------------------------------------                                                                                             
+        //getting delta log likelihood (for signal)                                                               
+        //---------------------------------------- 
+	TH1D* _dll_tmp = getDeltaLogLikelihood(obs, n_sideband, SF, higgs, extra_err, false);
+	TString _h_name = Form("delta_log_likelihood_%d", i);
+	_dll_tmp->Write( _h_name );
+	
+	
+	//----------------------------------------                                                                                             
+	//getting delta log likelihood (for Nobs)
+	//----------------------------------------                                                                        
+	TH1D* _dll_tmp_obs = getDeltaLogLikelihood(obs, n_sideband, SF, higgs, extra_err, true);
+        _h_name = Form("delta_log_likelihood_obs_%d", i);
+	std::pair<float, float> bkg_total_err = findOneSigma( _dll_tmp_obs );
+	_dll_tmp_obs->Write( _h_name );
+	
+	std::cout << "====> iBin: " << i << std::endl;
+	std::cout << "Nobs: " << obsVec.at(i) << " Nexp: " << bkgTot << " (+" << bkg_total_err.second << ", -" << bkg_total_err.first 
+		  << ")"
+		  << " nH: " << higgs.first << " +/- " << higgs.second 
+		  << " SF: " << scaleFactors.at(i) << " SFerr: " << scaleFactorsError.at(i)
+		  << std::endl;
+	std::cout << "nominal pred: " << non_res_nominal_pred
+		  << ", upper-sideband pred: " << non_res_upper_pred
+		  << ", lower-sideband pred: " << non_res_lower_pred
+		  << std::endl;
+	std::cout << "stat. uncertainty: " << non_res_stat_err
+		  << ", |sidebandUpper-sidebandLower| =  " << sideband_deviation_size
+		  << "; Extra uncertainty: " << extra_err
+		  << std::endl;
+
+	std::cout << "nsigmas: " << sig << ", p-val: " << pv 
+		  << std::endl;
       }
-      
-      float higgsTot=0;
-      pair<float,float> err = make_pair(0,0);
-      for(int iBkg=1; iBkg < Nbkg; iBkg++) { 
-	//std::cout << bkgNominal.at(i).at(iBkg);
-	higgsTot+=bkgNominal.at(i).at(iBkg);
-	pair<float,float> thisErr = addSystsQuad(bkgNominal.at(i).at(iBkg),bkgSyst.at(i).at(iBkg));
-	err.first+=thisErr.first;
-	err.second+=thisErr.second;
-      }
-      //err.first+=(bkgStatistics.at(i)+1)*scaleFactors.at(i)*scaleFactors.at(i);
-      //err.second+=(bkgStatistics.at(i)+1)*scaleFactors.at(i)*scaleFactors.at(i);
-
-      pair<float,float> dispErr = err; // the error to display (add in the statistical and sideband errors)
-
-      dispErr.first = dispErr.first + scaleFactors.at(i)*scaleFactors.at(i)*bkgStatistics.at(i); //add in the background stat error (in quadrature)
-      dispErr.second = dispErr.second + scaleFactors.at(i)*scaleFactors.at(i)*bkgStatistics.at(i); //add in the background stat error (in quadrature)
-
-      std::pair<float,float> sideband = bkgStatisticsHighLow.at(i);
-
-      if( fabs(sideband.first-sideband.second) < sqrt(bkgStatistics.at(i)) ) {
-	//sideband error small, use statistical error
-	dispErr.first = dispErr.first + 0.5*scaleFactors.at(i)*scaleFactors.at(i)*bkgStatistics.at(i); //add in the background stat error (in quadrature)
-	dispErr.second = dispErr.second + 0.5*scaleFactors.at(i)*scaleFactors.at(i)*bkgStatistics.at(i); //add in the background stat error (in quadrature)
-      } else {
-	float diff = fabs(sideband.first-sideband.second);
-	dispErr.first = dispErr.first + 0.5*scaleFactors.at(i)*scaleFactors.at(i)*diff; //add in the background shape systematics
-	dispErr.second = dispErr.second + 0.5*scaleFactors.at(i)*scaleFactors.at(i)*diff;
-      }
-
-      // print \pm if the up/down errors are the same
-      if( fabs(sqrt(dispErr.first) - sqrt(dispErr.second)) < 0.01 ) {
-	printf( "% 6.0f - % 6.0f & %0.2f - %0.2f & % 4.0f & $% 4.1f \\pm %0.2f$ ",
-		region.at(iC).MR_min, region.at(iC).MR_max,
-	region.at(iC).Rsq_min, region.at(iC).Rsq_max,	    
-		obsVec.at(i), bkgTot,sqrt(dispErr.first)); 
-      }else{
-	printf( "% 6.0f - % 6.0f & %0.2f - %0.2f & % 4.0f & $% 4.1f^{+%0.2f}_{-%0.2f}$ ",
-		region.at(iC).MR_min, region.at(iC).MR_max,
-		region.at(iC).Rsq_min, region.at(iC).Rsq_max,	    
-		obsVec.at(i), bkgTot,sqrt(dispErr.first),sqrt(dispErr.second)); 
-      }
-      cout << flush;
-
-      float obs = obsVec.at(i);
-      std::pair<float,float> SFHigh   = scaleFactorHigh.at(i);
-      std::pair<float,float> SFLow   = scaleFactorLow.at(i);
-      std::pair<float,float> higgs = make_pair(higgsTot,sqrt(err.first));
-
-      
-
-      float sig = getSigMinuit(obs,sideband,SFHigh,SFLow,higgs);
-      if(isinf(sig)) return;
-
-      float pv = RooStats::SignificanceToPValue(sig);//pval(obsVec.at(i),bkgNominal.at(i),bkgSyst.at(i));
-      //float sig = fabs(TMath::NormQuantile(pv/2));
-      if(obsVec.at(i) < bkgTot && fabs(sig)>0.005) sig*=-1;
-      printf("& %0.3f & %0.1f \\\\\n",pv, sig);
     }
-    if(fullTex) {
-      std::cout << "\\hline\n\\end{tabular}" << std::endl
-		<< "\\caption{Number of Events observed in the signal region compared to expected background in the {\\bf " << getRegionName( (BinningRegion)iReg ) << "} box.}\n"
-		<< "\\label{tab:ObsPV_" << getRegionName( (BinningRegion)iReg ) << "}\n"
-		<< "\\end{table}" << std::endl;
-    }
-    //break;
-  }
   
-  
+  _fout->Close();
 }
 
 
@@ -446,23 +517,71 @@ void pruneSystematics(float nom, vector<pair<float,float> >& systs, float thresh
   }
 }
 
-float getSigMinuit(float obs, std::pair<float,float> sideband, std::pair<float,float> SFHigh, std::pair<float,float> SFLow,
-		   std::pair<float,float> higgsBkg) {
-
-
+float getSigMinuit(float obs, float sideband, std::pair<float,float> SF, std::pair<float,float> higgsBkg,float bkgShapeErr)
+{
   params.obs = obs;
-  params.Nupper = sideband.second;
-  params.Nlower = sideband.first;
-  //params.Nupper = sideband.first;
-  //params.Nlower = sideband.second;
-  params.UpperSF = SFHigh.first;
-  params.UpperSFe = SFHigh.second;
-  params.LowerSF = SFLow.first;
-  params.LowerSFe = SFLow.second;
+  params.Nside = sideband;
+  params.sf = SF.first;
+  params.sfe = SF.second;
   params.Higgs = higgsBkg.first;
   params.HiggsErr = higgsBkg.second;
-
-  std::pair<float,float> prof = profileNoHistMinuit();
-
+  params.combAddErr = bkgShapeErr;
+  std::pair<float,float> prof = profileSimpleNoHistMinuit();
+  
   return sqrt(prof.first);
-}
+};
+
+TH1D* getDeltaLogLikelihood(float obs, float sideband, std::pair<float,float> SF,
+			    std::pair<float,float> higgsBkg,float bkgShapeErr, bool _profileNobs )
+{
+  params.obs = obs;
+  params.Nside = sideband;
+  params.sf = SF.first;
+  params.sfe = SF.second;
+  params.Higgs = higgsBkg.first;
+  params.HiggsErr = higgsBkg.second;
+  params.combAddErr = bkgShapeErr;
+  TH1D* _dll;
+  if ( !_profileNobs )
+    {
+      _dll = getTwoLogLikelihood();
+    }
+  else
+    {
+      _dll = getTwoLogLikelihood( true );
+    }
+
+  return _dll;
+};
+
+pair<float, float> findOneSigma( TH1D* _nll )
+{
+  if ( _nll == NULL )return make_pair( 0, 0);
+  float pSigma = 0.0, mSigma = 0.0;
+  int nbins = _nll->GetNbinsX();
+  float x_low = _nll->GetXaxis()->GetXmin();
+  float step = ( _nll->GetXaxis()->GetXmax() - _nll->GetXaxis()->GetXmin() )/(float)nbins;
+  int min_bin = _nll->GetMinimumBin();
+  float x_min = x_low + step*(float)min_bin;
+  float min_diff = 99999;
+  for ( int i = 1; i <= min_bin; i++ )
+    {
+      if ( fabs( _nll->GetBinContent(i) - 1.0 ) < min_diff )
+	{
+	  mSigma = x_min - (x_low + step*(float)i);
+	  min_diff = fabs( _nll->GetBinContent(i) - 1.0 );
+	}
+    }
+
+  min_diff = 99999;
+  for ( int i = min_bin; i <= nbins; i++ )
+    {
+      if ( fabs( _nll->GetBinContent(i) - 1.0 ) < min_diff )
+        {
+          pSigma = (x_low + step*(float)i) - x_min;
+          min_diff = fabs( _nll->GetBinContent(i) - 1.0 );
+        }
+    }
+  
+  return make_pair( mSigma, pSigma);
+};
