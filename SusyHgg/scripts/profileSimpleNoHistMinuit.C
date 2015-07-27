@@ -37,12 +37,13 @@ void negLikelihood(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t fla
     return;
   }
   f = 1;
-  f *= TMath::Gaus(par[0],params.sf,params.sfe); // SF
-  f *= TMath::PoissonI(params.Nside,par[1]);                    //sideband compatibility
-  f *= TMath::Gaus(par[2],params.Higgs,params.HiggsErr);        //Higgs background compatibility
-  f *= TMath::Gaus(par[3],0,params.combAddErr);                 //background shape compatibility
-  //f *= TMath::PoissonI(params.obs,params.S+par[0]*par[1]*(1+par[3])+par[2]);            // S compatibility
-  f *= TMath::Poisson(params.obs,params.S+par[0]*par[1]*(1+par[3])+par[2]);
+  f *= TMath::Gaus(par[0],params.sf,params.sfe);//SF
+  //f *= TMath::Poisson(params.Nside,par[1]);//sideband compatibility
+  f *= TMath::PoissonI(params.Nside,par[1]);
+  f *= TMath::Gaus(par[2],params.Higgs,params.HiggsErr);//Higgs background compatibility
+  f *= TMath::Gaus(par[3],0,params.combAddErr);//background shape compatibility
+  //f *= TMath::Poisson(params.obs,params.S+par[0]*par[1]*(1+par[3])+par[2]);//signal+bkg compatibility
+  f *= TMath::PoissonI(params.obs,params.S+par[0]*par[1]*(1+par[3])+par[2]);
   f *= -1;
 }
 
@@ -53,11 +54,11 @@ void negLikelihoodMod(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t 
     return;
   }
   f = 1;
-  f *= TMath::Gaus(par[0],params.sf,params.sfe); // SF                                                    
-  f *= TMath::PoissonI(params.Nside,par[1]);                    //sideband compatibility                                  
-  f *= TMath::Gaus(par[2],params.Higgs,params.HiggsErr);        //Higgs background compatibility                              
-  f *= TMath::Gaus(par[3],0,params.combAddErr);                 //background shape compatibility                           
-  f *= TMath::Poisson(params.obs,par[0]*par[1]*(1+par[3])+par[2]);            // no signal, bkg compatibiblity
+  f *= TMath::Gaus(par[0],params.sf,params.sfe);//SF                                                    
+  f *= TMath::Poisson(params.Nside,par[1]);//sideband compatibility
+  f *= TMath::Gaus(par[2],params.Higgs,params.HiggsErr);//Higgs background compatibility       
+  f *= TMath::Gaus(par[3],0,params.combAddErr);//background shape compatibility       
+  f *= TMath::Poisson(params.obs,par[0]*par[1]*(1+par[3])+par[2]);//no signal, bkg compatibiblity
   f *= -1.0;
 }
 

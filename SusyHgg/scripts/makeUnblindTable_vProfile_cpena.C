@@ -391,14 +391,24 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	    extra_err = non_res_stat_err;
 	  }
 	
-	//extra_err = 0.5*extra_err;
+	if( non_res_nominal_pred != 0 )
+	  {
+	    extra_err = 0.5*extra_err/non_res_nominal_pred;
+	  }
+	else
+	  {
+	    extra_err = 0.01;
+	  }
+
+	if ( extra_err > 0.5 ) extra_err = 0.5;//fixing maximum extra systematic error to 50%
+	
 	//-----------------------------------------
 	//prepare input to minuit minimization
 	//-----------------------------------------
 	float obs = obsVec.at(i);
 	std::pair<float,float> SF   =  make_pair(scaleFactors.at(i),scaleFactorsError.at(i));
 	float n_sideband = bkgStatistics.at(i);
-
+	extra_err = 0.5*extra_err/(float)n_sideband;
 
 	//----------------------------------------
 	//getting significance
@@ -407,15 +417,15 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	if(isinf(sig)) return;
 	float pv = RooStats::SignificanceToPValue(sig);
 
-	//----------------------------------------                                                                                             
-        //getting delta log likelihood (for signal)                                                               
+	//----------------------------------------                                            
+	//getting delta log likelihood (for signal)                                                               
         //---------------------------------------- 
 	TH1D* _dll_tmp = getDeltaLogLikelihood(obs, n_sideband, SF, higgs, extra_err, false);
 	TString _h_name = Form("delta_log_likelihood_%d", i);
 	_dll_tmp->Write( _h_name );
 	
 	
-	//----------------------------------------                                                                                             
+	//----------------------------------------
 	//getting delta log likelihood (for Nobs)
 	//----------------------------------------                                                                        
 	TH1D* _dll_tmp_obs = new TH1D( *getDeltaLogLikelihood(obs, n_sideband, SF, higgs, extra_err, true) );
@@ -423,13 +433,15 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	std::pair<float, float> bkg_total_err = findOneSigma( _dll_tmp_obs );
 	_dll_tmp_obs->Write( _h_name );
 	
+	//std::cout << "====> iBin: " << i << std::endl;
+	//std::cout << "extra err = " << extra_err << std::endl;
 	printf( "% 6.0f - % 6.0f & %0.2f - %0.2f & % 4.0f & $% 4.1f^{+%0.2f}_{-%0.2f}$ & %0.3f & %0.1f \\\\\n",
 		region.at(iC).MR_min, region.at(iC).MR_max,
                 region.at(iC).Rsq_min, region.at(iC).Rsq_max,
                 obsVec.at(i), bkgTot, bkg_total_err.second, bkg_total_err.first,
 		pv, sig
 		);
-
+	
 	/*
 	std::cout << "====> iBin: " << i << std::endl;
 	std::cout << "Nobs: " << obsVec.at(i) << " Nexp: " << bkgTot << " (+" << bkg_total_err.second << ", -" << bkg_total_err.first 
@@ -438,7 +450,7 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 		  << " SF: " << scaleFactors.at(i) << " SFerr: " << scaleFactorsError.at(i)
 		  << std::endl;
 	std::cout << "nominal pred: " << non_res_nominal_pred
-		  << ", upper-sideband pred: " << non_res_upper_pred
+	<< ", upper-sideband pred: " << non_res_upper_pred
 		  << ", lower-sideband pred: " << non_res_lower_pred
 		  << std::endl;
 	std::cout << "stat. uncertainty: " << non_res_stat_err
@@ -447,7 +459,7 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 		  << std::endl;
 
 	std::cout << "nsigmas: " << sig << ", p-val: " << pv 
-		  << std::endl;
+	<< std::endl;
 	*/
       }
     
