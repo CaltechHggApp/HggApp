@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "TH1D.h"
+#include "TRandom.h"
 
 //the parameters of the bin we are in
 struct par {
@@ -280,13 +281,15 @@ float getR(TMinuit& m) {
 
 TH1D* getTwoLogLikelihood( bool _profileNobs = false )
 {
-  float step = 0.02;
+  float step = 0.01;
   double x_h = 40., x_l = 0.0;
   if ( _profileNobs ) x_h = 3.0*params.Nside*params.sf;
   int nbins = (int) ( x_h - x_l )/step;
   double _nll[nbins];
   double _min_nll = 999999999.;
-  TH1D* _h = new TH1D("_h", "LogLikelihood", nbins, x_l, x_h );
+  TRandom a(0);
+  TString _hname = Form( "_h_%d", a.Integer(10000) );
+  TH1D* _h = new TH1D( _hname, "LogLikelihood", nbins, x_l, x_h );
   for ( int i = 1; i <= nbins; i++ )
     {
       double signal = x_l + step*( i - 1 );

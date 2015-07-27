@@ -390,8 +390,8 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	  {
 	    extra_err = non_res_stat_err;
 	  }
-
-	extra_err = 0.5*extra_err;
+	
+	//extra_err = 0.5*extra_err;
 	//-----------------------------------------
 	//prepare input to minuit minimization
 	//-----------------------------------------
@@ -418,11 +418,19 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	//----------------------------------------                                                                                             
 	//getting delta log likelihood (for Nobs)
 	//----------------------------------------                                                                        
-	TH1D* _dll_tmp_obs = getDeltaLogLikelihood(obs, n_sideband, SF, higgs, extra_err, true);
+	TH1D* _dll_tmp_obs = new TH1D( *getDeltaLogLikelihood(obs, n_sideband, SF, higgs, extra_err, true) );
         _h_name = Form("delta_log_likelihood_obs_%d", i);
 	std::pair<float, float> bkg_total_err = findOneSigma( _dll_tmp_obs );
 	_dll_tmp_obs->Write( _h_name );
 	
+	printf( "% 6.0f - % 6.0f & %0.2f - %0.2f & % 4.0f & $% 4.1f^{+%0.2f}_{-%0.2f}$ & %0.3f & %0.1f \\\\\n",
+		region.at(iC).MR_min, region.at(iC).MR_max,
+                region.at(iC).Rsq_min, region.at(iC).Rsq_max,
+                obsVec.at(i), bkgTot, bkg_total_err.second, bkg_total_err.first,
+		pv, sig
+		);
+	
+	/*
 	std::cout << "====> iBin: " << i << std::endl;
 	std::cout << "Nobs: " << obsVec.at(i) << " Nexp: " << bkgTot << " (+" << bkg_total_err.second << ", -" << bkg_total_err.first 
 		  << ")"
@@ -440,6 +448,7 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 
 	std::cout << "nsigmas: " << sig << ", p-val: " << pv 
 		  << std::endl;
+	*/
       }
     }
   
