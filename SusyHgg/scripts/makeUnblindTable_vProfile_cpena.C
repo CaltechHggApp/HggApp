@@ -385,7 +385,8 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	  {
 	    double plus_sigma  = fabs( max( non_res_upper_pred, non_res_lower_pred ) - non_res_nominal_pred );
 	    double minus_sigma = fabs( non_res_nominal_pred - min( non_res_upper_pred, non_res_lower_pred ) );
-	    extra_err = max( plus_sigma, minus_sigma );
+	    //extra_err = max( plus_sigma, minus_sigma );
+	    extra_err = 0.5*( plus_sigma + minus_sigma );//use average error (this is in the paper)
 	  }else
 	  {
 	    extra_err = non_res_stat_err;
@@ -393,14 +394,12 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	
 	if( non_res_nominal_pred != 0 )
 	  {
-	    extra_err = 0.5*extra_err/non_res_nominal_pred;
+	    extra_err = extra_err/non_res_nominal_pred;
 	  }
 	else
 	  {
 	    extra_err = 0.01;
 	  }
-
-	if ( extra_err > 0.5 ) extra_err = 0.5;//fixing maximum extra systematic error to 50%
 	
 	//-----------------------------------------
 	//prepare input to minuit minimization
