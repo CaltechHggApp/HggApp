@@ -369,7 +369,8 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	//----------------------------------------------------------
 	double non_res_upper_pred = scaleFactorHigh.at(i).first*bkgStatisticsHighLow.at(i).first;
 	double non_res_lower_pred = scaleFactorLow.at(i).first*bkgStatisticsHighLow.at(i).second; 
-	
+	std::cout << "nU: " << bkgStatisticsHighLow.at(i).first << " nL " << bkgStatisticsHighLow.at(i).second << std::endl;
+	std::cout << "SFu: " << scaleFactorHigh.at(i).first << " SFl: " << scaleFactorLow.at(i).first << std::endl;
 	//---------------------------------------------------------------------------------------------
 	//estimate the size of the deviation between uppper and lower sideband non-resonant predictions
 	//---------------------------------------------------------------------------------------------
@@ -387,6 +388,9 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	    double minus_sigma = fabs( non_res_nominal_pred - min( non_res_upper_pred, non_res_lower_pred ) );
 	    //extra_err = max( plus_sigma, minus_sigma );
 	    extra_err = 0.5*( plus_sigma + minus_sigma );//use average error (this is in the paper)
+	    std::cout << "upPred: " << non_res_upper_pred << " low pred: " << non_res_lower_pred 
+		      << " nom: " << non_res_nominal_pred << std::endl;
+	    std::cout << "ee: " << extra_err << " +sigma: " << plus_sigma  << " -sigma: " << minus_sigma << std::endl;
 	  }else
 	  {
 	    extra_err = non_res_stat_err;
@@ -407,7 +411,7 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	float obs = obsVec.at(i);
 	std::pair<float,float> SF   =  make_pair(scaleFactors.at(i),scaleFactorsError.at(i));
 	float n_sideband = bkgStatistics.at(i);
-	extra_err = 0.5*extra_err/(float)n_sideband;
+	//extra_err = extra_err/(float)n_sideband;
 
 	//----------------------------------------
 	//getting significance
@@ -426,14 +430,16 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	
 	//----------------------------------------
 	//getting delta log likelihood (for Nobs)
-	//----------------------------------------                                                                        
+	//---------------------------------------- 
+	
 	TH1D* _dll_tmp_obs = new TH1D( *getDeltaLogLikelihood(obs, n_sideband, SF, higgs, extra_err, true) );
         _h_name = Form("delta_log_likelihood_obs_%d", i);
 	std::pair<float, float> bkg_total_err = findOneSigma( _dll_tmp_obs );
 	_dll_tmp_obs->Write( _h_name );
 	
-	//std::cout << "====> iBin: " << i << std::endl;
-	//std::cout << "extra err = " << extra_err << std::endl;
+	//std::pair<float, float> bkg_total_err = std::make_pair(0,0);
+	std::cout << "====> iBin: " << i << std::endl;
+	std::cout << "extra err = " << extra_err << std::endl;
 	printf( "% 6.0f - % 6.0f & %0.2f - %0.2f & % 4.0f & $% 4.1f^{+%0.2f}_{-%0.2f}$ & %0.3f & %0.1f \\\\\n",
 		region.at(iC).MR_min, region.at(iC).MR_max,
                 region.at(iC).Rsq_min, region.at(iC).Rsq_max,

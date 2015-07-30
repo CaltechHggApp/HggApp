@@ -9,10 +9,12 @@
 //the parameters of the bin we are in
 struct par {
   double obs=5;
-  double Nside=3;
+  //double Nside=3;
+  double Nside=3; 
   double sf=0.162,sfe=0.0016;
-  double combAddErr=0.5; //additional % error on the combinatorial bkg
+  double combAddErr=0.01; //additional % error on the combinatorial bkg
   double Higgs=0.05,HiggsErr=0.012;
+  double Nexp = 0.0;
   double S=0;
 } params;
 
@@ -50,7 +52,7 @@ void negLikelihood(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t fla
 //Allow last poison to be float instead of integer
 void negLikelihoodMod(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t flag) {
   if(params.S+par[0]*par[2]+par[3] <0) {
-    f=0; //truncate so we can scan negative S                                                                           
+    f=0; //truncate so we can scan negative S                                 
     return;
   }
   f = 1;
@@ -62,18 +64,84 @@ void negLikelihoodMod(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t 
   f *= -1.0;
 }
 
+//Allow last poison to be float instead of integer                                                                 
+void negLikelihoodNexp(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t flag) {
+  if( (params.Nexp - par[1])/(par[2]*par[0]) <0) {
+    f=0; //truncate so we can scan negative S         
+    //std::cout << "entering this regime" << std::endl;
+    return;
+  }
+  f = 1;
+  f *= TMath::Gaus( par[0], params.sf, params.sfe );                                                     
+  f *= TMath::Gaus( par[1], params.Higgs, params.HiggsErr );
+  f *= TMath::Gaus( par[2], 1, params.combAddErr );
+  //f *= TMath::LogNormal( par[2], params.combAddErr, 0, 1 );
+  f *= TMath::Poisson( params.Nside, (params.Nexp - par[1])/(par[2]*par[0]) );
+  f *= -1.0;
+}
+
 float getR(TMinuit& m);
+
+
+std::pair<float,float> profileSimpleNexp( float step = 0.01, bool _singlePoint = false, double signal = .0,
+					  bool _profileNobs = false, double obs = 0.0 ) 
+{
+  const int nPar = 3;
+
+  TMinuit min(nPar);
+  Int_t ierflg = 0;
+
+  min.SetFCN( negLikelihoodNexp );
+  
+  double pStart[nPar]={params.sf, params.Higgs, 1.0};
+  double pStep [nPar]={0.001,0.001,0.001};
+
+  Double_t arglist[10];
+  Double_t arglistS0[10];
+
+  arglist[0] = 5000;
+  arglist[1] = 2.;
+
+  arglistS0[0] = 5000;
+  arglistS0[1] = 0.;
+  
+  min.SetPrintLevel(-1);
+  
+  params.S = 0;
+
+  min.mnparm(0,"SF",pStart[0],pStep[0],0,0,ierflg);
+  min.mnparm(1,"HiggsB",pStart[1],pStep[1],0,0,ierflg);
+  min.mnparm(2,"BkgShape",pStart[2],pStep[2],0,0,ierflg);
+  
+  if( _profileNobs )
+    {
+      params.obs = obs;
+      params.Nexp = obs;
+    }
+  min.mnexcm("MIGRAD",arglistS0,2,ierflg);
+  min.mnexcm("MIGRAD",arglist,2,ierflg);
+  
+  if( TMath::IsNaN( getR(min) )  || getR(min) == .0 )
+    {
+      //std::cout << "NaN!  obs=" << params.Nexp << std::endl;                                                                     
+      return std::make_pair( 0, 0 );
+    }
+  return std::make_pair( 2*TMath::Log( -1*getR(min) ), signal );
+  
+}
 
 //just return the -2delta LL , best S
 std::pair<float,float> profileSimpleNoHistMinuit( float step = 0.01, bool _singlePoint = false, double signal = .0,
 						  bool _profileNobs = false, double obs = 0.0 ) {
   //    std::cout << std::endl;
-  //    std::cout << params.obs << " " << params.Nupper << " " << params.Nlower << " " << params.UpperSF << " " << params.UpperSFe << " " << std::endl;
+  //std::cout << params.obs << " " << params.Nupper << " " << params.Nlower << " " << params.UpperSF << " " << params.UpperSFe << " " << std::endl;
   //    std::cout << params.LowerSF << " " << params.LowerSFe << " " << params.Higgs << " " << params.HiggsErr << " " <<  std::endl;
   
+  //std::cout << "entering program" << std::endl;
   const int nPar = 4;
   
   TMinuit min(nPar);
+  //TMinuit min( 3 );
   Int_t ierflg = 0;
   
   if ( !_profileNobs )
@@ -82,12 +150,13 @@ std::pair<float,float> profileSimpleNoHistMinuit( float step = 0.01, bool _singl
     }
   else
     {
-      min.SetFCN( negLikelihoodMod );
+      //min.SetFCN( negLikelihoodMod );
+      min.SetFCN( negLikelihoodNexp );
     }
   
   
-  double pStart[nPar]={params.sf,params.Nside,params.Higgs,0};
-  double pStep [nPar]={0.0001,0.0001,0.0001,0.0001};
+  double pStart[nPar]={params.sf,params.Nside,params.Higgs,.0};
+  double pStep [nPar]={0.001,0.001,0.001,0.001};
   
   
   Double_t arglist[10];
@@ -113,11 +182,18 @@ std::pair<float,float> profileSimpleNoHistMinuit( float step = 0.01, bool _singl
   const int nMax = 1E6; // never exceed this many calls
   
   params.S = 0;
+  
   min.mnparm(0,"SF",pStart[0],pStep[0],0,0,ierflg);
   min.mnparm(1,"B",pStart[1],pStep[1],0,0,ierflg);
   min.mnparm(2,"HiggsB",pStart[2],pStep[2],0,0,ierflg);
   min.mnparm(3,"BkgShape",pStart[3],pStep[3],0,0,ierflg);
   
+  /*
+  min.mnparm(0,"SF",pStart[0],pStep[0],0,0,ierflg);                                                                
+  min.mnparm(1,"HiggsB",pStart[2],pStep[2],0,0,ierflg);                                          
+  min.mnparm(2,"BkgShape",pStart[3],pStep[3],0,0,ierflg); 
+  */
+
   //min.SetPrintLevel(1);
   
   min.mnexcm("MIGRAD",arglistS0,2,ierflg);
@@ -128,20 +204,30 @@ std::pair<float,float> profileSimpleNoHistMinuit( float step = 0.01, bool _singl
   if ( _singlePoint )
     {
       params.S = signal;
+      
       min.mnparm(0,"SF",pStart[0],pStep[0],0,0,ierflg);
       min.mnparm(1,"B",pStart[1],pStep[1],0,0,ierflg);
       min.mnparm(2,"HiggsB",pStart[2],pStep[2],0,0,ierflg);
       min.mnparm(3,"BkgShape",pStart[3],pStep[3],0,0,ierflg);
       
-      if( _profileNobs ) params.obs = obs;
+      /*
+      min.mnparm(0,"SF",pStart[0],pStep[0],0,0,ierflg);
+      min.mnparm(1,"HiggsB",pStart[2],pStep[2],0,0,ierflg);
+      min.mnparm(2,"BkgShape",pStart[3],pStep[3],0,0,ierflg);
+      */
+      if( _profileNobs )
+	{
+	  params.obs = obs;
+	  params.Nexp = obs;
+	}
       //min.SetPrintLevel(1);
       min.mnexcm("MIGRAD",arglistS0,2,ierflg);
       min.mnexcm("MIGRAD",arglist,2,ierflg);
       
-      
-      if( TMath::IsNaN( getR(min) ) ) 
+      //std::cout << getR(min) << std::endl;
+      if( TMath::IsNaN( getR(min) )  || getR(min) == .0 ) 
 	{
-	  std::cout << "NaN!  obs=" << params.obs << std::endl;
+	  //std::cout << "NaN!  obs=" << params.Nexp << std::endl;
 	  return std::make_pair( 0, 0 );
 	}
       return std::make_pair( 2*TMath::Log( -1*getR(min) ), signal );
@@ -284,8 +370,13 @@ TH1D* getTwoLogLikelihood( bool _profileNobs = false )
 {
   float step = 0.01;
   double x_h = 40., x_l = 0.0;
-  if ( _profileNobs ) x_h = 3.0*params.Nside*params.sf;
-  int nbins = (int) ( x_h - x_l )/step;
+  if ( _profileNobs )
+    {
+      x_h = 2.0*params.Nside*params.sf;
+      x_l = 2.*params.Higgs;
+      std::cout << "xl: " << x_l << std::endl;
+    }
+  int nbins = (int) (( x_h - x_l )/step);
   double _nll[nbins];
   double _min_nll = 999999999.;
   TRandom a(0);
@@ -301,9 +392,9 @@ TH1D* getTwoLogLikelihood( bool _profileNobs = false )
 	}
       else
 	{
-	  ll = -1.0*profileSimpleNoHistMinuit( step, true, 0.0, true, signal ).first;
+	  ll = -1.0*profileSimpleNexp( step, true, 0.0, true, signal ).first;
 	}
-      if ( ll < _min_nll ) _min_nll = ll;//store nll minimum
+      if ( ll < _min_nll && ll != .0 ) _min_nll = ll;//store nll minimum
       _nll[i-1] = ll;
       //_h->SetBinContent( i, ll );
     }

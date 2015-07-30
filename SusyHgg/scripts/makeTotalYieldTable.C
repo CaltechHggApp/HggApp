@@ -25,6 +25,7 @@ void makeTotalYieldTable(TString dir) {
 
   float lumi=1.025;
   float trigger=1.05;
+  //float trigger=1.01;
 
   const int nSMS=2;
   TString sms[nSMS]={"sms_ChiHH","sms_ChiWH"};

@@ -30,6 +30,7 @@ RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool 
   RooFormulaVar mggsq("mggsq","","@0*@0",mgg);
 
   RooRealVar a1("a1","",0.6,-1.,1.);
+  //RooRealVar a1("a1","",-0.17,-1.,1.);//Rsq dependent scale factor initial value for LowRes
   RooRealVar a2("a2","",0.4/150,-1/150.,1/150.);
   RooRealVar f("f","",0.5,0,1);
 
@@ -38,8 +39,11 @@ RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool 
   RooFormulaVar a2sq("a2sq","","-1*@0*@0",a2);
   RooFormulaVar ftanh("ftanh","","0.5*(tanh(@0)+1)",f);
 
+  
   RooRealVar NBkg1("Nbkg1","",10,-1e5,1e5);
   RooRealVar NBkg2("Nbkg2","",1,-1e5,1e5);
+  //RooRealVar NBkg1("Nbkg1","",70,-1e5,1e5);//Rsq dependent scale factor initial value           
+  //RooRealVar NBkg2("Nbkg2","",1,-1e5,1e5);//Rsq dependent scale factor initial value
 
   RooFormulaVar NBkg1Sq("Nbkg1Sq","","@0*@0",NBkg1);
   RooFormulaVar NBkg2Sq("Nbkg2Sq","","@0*@0",NBkg2);
@@ -51,23 +55,23 @@ RealVar DataFitter::doFitGetScale(TTree* data,float width,RooWorkspace* ws,bool 
 
   RooDataSet rdata("data","",data,mgg);
   rdata.Print();
+  
   //pdf_FULL->fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE));
   //pdf_FULL->fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE));
-
+  
   //pdf.fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE));
   //pdf.fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE));
   
   //full fit
-  pdf.fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE));
-  RooFitResult* res = pdf.fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE));
+  //pdf.fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE));
+  //RooFitResult* res = pdf.fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE));
   
   //pdf->fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::Minimizer("Minuit2"));
   //RooFitResult* res = pdf->fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE),RooFit::Minimizer("Minuit2"));
   
   //sideband fit mgg in (103-120, 131-160) GeV
-  //pdf.fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::Range("low,high"));
-  //RooFitResult* res = pdf.fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE),RooFit::Range("low,high"));
-  
+  pdf.fitTo(rdata,RooFit::Strategy(0),RooFit::Extended(kTRUE),RooFit::Range("low,high"));
+  RooFitResult* res = pdf.fitTo(rdata,RooFit::Strategy(2),RooFit::Extended(kTRUE),RooFit::Save(kTRUE),RooFit::Range("low,high"));
   
   std::cout << "======================================" << std::endl;
   std::cout << "======================================" << std::endl;
@@ -183,6 +187,7 @@ void DataFitter::buildSidebandHistograms() {
     while( fChain->GetEntry(++iEntry) ) {
       if(!passBasicSelection()) continue;
       if(hasTrigger && !triggerBit) continue;
+      //if( Rsq > 0.025 ) continue;//only use this for MR-RSQ dependent scaleFactor test
       TLorentzVector pho1;
       TLorentzVector pho2;
   

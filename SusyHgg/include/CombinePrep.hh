@@ -54,7 +54,8 @@ protected:
   TString outputFolder;
 
   float triggerEff=0.81;
-  float triggerEffErr = 0.05;
+  //float triggerEffErr = 0.05;
+  float triggerEffErr = 0.01;
 
   //if we do variable binning, use these parameters
   bool useVarBinning=false;
