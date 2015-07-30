@@ -12,7 +12,7 @@ struct par {
   //double Nside=3;
   double Nside=3; 
   double sf=0.162,sfe=0.0016;
-  double combAddErr=0.01; //additional % error on the combinatorial bkg
+  double combAddErr=1.0; //additional % error on the combinatorial bkg
   double Higgs=0.05,HiggsErr=0.012;
   double Nexp = 0.0;
   double S=0;
@@ -71,11 +71,16 @@ void negLikelihoodNexp(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t
     //std::cout << "entering this regime" << std::endl;
     return;
   }
+  if( par[2] < 0 )
+    {
+      f = 0;
+      return;
+    }
   f = 1;
   f *= TMath::Gaus( par[0], params.sf, params.sfe );                                                     
   f *= TMath::Gaus( par[1], params.Higgs, params.HiggsErr );
-  f *= TMath::Gaus( par[2], 1, params.combAddErr );
-  //f *= TMath::LogNormal( par[2], params.combAddErr, 0, 1 );
+  //f *= TMath::Gaus( par[2], 1, params.combAddErr );
+  f *= TMath::LogNormal( par[2], params.combAddErr, 0, 1 );
   f *= TMath::Poisson( params.Nside, (params.Nexp - par[1])/(par[2]*par[0]) );
   f *= -1.0;
 }
@@ -123,7 +128,7 @@ std::pair<float,float> profileSimpleNexp( float step = 0.01, bool _singlePoint =
   
   if( TMath::IsNaN( getR(min) )  || getR(min) == .0 )
     {
-      //std::cout << "NaN!  obs=" << params.Nexp << std::endl;                                                                     
+      //std::cout << "NaN!  obs=" << params.Nexp << std::endl;                                      
       return std::make_pair( 0, 0 );
     }
   return std::make_pair( 2*TMath::Log( -1*getR(min) ), signal );
@@ -374,7 +379,6 @@ TH1D* getTwoLogLikelihood( bool _profileNobs = false )
     {
       x_h = 2.0*params.Nside*params.sf;
       x_l = 2.*params.Higgs;
-      std::cout << "xl: " << x_l << std::endl;
     }
   int nbins = (int) (( x_h - x_l )/step);
   double _nll[nbins];
@@ -393,14 +397,22 @@ TH1D* getTwoLogLikelihood( bool _profileNobs = false )
       else
 	{
 	  ll = -1.0*profileSimpleNexp( step, true, 0.0, true, signal ).first;
+	  if( ll < 0 ) ll = 0.0;
 	}
-      if ( ll < _min_nll && ll != .0 ) _min_nll = ll;//store nll minimum
+      if ( ll < _min_nll && ll > .0 ) _min_nll = ll;//store nll minimum
       _nll[i-1] = ll;
       //_h->SetBinContent( i, ll );
     }
   for ( int i = 1; i <= nbins; i++ )
     {
-      _h->SetBinContent( i, _nll[i-1] - _min_nll ); 
+      if( (_nll[i-1] - _min_nll) >= 0.0 )
+	{
+	  _h->SetBinContent( i, _nll[i-1] - _min_nll ); 
+	}
+      else
+	{
+	  _h->SetBinContent( i, 0.0001 );
+	}
     }
   return _h;
 };
