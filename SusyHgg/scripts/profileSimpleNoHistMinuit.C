@@ -92,7 +92,7 @@ void negLikelihoodMod(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t 
 
 //Allow last poison to be float instead of integer                                                                 
 void negLikelihoodNexp(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t flag) {
-  if( (params.Nexp - par[1])/(par[2]*par[0]) <0 || Par[2]< 0 ) {
+  if( (params.Nexp - par[1])/(par[2]*par[0]) <0 || par[2]< 0 ) {
     f=0; //truncate so we can scan negative S         
     //std::cout << "entering this regime" << std::endl;
     return;
