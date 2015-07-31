@@ -44,7 +44,7 @@ double pois(double N, double alpha) {
 // npar should be 4 (free) parameters
 // SF,B,HiggsB,bkgMMult
 void negLikelihood(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t flag) {
-  if(params.S+par[0]*par[1]+par[2] <0) { 
+  if(params.S+par[0]*par[1](1+par[3])+par[2] <0) { 
     f=0; //truncate so we can scan negative S
     return;
   }
@@ -56,6 +56,24 @@ void negLikelihood(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t fla
   f *= TMath::PoissonI(params.obs,params.S+par[0]*par[1]*(1+par[3])+par[2]);            // S compatibility                       
   f *= -1;
 }
+
+
+// npar should be 4 (free) parameters                                                                                                      
+// SF,B,HiggsB,bkgMMult                                                                                                                    
+void negLikelihoodLn(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t flag) {
+  if(params.S+par[0]*par[1]*par[3]+par[2] <0 || par[3] < 0) {
+    f=0; //truncate so we can scan negative S                                                                                        
+    return;
+  }
+  f = 1;
+  f *= TMath::Gaus(par[0],params.sf,params.sfe); // upper SF compatibility                                    
+  f *= TMath::PoissonI(params.Nside,par[1]);                    // upper sideband compatibility                            
+  f *= TMath::Gaus(par[2],params.Higgs,params.HiggsErr);        // Higgs background compatibility                        
+  f *= TMath::LogNormal( par[3], params.combAddErr, 0, 1 );
+  f *= TMath::PoissonI(params.obs,params.S+par[0]*par[1]*par[3]+par[2]);
+  f *= -1;
+}
+
 
 //Allow last poison to be float instead of integer
 void negLikelihoodMod(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t flag) {
@@ -74,20 +92,14 @@ void negLikelihoodMod(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t 
 
 //Allow last poison to be float instead of integer                                                                 
 void negLikelihoodNexp(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t flag) {
-  if( (params.Nexp - par[1])/(par[2]*par[0]) <0) {
+  if( (params.Nexp - par[1])/(par[2]*par[0]) <0 || Par[2]< 0 ) {
     f=0; //truncate so we can scan negative S         
     //std::cout << "entering this regime" << std::endl;
     return;
   }
-  if( par[2] < 0 )
-    {
-      f = 0;
-      return;
-    }
   f = 1;
   f *= TMath::Gaus( par[0], params.sf, params.sfe );                                                     
   f *= TMath::Gaus( par[1], params.Higgs, params.HiggsErr );
-  //f *= TMath::Gaus( par[2], 1, params.combAddErr );
   f *= TMath::LogNormal( par[2], params.combAddErr, 0, 1 );
   f *= TMath::Poisson( params.Nside, (params.Nexp - par[1])/(par[2]*par[0]) );
   f *= -1.0;
@@ -168,8 +180,8 @@ std::pair<float,float> profileSimpleNoHistMinuit( float step = 0.01, bool _singl
     }
   
   
-  double pStart[nPar]={params.sf,params.Nside,params.Higgs,.0};
-  //double pStart[nPar]={params.sf,params.Nside,params.Higgs,1.0};
+  //double pStart[nPar]={params.sf,params.Nside,params.Higgs,.0};
+  double pStart[nPar]={params.sf,params.Nside,params.Higgs,1.0};
   double pStep [nPar]={0.000001,0.000001,0.000001,0.000001};
   
   
