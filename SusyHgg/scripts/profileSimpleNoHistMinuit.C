@@ -43,44 +43,49 @@ double pois(double N, double alpha) {
 
 // npar should be 4 (free) parameters
 // SF,B,HiggsB,bkgMMult
-void negLikelihood(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t flag) {
-  if(params.S+par[0]*par[1]*(1+par[3])+par[2] <0) { 
-    f=0; //truncate so we can scan negative S
-    return;
-  }
+void negLikelihood(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t flag)
+{
+  if( params.S + par[0]*par[1]*( 1+par[3] ) + par[2] < .0 )
+    { 
+      f=0;/*truncate so we can scan negative S*/
+      return;
+    }
   f = 1;
-  f *= TMath::Gaus(par[0],params.sf,params.sfe); // upper SF compatibility                                             
-  f *= TMath::PoissonI(params.Nside,par[1]);                    // upper sideband compatibility                           
-  f *= TMath::Gaus(par[2],params.Higgs,params.HiggsErr);        // Higgs background compatibility                              
-  f *= TMath::Gaus(par[3],0,params.combAddErr);                 // background shape compatibility                        
-  f *= TMath::PoissonI(params.obs,params.S+par[0]*par[1]*(1+par[3])+par[2]);            // S compatibility                       
+  f *= TMath::Gaus(par[0],params.sf,params.sfe);/*upper SF compatibility*/
+  f *= TMath::PoissonI(params.Nside,par[1]);/*upper sideband compatibility*/
+  f *= TMath::Gaus(par[2],params.Higgs,params.HiggsErr);/*Higgs background compatibility*/
+  f *= TMath::Gaus(par[3],0,params.combAddErr);/*background shape compatibility*/
+  f *= TMath::PoissonI(params.obs,params.S+par[0]*par[1]*(1+par[3])+par[2]);/*S compatibility*/
   f *= -1;
-}
+};
 
 
 // npar should be 4 (free) parameters                                                                                                      
-// SF,B,HiggsB,bkgMMult                                                                                                                    
-void negLikelihoodLn(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t flag) {
-  if(params.S+par[0]*par[1]*par[3]+par[2] <0 || par[3] < 0) {
-    f=0; //truncate so we can scan negative S                                                                                        
-    return;
-  }
+// SF,B,HiggsB,bkgMMult, modified to accomodate a LogNormal shape systematic                                                                          
+void negLikelihoodLn(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t flag)
+{
+  if( params.S + par[0]*par[1]*par[3] + par[2] < .0 || par[3] < .0 )
+    {
+      f=0;/*truncate so we can scan negative S*/
+      return;
+    }
   f = 1;
-  f *= TMath::Gaus(par[0],params.sf,params.sfe); // upper SF compatibility                                    
-  f *= TMath::PoissonI(params.Nside,par[1]);                    // upper sideband compatibility                
-  f *= TMath::Gaus(par[2],params.Higgs,params.HiggsErr);        // Higgs background compatibility             
-  f *= TMath::LogNormal( par[3], params.combAddErr, 0, 1 );
-  f *= TMath::PoissonI(params.obs,params.S+par[0]*par[1]*par[3]+par[2]);
+  f *= TMath::Gaus(par[0],params.sf,params.sfe);/*upper SF compatibility*/
+  f *= TMath::PoissonI(params.Nside,par[1]);/*upper sideband compatibility*/
+  f *= TMath::Gaus(par[2],params.Higgs,params.HiggsErr);/*Higgs background compatibility*/
+  f *= TMath::LogNormal( par[3], params.combAddErr, 0, 1 );/*background shape compatibility*/
+  f *= TMath::PoissonI(params.obs,params.S+par[0]*par[1]*par[3]+par[2]);/*S compatibility*/
   f *= -1;
 }
 
 
 //Allow last poison to be float instead of integer
 void negLikelihoodMod(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t flag) {
-  if(params.S+par[0]*par[2]+par[3] <0) {
-    f=0; //truncate so we can scan negative S                                 
-    return;
-  }
+  if( params.S + par[0]*par[1]*(1. + par[3]) + par[2] < .0 )
+    {
+      f=0;/*truncate so we can scan negative S*/
+      return;
+    }
   f = 1;
   f *= TMath::Gaus(par[0],params.sf,params.sfe);//SF                                                    
   f *= TMath::Poisson(params.Nside,par[1]);//sideband compatibility
@@ -90,13 +95,17 @@ void negLikelihoodMod(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t 
   f *= -1.0;
 }
 
-//Allow last poison to be float instead of integer                                                                 
-void negLikelihoodNexp(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t flag) {
-  if( (params.Nexp - par[1])/(par[2]*par[0]) <0 || par[2]< 0 ) {
-    f=0; //truncate so we can scan negative S         
-    //std::cout << "entering this regime" << std::endl;
-    return;
-  }
+//-------------------------------------------------------------------
+//Profiles Nexp, without including the last poisson
+//for observed events, therefore only systematic effects are included
+//-------------------------------------------------------------------
+void negLikelihoodNexp(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t flag)
+{
+  if( (params.Nexp - par[1])/(par[2]*par[0]) < .0 || par[2] < .0 )
+    {
+      f=0;/*truncate so we can scan negative S*/
+      return;
+    }
   f = 1;
   f *= TMath::Gaus( par[0], params.sf, params.sfe );                                                     
   f *= TMath::Gaus( par[1], params.Higgs, params.HiggsErr );
@@ -107,15 +116,14 @@ void negLikelihoodNexp(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t
 
 float getR(TMinuit& m);
 
-
 std::pair<float,float> profileSimpleNexp( float step = 0.01, bool _singlePoint = false, double signal = .0,
 					  bool _profileNobs = false, double obs = 0.0 ) 
 {
   const int nPar = 3;
-
+  
   TMinuit min(nPar);
   Int_t ierflg = 0;
-
+  
   min.SetFCN( negLikelihoodNexp );
   
   double pStart[nPar]={params.sf, params.Higgs, 1.0};
@@ -133,7 +141,7 @@ std::pair<float,float> profileSimpleNexp( float step = 0.01, bool _singlePoint =
   min.SetPrintLevel(-1);
   
   params.S = 0;
-
+  
   min.mnparm(0,"SF",pStart[0],pStep[0],0,0,ierflg);
   min.mnparm(1,"HiggsB",pStart[1],pStep[1],0,0,ierflg);
   min.mnparm(2,"BkgShape",pStart[2],pStep[2],0,0,ierflg);
@@ -158,31 +166,29 @@ std::pair<float,float> profileSimpleNexp( float step = 0.01, bool _singlePoint =
 //just return the -2delta LL , best S
 std::pair<float,float> profileSimpleNoHistMinuit( float step = 0.01, bool _singlePoint = false, double signal = .0,
 						  bool _profileNobs = false, double obs = 0.0 ) {
-  //    std::cout << std::endl;
-  //std::cout << params.obs << " " << params.Nupper << " " << params.Nlower << " " << params.UpperSF << " " << params.UpperSFe << " " << std::endl;
-  //    std::cout << params.LowerSF << " " << params.LowerSFe << " " << params.Higgs << " " << params.HiggsErr << " " <<  std::endl;
-  
   //std::cout << "entering program" << std::endl;
   const int nPar = 4;
   
   TMinuit min(nPar);
-  //TMinuit min( 3 );
   Int_t ierflg = 0;
-  
+  double _shapeErrInit;
+  //double _stepPrecision = 0.000001;
+  double _stepPrecision = 0.0001;
   if ( !_profileNobs )
     {
-      min.SetFCN( negLikelihoodLn );
+      //_shapeErrInit = 1.0;
+      //min.SetFCN( negLikelihoodLn );
+      _shapeErrInit = 0.0;
+      min.SetFCN( negLikelihood );
     }
   else
     {
-      //min.SetFCN( negLikelihoodMod );
       min.SetFCN( negLikelihoodNexp );
     }
   
   
-  //double pStart[nPar]={params.sf,params.Nside,params.Higgs,.0};
-  double pStart[nPar]={params.sf,params.Nside,params.Higgs,1.0};
-  double pStep [nPar]={0.000001,0.000001,0.000001,0.000001};
+  double pStart[nPar]={params.sf,params.Nside,params.Higgs, _shapeErrInit};
+  double pStep [nPar]={_stepPrecision, _stepPrecision, _stepPrecision, _stepPrecision};
   
   
   Double_t arglist[10];
@@ -214,12 +220,6 @@ std::pair<float,float> profileSimpleNoHistMinuit( float step = 0.01, bool _singl
   min.mnparm(2,"HiggsB",pStart[2],pStep[2],0,0,ierflg);
   min.mnparm(3,"BkgShape",pStart[3],pStep[3],0,0,ierflg);
   
-  /*
-  min.mnparm(0,"SF",pStart[0],pStep[0],0,0,ierflg);                                                                
-  min.mnparm(1,"HiggsB",pStart[2],pStep[2],0,0,ierflg);                                          
-  min.mnparm(2,"BkgShape",pStart[3],pStep[3],0,0,ierflg); 
-  */
-
   //min.SetPrintLevel(1);
   
   min.mnexcm("MIGRAD",arglistS0,2,ierflg);
@@ -236,11 +236,6 @@ std::pair<float,float> profileSimpleNoHistMinuit( float step = 0.01, bool _singl
       min.mnparm(2,"HiggsB",pStart[2],pStep[2],0,0,ierflg);
       min.mnparm(3,"BkgShape",pStart[3],pStep[3],0,0,ierflg);
       
-      /*
-      min.mnparm(0,"SF",pStart[0],pStep[0],0,0,ierflg);
-      min.mnparm(1,"HiggsB",pStart[2],pStep[2],0,0,ierflg);
-      min.mnparm(2,"BkgShape",pStart[3],pStep[3],0,0,ierflg);
-      */
       if( _profileNobs )
 	{
 	  params.obs = obs;
@@ -250,14 +245,12 @@ std::pair<float,float> profileSimpleNoHistMinuit( float step = 0.01, bool _singl
       min.mnexcm("MIGRAD",arglistS0,2,ierflg);
       min.mnexcm("MIGRAD",arglist,2,ierflg);
       
-      //std::cout << getR(min) << std::endl;
       if( TMath::IsNaN( getR(min) )  || getR(min) == .0 ) 
 	{
 	  //std::cout << "NaN!  obs=" << params.Nexp << std::endl;
 	  return std::make_pair( 0, 0 );
 	}
       return std::make_pair( 2*TMath::Log( -1*getR(min) ), signal );
-      //return std::make_pair( -1*getR(min), signal );
     }
   
   if(TMath::IsNaN(likeS0)) {
@@ -422,7 +415,6 @@ TH1D* getTwoLogLikelihood( bool _profileNobs = false )
 	}
       if ( ll < _min_nll && ll > .0 ) _min_nll = ll;//store nll minimum
       _nll[i-1] = ll;
-      //_h->SetBinContent( i, ll );
     }
   for ( int i = 1; i <= nbins; i++ )
     {
