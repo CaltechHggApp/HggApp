@@ -9,15 +9,25 @@
 //the parameters of the bin we are in
 struct par {
   double obs=5;
-  //double Nside=3;
   double Nside=3; 
   double sf=0.162,sfe=0.0016;
-  double combAddErr=1.0; //additional % error on the combinatorial bkg
+  double combAddErr=0.5; //additional % error on the combinatorial bkg
   double Higgs=0.05,HiggsErr=0.012;
   double Nexp = 0.0;
   double S=0;
 } params;
 
+/*
+struct par {
+  double obs=386;
+  double Nside=1530;
+  double sf=0.259,sfe=0.002;
+  double combAddErr=0.0255655; //additional % error on the combinatorial bkg                                                      
+  double Higgs=3.80874,HiggsErr=0.188588;
+  double Nexp = 0.0;
+  double S=0;
+} params;
+*/
 
 double gaus(double x, double m, double s) {
   return 1/sqrt(TMath::Pi()*s)*TMath::Exp( -1*(x-m)*(x-m)/s/s);
@@ -34,18 +44,16 @@ double pois(double N, double alpha) {
 // npar should be 4 (free) parameters
 // SF,B,HiggsB,bkgMMult
 void negLikelihood(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t flag) {
-  if(params.S+par[0]*par[2]+par[3] <0) { 
+  if(params.S+par[0]*par[1]+par[2] <0) { 
     f=0; //truncate so we can scan negative S
     return;
   }
   f = 1;
-  f *= TMath::Gaus(par[0],params.sf,params.sfe);//SF
-  //f *= TMath::Poisson(params.Nside,par[1]);//sideband compatibility
-  f *= TMath::PoissonI(params.Nside,par[1]);
-  f *= TMath::Gaus(par[2],params.Higgs,params.HiggsErr);//Higgs background compatibility
-  f *= TMath::Gaus(par[3],0,params.combAddErr);//background shape compatibility
-  //f *= TMath::Poisson(params.obs,params.S+par[0]*par[1]*(1+par[3])+par[2]);//signal+bkg compatibility
-  f *= TMath::PoissonI(params.obs,params.S+par[0]*par[1]*(1+par[3])+par[2]);
+  f *= TMath::Gaus(par[0],params.sf,params.sfe); // upper SF compatibility                                             
+  f *= TMath::PoissonI(params.Nside,par[1]);                    // upper sideband compatibility                           
+  f *= TMath::Gaus(par[2],params.Higgs,params.HiggsErr);        // Higgs background compatibility                              
+  f *= TMath::Gaus(par[3],0,params.combAddErr);                 // background shape compatibility                        
+  f *= TMath::PoissonI(params.obs,params.S+par[0]*par[1]*(1+par[3])+par[2]);            // S compatibility                       
   f *= -1;
 }
 
@@ -99,7 +107,7 @@ std::pair<float,float> profileSimpleNexp( float step = 0.01, bool _singlePoint =
   min.SetFCN( negLikelihoodNexp );
   
   double pStart[nPar]={params.sf, params.Higgs, 1.0};
-  double pStep [nPar]={0.001,0.001,0.001};
+  double pStep [nPar]={0.00001,0.00001,0.00001};
 
   Double_t arglist[10];
   Double_t arglistS0[10];
@@ -161,7 +169,8 @@ std::pair<float,float> profileSimpleNoHistMinuit( float step = 0.01, bool _singl
   
   
   double pStart[nPar]={params.sf,params.Nside,params.Higgs,.0};
-  double pStep [nPar]={0.001,0.001,0.001,0.001};
+  //double pStart[nPar]={params.sf,params.Nside,params.Higgs,1.0};
+  double pStep [nPar]={0.000001,0.000001,0.000001,0.000001};
   
   
   Double_t arglist[10];
@@ -374,7 +383,7 @@ float getR(TMinuit& m) {
 TH1D* getTwoLogLikelihood( bool _profileNobs = false )
 {
   float step = 0.01;
-  double x_h = 40., x_l = 0.0;
+  double x_h = 40., x_l = -40.0;
   if ( _profileNobs )
     {
       x_h = 2.0*params.Nside*params.sf;

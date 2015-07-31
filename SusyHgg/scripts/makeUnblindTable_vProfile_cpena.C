@@ -369,13 +369,10 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	//----------------------------------------------------------
 	double non_res_upper_pred = scaleFactorHigh.at(i).first*bkgStatisticsHighLow.at(i).first;
 	double non_res_lower_pred = scaleFactorLow.at(i).first*bkgStatisticsHighLow.at(i).second; 
-	//std::cout << "nU: " << bkgStatisticsHighLow.at(i).first << " nL " << bkgStatisticsHighLow.at(i).second << std::endl;
-	//std::cout << "SFu: " << scaleFactorHigh.at(i).first << " SFl: " << scaleFactorLow.at(i).first << std::endl;
 	//---------------------------------------------------------------------------------------------
 	//estimate the size of the deviation between uppper and lower sideband non-resonant predictions
 	//---------------------------------------------------------------------------------------------
 	double sideband_deviation_size = fabs( non_res_upper_pred - non_res_lower_pred );
-
 
 	//-----------------------------------------------------------
 	//compare size of the stat. uncertainty to sideband_deviation
@@ -386,8 +383,7 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	  {
 	    double plus_sigma  = fabs( max( non_res_upper_pred, non_res_lower_pred ) - non_res_nominal_pred );
 	    double minus_sigma = fabs( non_res_nominal_pred - min( non_res_upper_pred, non_res_lower_pred ) );
-	    //extra_err = max( plus_sigma, minus_sigma );
-	    extra_err = 0.5*( plus_sigma + minus_sigma );//use average error (this is in the paper)
+	    extra_err = max( plus_sigma, minus_sigma )/2.0;
 	  }
 	else
 	  {
@@ -409,8 +405,7 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	float obs = obsVec.at(i);
 	std::pair<float,float> SF   =  make_pair(scaleFactors.at(i),scaleFactorsError.at(i));
 	float n_sideband = bkgStatistics.at(i);
-	//extra_err = extra_err/(float)n_sideband;
-
+	
 	//----------------------------------------
 	//getting significance
 	//----------------------------------------
@@ -435,10 +430,14 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	std::pair<float, float> bkg_total_err = findOneSigma( _dll_tmp_obs );
 	_dll_tmp_obs->Write( _h_name );
 	
-	//std::pair<float, float> bkg_total_err = std::make_pair(0,0);
-	//std::cout << "====> iBin: " << i << std::endl;
-	//std::cout << "extra err = " << extra_err << std::endl;
-	printf( "% 6.0f - % 6.0f & %0.2f - %0.2f & % 4.0f & $% 4.1f^{+%0.2f}_{-%0.2f}$ & %0.3f & %0.1f \\\\\n",
+	/*
+	std::cout << "====> iBin: " << i << std::endl;
+	std::cout << "---SF uncertainty: " << scaleFactorsError.at(i) << std::endl;
+	std::cout << "nside: " << bkgStatistics.at(i) << " higgs: " 
+		  << higgs.first << " H_err" << higgs.second << std::endl;
+	std::cout << "extra err = " << extra_err << std::endl;
+	*/
+	printf( "% 6.0f - % 6.0f & %0.2f - %0.2f & % 4.0f & $% 4.1f^{+%0.1f}_{-%0.1f}$ & %0.2f & %0.1f \\\\\n",
 		region.at(iC).MR_min, region.at(iC).MR_max,
                 region.at(iC).Rsq_min, region.at(iC).Rsq_max,
                 obsVec.at(i), bkgTot, bkg_total_err.second, bkg_total_err.first,
@@ -446,23 +445,22 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 		);
 	
 	/*
-	std::cout << "====> iBin: " << i << std::endl;
-	std::cout << "Nobs: " << obsVec.at(i) << " Nexp: " << bkgTot << " (+" << bkg_total_err.second << ", -" << bkg_total_err.first 
-		  << ")"
-		  << " nH: " << higgs.first << " +/- " << higgs.second 
-		  << " SF: " << scaleFactors.at(i) << " SFerr: " << scaleFactorsError.at(i)
-		  << std::endl;
-	std::cout << "nominal pred: " << non_res_nominal_pred
-	<< ", upper-sideband pred: " << non_res_upper_pred
-		  << ", lower-sideband pred: " << non_res_lower_pred
-		  << std::endl;
-	std::cout << "stat. uncertainty: " << non_res_stat_err
-		  << ", |sidebandUpper-sidebandLower| =  " << sideband_deviation_size
-		  << "; Extra uncertainty: " << extra_err
-		  << std::endl;
-
-	std::cout << "nsigmas: " << sig << ", p-val: " << pv 
-	<< std::endl;
+	  std::cout << "====> iBin: " << i << std::endl;
+	  std::cout << "Nobs: " << obsVec.at(i) << " Nexp: " << bkgTot << " (+" << bkg_total_err.second << ", -" << bkg_total_err.first << ")"
+	  << " nH: " << higgs.first << " +/- " << higgs.second 
+	  << " SF: " << scaleFactors.at(i) << " SFerr: " << scaleFactorsError.at(i)
+	  << std::endl;
+	  std::cout << "nominal pred: " << non_res_nominal_pred
+	  << ", upper-sideband pred: " << non_res_upper_pred
+	  << ", lower-sideband pred: " << non_res_lower_pred
+	  << std::endl;
+	  std::cout << "stat. uncertainty: " << non_res_stat_err
+	  << ", |sidebandUpper-sidebandLower| =  " << sideband_deviation_size
+	  << "; Extra uncertainty: " << extra_err
+	  << std::endl;
+	  
+	  std::cout << "nsigmas: " << sig << ", p-val: " << pv 
+	  << std::endl;
 	*/
       }
     
