@@ -44,7 +44,7 @@ double pois(double N, double alpha) {
 // npar should be 4 (free) parameters
 // SF,B,HiggsB,bkgMMult
 void negLikelihood(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t flag) {
-  if(params.S+par[0]*par[1](1+par[3])+par[2] <0) { 
+  if(params.S+par[0]*par[1]*(1+par[3])+par[2] <0) { 
     f=0; //truncate so we can scan negative S
     return;
   }
@@ -67,8 +67,8 @@ void negLikelihoodLn(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t f
   }
   f = 1;
   f *= TMath::Gaus(par[0],params.sf,params.sfe); // upper SF compatibility                                    
-  f *= TMath::PoissonI(params.Nside,par[1]);                    // upper sideband compatibility                            
-  f *= TMath::Gaus(par[2],params.Higgs,params.HiggsErr);        // Higgs background compatibility                        
+  f *= TMath::PoissonI(params.Nside,par[1]);                    // upper sideband compatibility                
+  f *= TMath::Gaus(par[2],params.Higgs,params.HiggsErr);        // Higgs background compatibility             
   f *= TMath::LogNormal( par[3], params.combAddErr, 0, 1 );
   f *= TMath::PoissonI(params.obs,params.S+par[0]*par[1]*par[3]+par[2]);
   f *= -1;
@@ -171,7 +171,7 @@ std::pair<float,float> profileSimpleNoHistMinuit( float step = 0.01, bool _singl
   
   if ( !_profileNobs )
     {
-      min.SetFCN( negLikelihood );
+      min.SetFCN( negLikelihoodLn );
     }
   else
     {
