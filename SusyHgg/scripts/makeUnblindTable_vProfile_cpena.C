@@ -429,16 +429,19 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
         _h_name = Form("delta_log_likelihood_obs_%d", i);
 	std::pair<float, float> bkg_total_err = findOneSigma( _dll_tmp_obs );
 	_dll_tmp_obs->Write( _h_name );
+	//-------------------------------------------
+	//Adding sign to n-sigma
+	//-------------------------------------------
+	if ( obs < bkgTot ) sig = -sig;
 	
-	
-	std::cout << "====> iBin: " << i << std::endl;
+	//std::cout << "====> iBin: " << i << std::endl;
 	/*
 	std::cout << "---SF uncertainty: " << scaleFactorsError.at(i) << std::endl;
 	std::cout << "nside: " << bkgStatistics.at(i) << " higgs: " 
 		  << higgs.first << " H_err" << higgs.second << std::endl;
 	std::cout << "extra err = " << extra_err << std::endl;
 	*/
-	printf( "% 6.0f - % 6.0f & %0.2f - %0.2f & % 4.0f & $% 4.1f^{+%0.1f}_{-%0.1f}$ & %0.2f & %0.1f \\\\\n",
+	printf( "% 6.0f - % 6.0f & %0.2f - %0.2f & % 4.0f & $% 4.1f^{+%0.1f}_{-%0.1f}$ & %0.3f & %0.1f \\\\\n",
 		region.at(iC).MR_min, region.at(iC).MR_max,
                 region.at(iC).Rsq_min, region.at(iC).Rsq_max,
                 obsVec.at(i), bkgTot, bkg_total_err.second, bkg_total_err.first,
