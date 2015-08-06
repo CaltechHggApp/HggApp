@@ -75,6 +75,7 @@ public:
 
   void setNSigEffs(float n){nSigEffSignalRegion=n;}
 
+  //static constexpr float minMgg = 100;
   static constexpr float minMgg = 103;
   static constexpr float maxMgg = 160;
 

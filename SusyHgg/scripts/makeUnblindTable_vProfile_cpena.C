@@ -430,8 +430,9 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	std::pair<float, float> bkg_total_err = findOneSigma( _dll_tmp_obs );
 	_dll_tmp_obs->Write( _h_name );
 	
-	/*
+	
 	std::cout << "====> iBin: " << i << std::endl;
+	/*
 	std::cout << "---SF uncertainty: " << scaleFactorsError.at(i) << std::endl;
 	std::cout << "nside: " << bkgStatistics.at(i) << " higgs: " 
 		  << higgs.first << " H_err" << higgs.second << std::endl;

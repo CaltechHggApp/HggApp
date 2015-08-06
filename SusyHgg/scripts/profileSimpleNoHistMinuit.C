@@ -176,10 +176,10 @@ std::pair<float,float> profileSimpleNoHistMinuit( float step = 0.01, bool _singl
   double _stepPrecision = 0.0001;
   if ( !_profileNobs )
     {
-      //_shapeErrInit = 1.0;
-      //min.SetFCN( negLikelihoodLn );
-      _shapeErrInit = 0.0;
-      min.SetFCN( negLikelihood );
+      _shapeErrInit = 1.0;
+      min.SetFCN( negLikelihoodLn );
+      //_shapeErrInit = 0.0;
+      //min.SetFCN( negLikelihood );
     }
   else
     {

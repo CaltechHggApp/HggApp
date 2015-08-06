@@ -21,7 +21,7 @@ void makeScaleFactorTable( TString dir = "./", bool _fullTable = false )
   //--------------------------------------------
   std::cout << std::fixed;
   std::cout.precision(3);
-    
+
   //--------------------------------------
   // D e f i n i n g   c a t e g o r i e s
   //--------------------------------------
@@ -41,7 +41,7 @@ void makeScaleFactorTable( TString dir = "./", bool _fullTable = false )
       RooWorkspace* w = (RooWorkspace*)dataFile->Get( cat[i] + "_mgg_workspace" );
       if( _fullTable )
 	{
-	  std::cout << "\n" << cat[i] << " & " 
+	  std::cout << std::scientific << "\n" << cat[i] << " & " 
 		    << w->var("Nbkg1")->getVal()*w->var("Nbkg1")->getVal() << " $\\pm$ " 
 		    << 2.0*w->var("Nbkg1")->getError() << " & "
 		    << w->var("Nbkg2")->getVal()*w->var("Nbkg2")->getVal() << " $\\pm$ "
