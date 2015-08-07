@@ -17,6 +17,7 @@
 #include "assert.h"
 #include <stdio.h>
 #include "profileSimpleNoHistMinuit.C"
+#include "pValueCalculator.C"
 
 using namespace std;
 using namespace SigRegionBinning;
@@ -433,10 +434,18 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 	//Adding sign to n-sigma
 	//-------------------------------------------
 	if ( obs < bkgTot ) sig = -sig;
-	
-	//std::cout << "====> iBin: " << i << std::endl;
+	//----------------
+	//simga from toys
+	//----------------
+	double par_tmp[6] = {scaleFactors.at(i), scaleFactorsError.at(i), bkgStatistics.at(i)
+			     ,higgs.first, higgs.second, extra_err};
+	TH1F* h_tmp = GetPosteriorPdf( par_tmp );
+	h_tmp->Write( Form("posterior_%d", i) );
+	double n_sigma = getNsigma( par_tmp, obsVec.at(i) );
 	/*
-	std::cout << "---SF uncertainty: " << scaleFactorsError.at(i) << std::endl;
+	std::cout << "====> iBin: " << i << std::endl;
+	std::cout << "nSigma': " << n_sigma << std::endl;
+	std::cout << "---SF: " << scaleFactors.at(i) << "+/-" << scaleFactorsError.at(i) << std::endl;
 	std::cout << "nside: " << bkgStatistics.at(i) << " higgs: " 
 		  << higgs.first << " H_err" << higgs.second << std::endl;
 	std::cout << "extra err = " << extra_err << std::endl;
@@ -445,7 +454,7 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 		region.at(iC).MR_min, region.at(iC).MR_max,
                 region.at(iC).Rsq_min, region.at(iC).Rsq_max,
                 obsVec.at(i), bkgTot, bkg_total_err.second, bkg_total_err.first,
-		pv, sig
+		pv, n_sigma
 		);
 	
 	/*

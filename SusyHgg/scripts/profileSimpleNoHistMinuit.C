@@ -52,16 +52,16 @@ void negLikelihood(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t fla
     }
   f = 1;
   f *= TMath::Gaus(par[0],params.sf,params.sfe);/*upper SF compatibility*/
-  f *= TMath::PoissonI(params.Nside,par[1]);/*upper sideband compatibility*/
+  f *= TMath::Poisson(params.Nside,par[1]);/*upper sideband compatibility*/
   f *= TMath::Gaus(par[2],params.Higgs,params.HiggsErr);/*Higgs background compatibility*/
   f *= TMath::Gaus(par[3],0,params.combAddErr);/*background shape compatibility*/
-  f *= TMath::PoissonI(params.obs,params.S+par[0]*par[1]*(1+par[3])+par[2]);/*S compatibility*/
+  f *= TMath::Poisson(params.obs,params.S+par[0]*par[1]*(1+par[3])+par[2]);/*S compatibility*/  
   f *= -1;
 };
 
 
 // npar should be 4 (free) parameters                                                                                                      
-// SF,B,HiggsB,bkgMMult, modified to accomodate a LogNormal shape systematic                                                                          
+// SF,B,HiggsB,bkgMMult, modified to accomodate a LogNormal shape systematic                                                
 void negLikelihoodLn(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t flag)
 {
   if( params.S + par[0]*par[1]*par[3] + par[2] < .0 || par[3] < .0 )
@@ -71,10 +71,10 @@ void negLikelihoodLn(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t f
     }
   f = 1;
   f *= TMath::Gaus(par[0],params.sf,params.sfe);/*upper SF compatibility*/
-  f *= TMath::PoissonI(params.Nside,par[1]);/*upper sideband compatibility*/
+  f *= TMath::Poisson(params.Nside,par[1]);/*upper sideband compatibility*/ 
   f *= TMath::Gaus(par[2],params.Higgs,params.HiggsErr);/*Higgs background compatibility*/
   f *= TMath::LogNormal( par[3], params.combAddErr, 0, 1 );/*background shape compatibility*/
-  f *= TMath::PoissonI(params.obs,params.S+par[0]*par[1]*par[3]+par[2]);/*S compatibility*/
+  f *= TMath::Poisson(params.obs,params.S+par[0]*par[1]*par[3]+par[2]);/*S compatibility*/
   f *= -1;
 }
 
@@ -114,21 +114,49 @@ void negLikelihoodNexp(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t
   f *= -1.0;
 }
 
+//-------------------------------------------------------------------
+//Profiles Nexp, including the last poisson
+//for observed events, therefore only systematic effects are included
+//-------------------------------------------------------------------                                                 
+void negLikelihoodNexpTwoPoisson(Int_t&npar, Double_t*gin, Double_t&f, Double_t*par, Int_t flag)
+{
+  if( par[0]*par[1]*par[3]+par[2] < .0 || par[3] < .0 )
+    {
+      f=0;/*truncate so we can scan negative S*/
+      return;
+    }
+  f = 1;
+  f *= TMath::Gaus(par[0],params.sf,params.sfe);/*upper SF compatibility*/
+  f *= TMath::Poisson(params.Nside,par[1]);/*upper sideband compatibility*/
+  f *= TMath::Gaus(par[2],params.Higgs,params.HiggsErr);/*Higgs background compatibility*/
+  f *= TMath::LogNormal( par[3], params.combAddErr, 0, 1 );/*background shape compatibility*/
+  f *= TMath::Poisson(params.Nexp, par[0]*par[1]*par[3]+par[2]);/*S compatibility*/
+  f *= -1;
+}
+
 float getR(TMinuit& m);
 
 std::pair<float,float> profileSimpleNexp( float step = 0.01, bool _singlePoint = false, double signal = .0,
 					  bool _profileNobs = false, double obs = 0.0 ) 
 {
   const int nPar = 3;
+  //const int nPar = 4;
   
   TMinuit min(nPar);
   Int_t ierflg = 0;
   
   min.SetFCN( negLikelihoodNexp );
+  //min.SetFCN( negLikelihoodNexpTwoPoisson ); 
   
-  double pStart[nPar]={params.sf, params.Higgs, 1.0};
-  double pStep [nPar]={0.00001,0.00001,0.00001};
-
+  double _stepPrecision = 0.00001;
+  double _shapeErrInit = 1.0;
+  
+  double pStart[nPar] = {params.sf, params.Higgs, _shapeErrInit};
+  double pStep[nPar] = {_stepPrecision, _stepPrecision, _stepPrecision};
+  /*
+  double pStart[nPar] = {params.sf,params.Nside,params.Higgs, _shapeErrInit};
+  double pStep[nPar]  = {_stepPrecision, _stepPrecision, _stepPrecision, _stepPrecision};
+  */
   Double_t arglist[10];
   Double_t arglistS0[10];
 
@@ -142,10 +170,17 @@ std::pair<float,float> profileSimpleNexp( float step = 0.01, bool _singlePoint =
   
   params.S = 0;
   
+  
   min.mnparm(0,"SF",pStart[0],pStep[0],0,0,ierflg);
   min.mnparm(1,"HiggsB",pStart[1],pStep[1],0,0,ierflg);
   min.mnparm(2,"BkgShape",pStart[2],pStep[2],0,0,ierflg);
   
+  /*
+  min.mnparm(0,"SF",pStart[0],pStep[0],0,0,ierflg);
+  min.mnparm(1,"B",pStart[1],pStep[1],0,0,ierflg);
+  min.mnparm(2,"HiggsB",pStart[2],pStep[2],0,0,ierflg);
+  min.mnparm(3,"BkgShape",pStart[3],pStep[3],0,0,ierflg);
+  */
   if( _profileNobs )
     {
       params.obs = obs;
@@ -153,6 +188,14 @@ std::pair<float,float> profileSimpleNexp( float step = 0.01, bool _singlePoint =
     }
   min.mnexcm("MIGRAD",arglistS0,2,ierflg);
   min.mnexcm("MIGRAD",arglist,2,ierflg);
+  
+  double minPar[nPar];
+  double minParErr[nPar];
+  if( params.Nexp < 0.1 )
+    {
+      for ( int i = 0; i < nPar; i++ ) min.GetParameter( i, minPar[i], minParErr[i]);
+      //std::cout << "minPar: " << minPar[0] << " +/- " << minParErr[0] << std::endl;
+    }
   
   if( TMath::IsNaN( getR(min) )  || getR(min) == .0 )
     {
@@ -236,15 +279,29 @@ std::pair<float,float> profileSimpleNoHistMinuit( float step = 0.01, bool _singl
       min.mnparm(2,"HiggsB",pStart[2],pStep[2],0,0,ierflg);
       min.mnparm(3,"BkgShape",pStart[3],pStep[3],0,0,ierflg);
       
+      /*
       if( _profileNobs )
 	{
 	  params.obs = obs;
 	  params.Nexp = obs;
 	}
+      */
       //min.SetPrintLevel(1);
       min.mnexcm("MIGRAD",arglistS0,2,ierflg);
       min.mnexcm("MIGRAD",arglist,2,ierflg);
       
+      double minPar[nPar];
+      double minParErr[nPar];
+      if( fabs( signal ) < 0.001 )
+	{
+	  for ( int i = 0; i < nPar; i++ )
+	    { 
+	      min.GetParameter( i, minPar[i], minParErr[i]);
+	      //std::cout << "minPar: " << minPar[i] << " +/- " << minParErr[i] << std::endl;                                        
+	    }
+	  //std::cout << "Prediction @ s = 0 ===> " << minPar[0]*minPar[1]*minPar[3]+minPar[2] << std::endl; 
+	}
+
       if( TMath::IsNaN( getR(min) )  || getR(min) == .0 ) 
 	{
 	  //std::cout << "NaN!  obs=" << params.Nexp << std::endl;
