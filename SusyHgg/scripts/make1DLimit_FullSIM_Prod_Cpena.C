@@ -43,7 +43,7 @@ void make1DLimit(TString combine_dir,TString type= "WH",bool blind=true){
   
   TGraphErrors* theo = 0;
   if(type=="WH") theo = getTheoXSec("xsecs/CharginoNeutralino.txt");
-  else theo = getTheoXSec("/home/amott/HggApp/SusyHgg/xsecs/Higgsino_ElectroHiggs.txt");
+  else theo = getTheoXSec("xsecs/Higgsino_ElectroHiggs.txt");
   //else theo = getTheoXSec("/home/amott/HggApp/SusyHgg/xsecs/Higgsino.txt");
 
   for(int m=125;m<=200;m+=25) {
@@ -85,6 +85,7 @@ void make1DLimit(TString combine_dir,TString type= "WH",bool blind=true){
     theo->GetYaxis()->SetTitleOffset(0.8);
     theo->GetYaxis()->SetTitle("95% CL #sigma upper limit (pb)");
     theo->GetXaxis()->SetTitle("m_{chargino} (GeV)");
+    if(type=="HH") theo->GetXaxis()->SetTitle("m_{neutralino} (GeV)");
     theo->SetFillColor(kBlue);
     theo->SetLineStyle(kDotted);
     theo->SetLineWidth(1);
@@ -99,6 +100,7 @@ void make1DLimit(TString combine_dir,TString type= "WH",bool blind=true){
     error.GetXaxis()->SetTitleOffset(0.9);
     error.GetYaxis()->SetTitle("95% CL #sigma upper limit (pb)");
     error.GetXaxis()->SetTitle("m_{chargino} (GeV)");
+    if(type=="HH") error.GetXaxis()->SetTitle("m_{neutralino} (GeV)");
     error.SetFillColor(kGreen);
     error.SetTitle("");
     error.Draw("A3");
@@ -149,6 +151,7 @@ void make1DLimit(TString combine_dir,TString type= "WH",bool blind=true){
     TString infix=(blind ? "" : "_OBS");
     cv.SaveAs(combine_dir+"/expected_exclusion_"+type+"_1D"+infix+".png");
     cv.SaveAs(combine_dir+"/expected_exclusion_"+type+"_1D"+infix+".pdf");
+    cv.SaveAs(combine_dir+"/expected_exclusion_"+type+"_1D"+infix+".C");
 
     error_r.SetMaximum(1e2);
     error_r.SetMinimum(1e-2);
@@ -161,7 +164,7 @@ void make1DLimit(TString combine_dir,TString type= "WH",bool blind=true){
     error_r.GetXaxis()->SetTitleSize(0.05);
     error_r.GetXaxis()->SetTitleOffset(0.9);
     error_r.GetYaxis()->SetTitle("#sigma_{95%}/#sigma_{NLO}");
-    if(type=="HH") error_r.GetXaxis()->SetTitle("M_{#chi_{2}^{0}} [GeV]");
+    if(type=="HH") error_r.GetXaxis()->SetTitle("m_{neutralino} (GeV)");
     else error_r.GetXaxis()->SetTitle("m_{chargino} (GeV)");
     error_r.SetFillColor(kGreen);
     error_r.Draw("A3");
@@ -202,6 +205,7 @@ void make1DLimit(TString combine_dir,TString type= "WH",bool blind=true){
     
     cv.SaveAs(combine_dir+"/expected_exclusion_ratio_"+type+"_1D"+infix+".png");
     cv.SaveAs(combine_dir+"/expected_exclusion_ratio_"+type+"_1D"+infix+".pdf");
+    cv.SaveAs(combine_dir+"/expected_exclusion_ratio_"+type+"_1D"+infix+".C");
 }
 
 

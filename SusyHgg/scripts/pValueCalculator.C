@@ -99,3 +99,8 @@ double getNsigma( double pars[6], int Nobs )
 {
   return TMath::Sqrt(2)*TMath::ErfcInverse( 2.*getPval( pars, Nobs ) );
 };
+
+double getNsigma( double pval )
+{
+  return TMath::Sqrt(2)*TMath::ErfcInverse( 2.*pval );
+};

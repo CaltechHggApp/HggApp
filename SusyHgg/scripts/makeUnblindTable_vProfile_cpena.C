@@ -441,7 +441,9 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 			     ,higgs.first, higgs.second, extra_err};
 	TH1F* h_tmp = GetPosteriorPdf( par_tmp );
 	h_tmp->Write( Form("posterior_%d", i) );
-	double n_sigma = getNsigma( par_tmp, obsVec.at(i) );
+	double pval = getPval( par_tmp, obsVec.at(i) );
+	double n_sigma = getNsigma( pval );
+	//double n_sigma = getNsigma( par_tmp, obsVec.at(i) );
 	/*
 	std::cout << "====> iBin: " << i << std::endl;
 	std::cout << "nSigma': " << n_sigma << std::endl;
@@ -454,7 +456,7 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 		region.at(iC).MR_min, region.at(iC).MR_max,
                 region.at(iC).Rsq_min, region.at(iC).Rsq_max,
                 obsVec.at(i), bkgTot, bkg_total_err.second, bkg_total_err.first,
-		pv, n_sigma
+		pval, n_sigma
 		);
 	
 	/*

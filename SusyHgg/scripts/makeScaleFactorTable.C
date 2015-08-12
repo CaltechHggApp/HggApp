@@ -20,7 +20,7 @@ void makeScaleFactorTable( TString dir = "./", bool _fullTable = false )
   // s e t   i o s t r e a m   p r e c i s i o n
   //--------------------------------------------
   std::cout << std::fixed;
-  std::cout.precision(3);
+  std::cout.precision(4);
     
   //--------------------------------------
   // D e f i n i n g   c a t e g o r i e s
