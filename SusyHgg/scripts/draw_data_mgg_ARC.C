@@ -72,7 +72,9 @@ void draw_data_mgg(TString folderName,bool blind=true,float min=103,float max=16
 	errfix2.SetPoint(i,x[i],y[i]);
 	mass->setVal(x[i]);      
 	double shapeErr = pdf->getPropagatedError(*res)*NtotalFit;
-	double totalErr = TMath::Sqrt( shapeErr*shapeErr + y[i] );
+	//double totalErr = TMath::Sqrt( shapeErr*shapeErr + y[i] );
+	//total normalization error
+	double totalErr = TMath::Sqrt( shapeErr*shapeErr + y[i]*y[i]/NtotalFit ); 
 	if ( y[i] - totalErr > .0 )
 	  {
 	    errfix.SetPointError(i, 0, 0, totalErr, totalErr );
@@ -90,11 +92,12 @@ void draw_data_mgg(TString folderName,bool blind=true,float min=103,float max=16
 	  {
 	    errfix2.SetPointError(i, 0, 0, y[i] - 0.01,  2.*totalErr );
 	  }
+	/*
 	std::cout << x[i] << " " << y[i] << " "
 		  << " ,pdf get Val: " << pdf->getVal()
 		  << " ,pdf get Prop Err: " << pdf->getPropagatedError(*res)*NtotalFit
 		  << " stat uncertainty: " << TMath::Sqrt(y[i]) << " Ntot: " << NtotalFit <<  std::endl;
-	
+	*/
       }
     errfix.SetFillColor(kYellow);
     errfix2.SetFillColor(kGreen);
@@ -119,8 +122,9 @@ void draw_data_mgg(TString folderName,bool blind=true,float min=103,float max=16
     //data->plotOn(plot);
 
     //pdf->plotOn(plot,RooFit::Normalization( norm ) );
-    pdf->plotOn(plot,RooFit::NormRange( "low,high" ),RooFit::Range("Full"),RooFit::LineWidth(0.1) );
-    
+    //pdf->plotOn(plot,RooFit::NormRange( "low,high" ),RooFit::Range("Full"),RooFit::LineWidth(1.5) );
+    pdf->plotOn(plot,RooFit::NormRange( "low,high" ),RooFit::Range("Full"), RooFit::LineWidth(1));
+    data->plotOn(plot);
     /*
     pdf->plotOn(plot,RooFit::Normalization(norm),RooFit::Range("all"),RooFit::LineWidth(0.8) );
     //pdf->plotOn(plot,RooFit::Normalization(norm),RooFit::FillColor(kGreen),RooFit::Range("all"), RooFit::VisualizeError(*res,2.0,kFALSE));
