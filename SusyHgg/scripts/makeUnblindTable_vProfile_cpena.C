@@ -441,41 +441,26 @@ void makeUnblindTable_vProfile( TString dir="./", bool BLIND=true, bool fullTex=
 			     ,higgs.first, higgs.second, extra_err};
 	TH1F* h_tmp = GetPosteriorPdf( par_tmp );
 	h_tmp->Write( Form("posterior_%d", i) );
-	double n_sigma = getNsigma( par_tmp, obsVec.at(i) );
-	
+
+	double pval = getPval( par_tmp, obsVec.at(i) );
+	double n_sigma = getNsigma( pval );
+	//double n_sigma = getNsigma( par_tmp, obsVec.at(i) );
+	/*
 	std::cout << "====> iBin: " << i << std::endl;
 	std::cout << "nSigma': " << n_sigma << " p-val: " << RooStats::SignificanceToPValue(n_sigma) << std::endl;
 	
 	std::cout << "---SF: " << scaleFactors.at(i) << "+/-" << scaleFactorsError.at(i) << std::endl;
 	std::cout << "nside: " << bkgStatistics.at(i) << " higgs: " 
-		  << higgs.first << " H_err" << higgs.second << std::endl;
+	<< higgs.first << " H_err" << higgs.second << std::endl;
 	std::cout << "extra err = " << extra_err << std::endl;
-	
+	*/
 	printf( "% 6.0f - % 6.0f & %0.2f - %0.2f & % 4.0f & $% 4.1f^{+%0.1f}_{-%0.1f}$ & %0.4f & %0.2f \\\\\n",
 		region.at(iC).MR_min, region.at(iC).MR_max,
                 region.at(iC).Rsq_min, region.at(iC).Rsq_max,
                 obsVec.at(i), bkgTot, bkg_total_err.second, bkg_total_err.first,
-		pv, sig
+		pv, n_sigma
 		);
 	
-	/*
-	  std::cout << "====> iBin: " << i << std::endl;
-	  std::cout << "Nobs: " << obsVec.at(i) << " Nexp: " << bkgTot << " (+" << bkg_total_err.second << ", -" << bkg_total_err.first << ")"
-	  << " nH: " << higgs.first << " +/- " << higgs.second 
-	  << " SF: " << scaleFactors.at(i) << " SFerr: " << scaleFactorsError.at(i)
-	  << std::endl;
-	  std::cout << "nominal pred: " << non_res_nominal_pred
-	  << ", upper-sideband pred: " << non_res_upper_pred
-	  << ", lower-sideband pred: " << non_res_lower_pred
-	  << std::endl;
-	  std::cout << "stat. uncertainty: " << non_res_stat_err
-	  << ", |sidebandUpper-sidebandLower| =  " << sideband_deviation_size
-	  << "; Extra uncertainty: " << extra_err
-	  << std::endl;
-	  
-	  std::cout << "nsigmas: " << sig << ", p-val: " << pv 
-	  << std::endl;
-	*/
       }
     
     if( fullTex )
