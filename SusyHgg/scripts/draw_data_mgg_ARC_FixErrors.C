@@ -167,7 +167,7 @@ void draw_data_mgg(TString folderName,bool blind=true,float min=103,float max=16
     data->plotOn(plot);
     pdf->plotOn(plot,RooFit::Normalization(norm),RooFit::Range("all"),RooFit::LineWidth(0.8) );
     */
-    TLatex lbl0(0.1,0.96,"CMS Preliminary");
+    TLatex lbl0(0.12,0.96,"CMS Preliminary");
     lbl0.SetNDC();
     lbl0.SetTextSize(0.042);
     plot->addObject(&lbl0);
