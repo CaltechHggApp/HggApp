@@ -57,7 +57,8 @@ void draw_data_mgg(TString folderName,bool blind=true,float min=103,float max=16
     pdf->plotOn(plot,RooFit::NormRange( "low,high" ),RooFit::Range("Full"),RooFit::LineWidth(0.1) );
     plot->Print();
     TH1F* h_tmp = new TH1F("h", "_h", 57, 103, 160);
-    TH1F* h_tmp2 = new TH1F("h", "_h", 57, 103, 160);
+    TH1F* h_tmp2 = new TH1F("h2", "_h2", 57, 103, 160);
+    TH1F* h_tmp3 = new TH1F("h3", "_h3", 57, 103, 160);
     h_tmp->SetBinErrorOption(TH1::kPoisson);
     h_tmp2->SetBinErrorOption(TH1::kPoisson);
     data->fillHistogram( h_tmp, *mass);
@@ -66,28 +67,28 @@ void draw_data_mgg(TString folderName,bool blind=true,float min=103,float max=16
     h_tmp2->SetMarkerStyle(20);
     //h_tmp->SetLineWidth(2);
     h_tmp2->SetStats(0);
-    h_tmp->SetLineColor(kBlack);
-    h_tmp->SetMarkerColor(kBlack);
-    h_tmp->SetMarkerStyle(20);
+    h_tmp3->SetLineColor(kBlack);
+    h_tmp3->SetMarkerColor(kBlack);
+    h_tmp3->SetMarkerStyle(20);
     //h_tmp->SetLineWidth(2);
-    h_tmp->SetStats(0);
-    h_tmp->SetTitle("");
-    for ( int i = 1; i < h_tmp->GetNbinsX(); i++ )
+    h_tmp3->SetStats(0);
+    h_tmp3->SetTitle("");
+    for ( int i = 1; i <= h_tmp->GetNbinsX(); i++ )
       {
 	h_tmp2->SetBinContent(i,h_tmp->GetBinContent(i));
-	if( h_tmp->GetBinContent(i) == 0.0 )
+	h_tmp3->SetBinContent(i,h_tmp->GetBinContent(i));
+	if( h_tmp3->GetBinContent(i) == 0.0 )
 	  {
-	    h_tmp->SetBinError(i,1.84); 
-	    h_tmp->SetBinContent(i,0.000001);
+	    h_tmp3->SetBinError(i,1.84); 
+	    h_tmp3->SetBinContent(i,0.000001);
 	  }
 	else
 	  {
-	    h_tmp->SetBinError(i,0); 
+	    h_tmp3->SetBinError(i,0);
+	    h_tmp3->SetBinContent(i,0);
 	  }
 	
       }
-    h_tmp->Draw();
-    cv.SaveAs("test_test.pdf");
     //add the fix error band
     RooCurve* c = plot->getCurve("pdf_Norm[mgg]_Range[Full]_NormRange[Full]");
     const int Nc = c->GetN();
@@ -189,10 +190,10 @@ void draw_data_mgg(TString folderName,bool blind=true,float min=103,float max=16
     }
     
     plot->Draw();
-    //h_tmp->SetBinErrorOption(TH1::kPoisson);
-    h_tmp2->Draw("sameE0");
+    
+    //h_tmp2->Draw("sameE0");
     h_tmp2->Draw("sameE1");
-    h_tmp->Draw("sameE1");
+    h_tmp3->Draw("sameE1");
     TString tag = (blind ? "_BLIND" : "");
     cv.SaveAs(folderName+"/figs/mgg_data_"+cats[iCat]+tag+TString(Form("_%0.0f_%0.0f",min,max))+".png");
     cv.SaveAs(folderName+"/figs/mgg_data_"+cats[iCat]+tag+TString(Form("_%0.0f_%0.0f",min,max))+".pdf");
